@@ -213,7 +213,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .hand-card .card-stats-bar .def{border-radius:2px 0 4px 0}
 
 /* FLOATING PANELLER */
-.float-panel{position:absolute;top:8px;width:auto;max-width:22vw;max-height:55vh;background:var(--panel-bg);border:1px solid var(--gold-border);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
+.float-panel{position:absolute;top:8px;width:auto;max-width:16vw;max-height:40vh;background:var(--panel-bg);border:1px solid var(--gold-border);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
 .float-panel.left{left:8px}
 .float-panel.right{right:8px}
 #log-panel{left:8px;top:8px}
@@ -245,7 +245,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 
 /* ===== MOTOR ILETISIM PANELI — Sag alt, 50vh ===== */
 .motor-panel{
-    position:fixed;right:0;bottom:0;width:20vw;min-width:300px;height:50vh;
+    position:fixed;right:0;bottom:0;width:18vw;min-width:280px;height:42vh;
     display:none;flex-direction:column;z-index:60;
     background:linear-gradient(175deg,rgba(22,14,32,0.96),rgba(12,8,18,0.98));
     border-left:1px solid rgba(232,200,64,0.1);border-top:1px solid rgba(232,200,64,0.1);
