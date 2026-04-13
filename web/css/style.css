@@ -45,6 +45,9 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .btn.primary{background:linear-gradient(135deg,rgba(180,80,30,0.3),rgba(140,60,20,0.3));border-color:rgba(200,100,40,0.4);color:#e8a040;flex:1}
 .btn.primary:hover{box-shadow:0 0 15px rgba(200,100,40,0.2);color:#ffb860}
 .status{margin-top:1.5rem;color:var(--text-muted);min-height:1.5rem;font-style:italic;font-size:clamp(0.9rem,1vw,1.1rem)}
+.lobby-footer{position:fixed;bottom:16px;display:flex;gap:20px;font-size:0.8rem;color:var(--text-muted)}
+.lobby-footer a{color:var(--text-dim);text-decoration:none;border-bottom:1px solid rgba(180,140,60,0.15)}
+.lobby-footer a:hover{color:var(--gold)}
 
 /* ===== BEKLEME ===== */
 #waiting{align-items:center;justify-content:center;gap:1.5rem}
