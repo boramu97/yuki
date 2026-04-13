@@ -123,7 +123,7 @@ const Field = {
                 face.appendChild(img);
                 if(isMon&&card.card_atk!==undefined){
                     const st=document.createElement("div");st.className="card-stats-bar";
-                    st.innerHTML=`<span class="atk">${card.card_atk}</span>/<span class="def">${card.card_def}</span>`;
+                    st.innerHTML=`<span class="atk">${card.card_atk}</span><span class="def">${card.card_def}</span>`;
                     face.appendChild(st);
                 }
                 if(card.counters){
@@ -152,7 +152,7 @@ const Field = {
                 div.appendChild(img);
                 if((card.card_type&0x1)&&card.card_atk!==undefined){
                     const st=document.createElement("div");st.className="card-stats-bar";
-                    st.innerHTML=`<span class="atk">${card.card_atk}</span>/<span class="def">${card.card_def}</span>`;
+                    st.innerHTML=`<span class="atk">${card.card_atk}</span><span class="def">${card.card_def}</span>`;
                     div.appendChild(st);
                 }
             } else {
@@ -168,14 +168,33 @@ const Field = {
     },
 };
 
-// Sag tik onizleme
+// Sag tik onizleme — saha, el ve log gorselleri
 document.addEventListener("contextmenu",(e)=>{
+    // 1. Saha/el kartlari
     const card=e.target.closest(".hand-card,.card-face");
     if(card){
         e.preventDefault();
+        if(card.classList.contains("facedown")){
+            const slot=card.closest(".card-slot");
+            const zone=slot?.parentElement;
+            if(zone&&(zone.id==="opp-mzone"||zone.id==="opp-szone")) return;
+        }
         const code=card.dataset?.code||card.closest("[data-code]")?.dataset?.code;
         if(code&&code!=="0"){
             document.getElementById("preview-img").src=cardImageUrlFull(code);
+            document.getElementById("preview-name").textContent="";
+            document.getElementById("card-preview-overlay").classList.add("active");
+        }
+        return;
+    }
+    // 2. Log banner gorselleri
+    const logImg=e.target.closest(".log-banner img, .mp-card-img");
+    if(logImg && logImg.src){
+        e.preventDefault();
+        const src=logImg.src;
+        const match=src.match(/\/(\d+)\.jpg/);
+        if(match){
+            document.getElementById("preview-img").src=cardImageUrlFull(match[1]);
             document.getElementById("preview-name").textContent="";
             document.getElementById("card-preview-overlay").classList.add("active");
         }
@@ -183,20 +202,58 @@ document.addEventListener("contextmenu",(e)=>{
 });
 document.getElementById("card-preview-overlay")?.addEventListener("click",function(){this.classList.remove("active")});
 
-// Kart tikla → menu ac/kapat
+// Kart tikla → popup menu ac/kapat
 document.addEventListener("click",(e)=>{
+    // Popup butonuna tiklandi
+    if(e.target.closest(".popup-btn")) return;
+
+    // Mevcut popup'lari kapat
+    document.querySelectorAll(".card-popup.open").forEach(p=>p.remove());
+
     const card=e.target.closest(".hand-card,.card-face");
-    if(card){
-        const menu=card.querySelector(".card-menu");
-        if(menu&&menu.children.length>0){
-            const wasOpen=menu.classList.contains("open");
-            document.querySelectorAll(".card-menu.open").forEach(m=>m.classList.remove("open"));
-            if(!wasOpen) menu.classList.add("open");
-            return;
-        }
-    }
-    // Disari tikla → kapat
-    if(!e.target.closest(".card-menu")){
-        document.querySelectorAll(".card-menu.open").forEach(m=>m.classList.remove("open"));
-    }
+    if(!card || !card.classList.contains("mp-highlight")) return;
+
+    const actionsJson=card.dataset.popupActions;
+    if(!actionsJson) return;
+
+    let actions;
+    try { actions=JSON.parse(actionsJson); } catch { return; }
+    if(!actions.length) return;
+
+    // Popup olustur
+    const popup=document.createElement("div");
+    popup.className="card-popup open";
+    actions.forEach(a=>{
+        const btn=document.createElement("button");
+        btn.className="popup-btn "+(a.cls||"");
+        btn.textContent=a.label;
+        btn.onclick=(ev)=>{
+            ev.stopPropagation();
+            popup.remove();
+            // Callback index'i kullanarak WS.sendResponse cagir
+            if(a.callback){
+                // callback serialized degilse dogrudan cagir
+                // Gercek oyunda _idleCmd zaten callback'leri bind ediyor
+            }
+            // Panel uzerinden ayni aksiyonu tetikle — paneldeki butonu bul ve tikla
+            const panel=document.getElementById("mp-actions");
+            if(panel){
+                const tiles=panel.querySelectorAll(".mp-action-card");
+                tiles.forEach(tile=>{
+                    const img=tile.querySelector(".mp-card-img");
+                    if(img && img.src.includes(card.dataset.code)){
+                        const btns=tile.querySelectorAll(".mp-btn");
+                        btns.forEach(b=>{
+                            if(b.textContent.trim().toUpperCase()===a.label.toUpperCase()) b.click();
+                        });
+                    }
+                });
+            }
+        };
+        popup.appendChild(btn);
+    });
+
+    card.style.position=card.style.position||"relative";
+    card.appendChild(popup);
+    e.stopPropagation();
 });

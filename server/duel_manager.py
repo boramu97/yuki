@@ -19,7 +19,8 @@ import struct as _struct
 from server.ocg_binding import (
     OCGCore,
     LOCATION_DECK, LOCATION_EXTRA, LOCATION_MZONE, LOCATION_SZONE,
-    POS_FACEDOWN_DEFENSE,
+    LOCATION_HAND,
+    POS_FACEDOWN_DEFENSE, POS_FACEDOWN,
     DUEL_MODE_MR2,
     DUEL_STATUS_END, DUEL_STATUS_AWAITING, DUEL_STATUS_CONTINUE,
     MSG_WIN, MSG_RETRY, MSG_ADD_COUNTER, MSG_REMOVE_COUNTER,
@@ -256,6 +257,9 @@ class DuelManager:
                 # Secim mesaji — sadece ilgili oyuncuya gonder
                 target_player = msg.get("player", 0)
                 self._pending_player = target_player
+
+                # Rakibin kapali kartlarinin bilgisini gizle
+                self._hide_opponent_facedowns(msg, target_player)
                 self._last_select_msg = msg
 
                 player = self.room.get_player(target_player)
@@ -402,25 +406,83 @@ class DuelManager:
 
         return msg
 
+    def _hide_opponent_facedowns(self, msg: dict, viewer_team: int):
+        """Interaktif mesajlardaki rakibin kapali kartlarinin bilgisini gizle.
+
+        Oyuncu, rakibin yuz asagi (facedown) kartlarinin ne oldugunu
+        gormemeli. code, card_name, card_atk, card_def, card_type sifirlanir.
+        """
+        hidden_info = {
+            "code": 0, "card_name": "", "card_atk": None, "card_def": None,
+            "card_type": 0, "card_level": 0, "card_attribute": 0,
+            "card_race": 0, "card_desc": "",
+        }
+
+        def is_opponent_facedown(entry):
+            """Kart rakibin kontrolunde ve kapali mi?"""
+            con = entry.get("controller")
+            pos = entry.get("position", 0)
+            loc = entry.get("location", 0)
+            if con is None or con == viewer_team:
+                return False
+            # El kartlari (LOCATION_HAND=0x02) zaten gizli olmali
+            if loc == 0x02:
+                return True
+            # Facedown kontrolu: position bit 1 (0x2) veya bit 3 (0x8)
+            if pos & 0x0A:
+                return True
+            return False
+
+        def hide_entry(entry):
+            """Tek bir kart girdisini gizle."""
+            if is_opponent_facedown(entry):
+                seq = entry.get("sequence", 0)
+                loc = entry.get("location", 0)
+                loc_name = {0x02: "El", 0x04: "Canavar", 0x08: "Buyu/Tuzak"}.get(loc, "?")
+                entry.update(hidden_info)
+                entry["card_name"] = f"Kapali Kart (Slot {seq + 1})"
+
+        # cards listesi (SELECT_CARD, SELECT_TRIBUTE, vs.)
+        for card_entry in msg.get("cards", []):
+            if isinstance(card_entry, dict):
+                hide_entry(card_entry)
+
+        # Diger listeler
+        for list_key in ("attackable", "selectable", "unselectable",
+                         "selectable_cards", "must_cards", "chains"):
+            items = msg.get(list_key, [])
+            if isinstance(items, list):
+                for entry in items:
+                    if isinstance(entry, dict):
+                        hide_entry(entry)
+
     async def _wait_for_response(self) -> bytes | None:
-        """Oyuncudan yanıt gelene kadar bekle (timeout ile)."""
+        """Oyuncudan yanıt gelene kadar bekle (timeout ile).
+
+        Not: Yanıt, beklemeye başlamadan ÖNCE gelebilir (örn. SELECT_PLACE
+        gibi otomatik yanıtlanan mesajlarda). Bu durumda event zaten set
+        edilmiştir — temizlemeden doğrudan kullanırız.
+        """
+        if not self._response_event.is_set():
+            # Yanıt henüz gelmedi — bekle
+            try:
+                await asyncio.wait_for(
+                    self._response_event.wait(), timeout=120.0
+                )
+            except asyncio.TimeoutError:
+                await self.room.broadcast({
+                    "action": "duel_end",
+                    "winner": 1 - self._pending_player,
+                    "reason": "timeout",
+                })
+                self._running = False
+                self.room.state = RoomState.FINISHED
+                return None
+
+        # Yanıtı al ve sıfırla
         self._response_event.clear()
-        self._pending_response = None
-
-        try:
-            await asyncio.wait_for(self._response_event.wait(), timeout=120.0)
-        except asyncio.TimeoutError:
-            # Zaman aşımı — oyuncu kaybeder
-            await self.room.broadcast({
-                "action": "duel_end",
-                "winner": 1 - self._pending_player,
-                "reason": "timeout",
-            })
-            self._running = False
-            self.room.state = RoomState.FINISHED
-            return None
-
         response = self._pending_response
+        self._pending_response = None
         self._pending_player = -1
         return response
 

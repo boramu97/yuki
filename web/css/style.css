@@ -14,6 +14,11 @@
     --text-muted: #5a5040;
     --danger: #e05040;
     --panel-bg: rgba(13,11,14,0.94);
+    /* Hologram palette */
+    --holo-cyan: rgba(88,196,240,0.12);
+    --holo-cyan-bright: rgba(88,196,240,0.3);
+    --holo-purple: rgba(154,106,186,0.1);
+    --holo-grid: rgba(88,196,240,0.04);
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -76,30 +81,115 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 /* FIELD WRAP — full width */
 .field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
 
-/* SAHA */
+/* SAHA — Holographic Projection Surface */
 .field{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8vw;gap:3px;
-    background:radial-gradient(ellipse at 50% 30%,rgba(100,50,20,0.05),transparent 50%),radial-gradient(ellipse at 50% 70%,rgba(60,30,100,0.05),transparent 50%)}
-.field-row{display:flex;gap:0.8vw;justify-content:center}
+    background:
+        radial-gradient(ellipse at 50% 30%,rgba(88,196,240,0.03),transparent 50%),
+        radial-gradient(ellipse at 50% 70%,rgba(154,106,186,0.04),transparent 50%),
+        radial-gradient(ellipse at 50% 50%,rgba(88,196,240,0.02),transparent 70%);
+    position:relative;
+    perspective:1200px;
+}
+/* Holographic scan-line overlay */
+.field::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:repeating-linear-gradient(0deg,
+        transparent 0px,transparent 3px,
+        rgba(88,196,240,0.015) 3px,rgba(88,196,240,0.015) 4px);
+    animation:holo-scan 8s linear infinite;
+}
+@keyframes holo-scan{
+    0%{background-position:0 0}
+    100%{background-position:0 200px}
+}
+/* Faint grid underlay */
+.field::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:
+        repeating-linear-gradient(90deg,rgba(88,196,240,0.02) 0px,rgba(88,196,240,0.02) 1px,transparent 1px,transparent 7.5vw),
+        repeating-linear-gradient(0deg,rgba(154,106,186,0.015) 0px,rgba(154,106,186,0.015) 1px,transparent 1px,transparent 10.2vw);
+    opacity:0.6;
+}
+.field-row{display:flex;gap:0.8vw;justify-content:center;position:relative;z-index:2}
 
-/* Durum cubugu */
-.status-strip{display:flex;align-items:center;justify-content:center;padding:5px 10vw;gap:12px}
-.status-strip .line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(180,140,60,0.2),transparent)}
-#status-text{font-size:1rem;color:var(--gold);font-style:italic;padding:3px 16px;background:rgba(13,11,14,0.8);border:1px solid rgba(180,140,60,0.1);border-radius:20px;white-space:nowrap}
+/* Durum cubugu — Energy divider */
+.status-strip{display:flex;align-items:center;justify-content:center;padding:8px 6vw;gap:16px;position:relative;z-index:2}
+.status-strip .line{
+    flex:1;height:2px;position:relative;overflow:visible;
+    background:linear-gradient(90deg,transparent,rgba(88,196,240,0.2),rgba(154,106,186,0.3),rgba(232,200,64,0.4));
+    border-radius:1px;
+}
+.status-strip .line:last-child{
+    background:linear-gradient(90deg,rgba(232,200,64,0.4),rgba(154,106,186,0.3),rgba(88,196,240,0.2),transparent);
+}
+/* Energy flow glow above the line */
+.status-strip .line::after{
+    content:'';position:absolute;top:-5px;left:0;right:0;height:12px;
+    background:linear-gradient(90deg,transparent,rgba(88,196,240,0.06),rgba(232,200,64,0.04),transparent);
+    filter:blur(6px);animation:energy-pulse 3s ease-in-out infinite;
+}
+@keyframes energy-pulse{0%,100%{opacity:0.4}50%{opacity:1}}
+#status-text{
+    font-size:1rem;color:var(--gold);font-style:italic;padding:4px 20px;
+    background:rgba(13,11,14,0.85);
+    border:1px solid rgba(88,196,240,0.1);border-radius:20px;white-space:nowrap;
+    box-shadow:0 0 12px rgba(88,196,240,0.05);
+    text-shadow:0 0 8px rgba(232,200,64,0.15);
+}
 
-/* KART SLOTU */
-.card-slot{width:7.5vw;height:10.2vw;border:1px solid rgba(180,140,60,0.08);border-radius:3px;background:rgba(180,140,60,0.015);position:relative}
+/* KART SLOTU — Holographic projection zone */
+.card-slot{
+    width:7.5vw;height:10.2vw;border-radius:4px;position:relative;
+    background:rgba(16,12,24,0.4);
+    border:1px solid rgba(88,196,240,0.08);
+    transition:border-color 0.3s,box-shadow 0.3s;
+}
+/* Rotating rune circle — outer */
+.card-slot::before{
+    content:'';position:absolute;inset:8%;
+    border:1px solid rgba(88,196,240,0.06);border-radius:50%;
+    pointer-events:none;
+    animation:rune-spin 20s linear infinite;
+}
+/* Inner rune circle */
+.card-slot::after{
+    content:'';position:absolute;inset:22%;
+    border:1px solid rgba(154,106,186,0.05);border-radius:50%;
+    pointer-events:none;
+    animation:rune-spin 15s linear infinite reverse;
+}
+@keyframes rune-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+/* Hover neon glow */
+.card-slot:hover{
+    border-color:rgba(88,196,240,0.2);
+    box-shadow:0 0 14px rgba(88,196,240,0.08),inset 0 0 10px rgba(88,196,240,0.03);
+}
+/* Card present — hide runes, show gold border */
+.card-slot:has(.card-face){
+    border-color:rgba(232,200,64,0.15);background:transparent;
+}
+.card-slot:has(.card-face)::before,.card-slot:has(.card-face)::after{display:none}
+.card-slot:has(.card-face):hover{
+    border-color:rgba(232,200,64,0.3);
+    box-shadow:0 0 18px rgba(232,200,64,0.1),0 0 36px rgba(154,106,186,0.05);
+}
 
-/* KART */
+/* KART — Holographic card projection */
 .card-face{width:100%;height:100%;border-radius:3px;overflow:visible;position:relative;cursor:pointer}
-.card-face img{width:100%;height:100%;object-fit:fill;display:block;border-radius:3px}
-.card-face.facedown{background:#6b4c2a;border:2px solid #b8960a;display:flex;align-items:center;justify-content:center;border-radius:3px}
-.card-face.facedown .card-back-inner{width:86%;height:88%;background:#5a3a1a;border-radius:3px;display:flex;align-items:center;justify-content:center}
-.card-face.facedown .card-back-oval{width:55%;height:60%;background:#1a1a1a;border-radius:50%;border:2px solid #2a2a2a}
+.card-face img{width:100%;height:100%;object-fit:fill;display:block;border-radius:3px;
+    filter:brightness(1.02) saturate(1.05)}
+.card-face.facedown{background:#b8860b;border:none;display:flex;align-items:center;justify-content:center;border-radius:3px;padding:4%}
+.card-face.facedown .card-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.card-face.facedown .card-back-oval{width:50%;height:55%;background:#2a2a2a;border-radius:50%;border:2px solid #1a1a1a}
 .card-face.defense-monster{transform:rotate(90deg) scale(0.82)}
 .card-name-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);font-size:0.6vw;text-align:center;padding:2px 3px;color:#d4c8a0;border-radius:0 0 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-stats-bar{position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,0.8);font-size:0.7vw;text-align:center;padding:2px;font-weight:700;border-radius:3px 3px 0 0}
-.card-stats-bar .atk{color:var(--atk)}
-.card-stats-bar .def{color:var(--def)}
+.card-stats-bar{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;font-weight:900;font-family:'Segoe UI',sans-serif;z-index:3}
+.card-stats-bar .atk,.card-stats-bar .def{
+    padding:1px 4px;font-size:0.65vw;line-height:1.2;
+    text-shadow:0 0 3px rgba(0,0,0,0.9),0 1px 2px rgba(0,0,0,0.8);
+}
+.card-stats-bar .atk{color:#ffd740;text-align:left;border-radius:0 3px 0 3px;background:rgba(0,0,0,0.6)}
+.card-stats-bar .def{color:#64b5f6;text-align:right;border-radius:3px 0 3px 0;background:rgba(0,0,0,0.6)}
 .counter-badge{position:absolute;top:3px;right:3px;width:1.5vw;height:1.5vw;min-width:20px;min-height:20px;background:radial-gradient(circle,#4fc3f7,#0288d1);border:2px solid #b3e5fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7vw;font-weight:900;color:#fff;font-family:sans-serif;z-index:5}
 
 /* KART ICI AKSYON MENUSU */
@@ -111,19 +201,23 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .card-menu button.primary{background:rgba(180,80,30,0.25);border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
 
 /* EL KARTLARI */
-.hand-area{display:flex;justify-content:center;padding:4px 15vw;min-height:11vw;margin-top:-1.5vw;position:relative;z-index:20}
-.hand-card{width:7.5vw;height:10.2vw;border-radius:4px;overflow:visible;cursor:pointer;transition:all 0.25s;margin-left:-1.2vw;box-shadow:-2px 0 8px rgba(0,0,0,0.5);position:relative;border:1px solid rgba(200,170,60,0.2)}
+.hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none}
+.hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto}
 .hand-card:first-child{margin-left:0}
-.hand-card:hover{transform:translateY(-2vw) scale(1.12);border-color:var(--gold);box-shadow:0 10px 30px var(--gold-glow);z-index:30}
-.hand-card img{width:100%;height:100%;object-fit:fill;display:block;border-radius:4px}
+.hand-card:hover{transform:translateY(-1.8vw) scale(1.18) rotate(0deg)!important;border-color:rgba(154,106,186,0.55);box-shadow:0 0 20px rgba(154,106,186,0.35),0 10px 28px rgba(0,0,0,0.6);z-index:30}
+.hand-card img{width:100%;height:100%;object-fit:cover;display:block;border-radius:3px}
 .hand-card .card-menu{border-radius:4px}
 .hand-card .card-name-bar{font-size:0.55vw;border-radius:0 0 4px 4px}
-.hand-card .card-stats-bar{font-size:0.6vw;border-radius:4px 4px 0 0}
+.hand-card .card-stats-bar{font-size:0.55vw}
+.hand-card .card-stats-bar .atk{border-radius:0 2px 0 4px}
+.hand-card .card-stats-bar .def{border-radius:2px 0 4px 0}
 
 /* FLOATING PANELLER */
 .float-panel{position:absolute;top:8px;width:auto;max-width:22vw;max-height:55vh;background:var(--panel-bg);border:1px solid var(--gold-border);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
 .float-panel.left{left:8px}
 .float-panel.right{right:8px}
+#log-panel{left:8px;top:8px}
+#effects-panel{left:8px;top:auto;bottom:9vw}
 .float-panel .fp-title{font-size:1.1rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);padding:10px 14px;border-bottom:1px solid rgba(180,140,60,0.08)}
 .float-panel .fp-list{overflow-y:auto;max-height:48vh;padding:4px}
 
@@ -149,32 +243,115 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .log-banner.spell .lb-text{color:#4fc3f7}
 .log-banner.trap .lb-text{color:#ce93d8}
 
-/* Tur aksyon paneli */
-.turn-panel{position:absolute;bottom:12vw;right:10px;display:flex;flex-direction:column;gap:10px;z-index:40;background:var(--panel-bg);border:1px solid rgba(180,140,60,0.15);border-radius:10px;padding:14px}
-.turn-panel button{padding:14px 28px;border:1px solid rgba(180,140,60,0.2);border-radius:6px;background:rgba(180,140,60,0.04);color:var(--text);font-family:inherit;font-size:1.3rem;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;transition:all 0.15s}
-.turn-panel button:hover{border-color:var(--gold);color:var(--gold);background:rgba(180,140,60,0.08)}
-.turn-panel button.go{background:linear-gradient(135deg,rgba(180,80,30,0.35),rgba(140,60,20,0.35));border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
-.turn-panel .auto-toggle{font-size:0.95rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;padding:4px 0}
-.turn-panel .auto-toggle input{accent-color:var(--gold);width:16px;height:16px}
+/* ===== MOTOR ILETISIM PANELI — Sag alt, 50vh ===== */
+.motor-panel{
+    position:fixed;right:0;bottom:0;width:20vw;min-width:300px;height:50vh;
+    display:none;flex-direction:column;z-index:60;
+    background:linear-gradient(175deg,rgba(22,14,32,0.96),rgba(12,8,18,0.98));
+    border-left:1px solid rgba(232,200,64,0.1);border-top:1px solid rgba(232,200,64,0.1);
+    border-radius:8px 0 0 0;overflow:hidden;
+    box-shadow:0 -4px 32px rgba(0,0,0,0.6);backdrop-filter:blur(6px);
+}
+.motor-panel::before{content:'';position:absolute;top:0;bottom:0;left:0;width:3px;z-index:2;
+    background:linear-gradient(180deg,rgba(232,200,64,0.5),rgba(154,106,186,0.4),rgba(232,200,64,0.3),rgba(154,106,186,0.4),rgba(232,200,64,0.5));
+    animation:mp-border-shimmer 6s ease-in-out infinite}
+@keyframes mp-border-shimmer{0%,100%{opacity:.6}50%{opacity:1}}
+.motor-panel.open{display:flex}
 
-/* Dinamik secim paneli */
-.select-panel{
-    position:absolute;bottom:12vw;right:10px;
-    display:none;flex-direction:column;gap:8px;
-    z-index:45;
-    background:var(--panel-bg);border:1px solid rgba(180,140,60,0.2);border-radius:10px;
-    padding:14px;max-width:30vw;max-height:50vh;overflow-y:auto;
-    box-shadow:0 -4px 24px rgba(0,0,0,0.5);
-}
-.select-panel.open{display:flex}
-.select-panel .sp-title{font-size:1rem;color:var(--gold);font-style:italic;padding-bottom:6px;border-bottom:1px solid rgba(180,140,60,0.1);text-align:center}
-.select-panel button{
-    padding:12px 24px;border:1px solid rgba(180,140,60,0.2);border-radius:5px;
-    background:rgba(180,140,60,0.04);color:var(--text);font-family:inherit;font-size:1.15rem;
-    cursor:pointer;white-space:nowrap;transition:all 0.15s;text-align:left;
-}
-.select-panel button:hover{border-color:var(--gold);color:var(--gold);background:rgba(180,140,60,0.08)}
-.select-panel button.go{background:linear-gradient(135deg,rgba(180,80,30,0.35),rgba(140,60,20,0.35));border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
+.mp-header{padding:18px 20px 16px;border-bottom:1px solid rgba(232,200,64,0.08);flex-shrink:0;
+    background:linear-gradient(180deg,rgba(232,200,64,0.03),transparent)}
+.mp-phase-badge{display:inline-flex;align-items:center;gap:10px;padding:6px 16px;font-size:15px;font-weight:700;
+    letter-spacing:3px;text-transform:uppercase;color:#e8c840;
+    border:1px solid rgba(232,200,64,0.2);border-radius:2px;background:rgba(232,200,64,0.04)}
+.mp-phase-badge::before{content:'';width:8px;height:8px;background:#e8c840;border-radius:1px;
+    transform:rotate(45deg);flex-shrink:0;animation:mp-badge-pulse 2s ease-in-out infinite;
+    box-shadow:0 0 6px rgba(232,200,64,0.4)}
+@keyframes mp-badge-pulse{0%,100%{opacity:1;box-shadow:0 0 6px rgba(232,200,64,0.4)}50%{opacity:.35;box-shadow:none}}
+.mp-question{font-size:20px;font-weight:600;color:#d4c8a0;line-height:1.35;margin-top:10px}
+
+.mp-actions{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px;min-height:0;display:flex;flex-direction:column;gap:6px;scroll-padding-bottom:8px}
+.mp-actions::-webkit-scrollbar{width:5px}
+.mp-actions::-webkit-scrollbar-track{background:transparent}
+.mp-actions::-webkit-scrollbar-thumb{background:rgba(232,200,64,0.15);border-radius:3px}
+
+/* Kart tile — buyuk gorsel + bilgi + butonlar */
+.mp-action-card{display:flex;overflow:hidden;border:1px solid rgba(154,106,186,0.1);border-radius:6px;
+    background:rgba(20,14,30,0.6);transition:border-color 0.2s,background 0.2s;flex-shrink:0}
+.mp-action-card:hover{border-color:rgba(232,200,64,0.25);background:rgba(30,20,44,0.7)}
+.mp-card-img{width:130px;flex-shrink:0;object-fit:cover;display:block;border-right:1px solid rgba(232,200,64,0.06)}
+.mp-card-back{background:#b8860b;display:flex;align-items:center;justify-content:center;min-height:130px;padding:5%}
+.mp-card-back .mp-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.mp-back-oval{width:50%;height:55%;background:#2a2a2a;border-radius:50%;border:2px solid #1a1a1a}
+.mp-card-info{flex:1;display:flex;flex-direction:column;min-width:0}
+.mp-card-info-text{padding:12px 14px 10px}
+.mp-card-name{font-size:20px;font-weight:700;color:#d4c8a0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-card-stats{font-size:18px;font-weight:700;margin-top:5px;display:flex;gap:16px}
+.mp-card-stats .atk-val{color:#c8a030}
+.mp-card-stats .def-val{color:#7090c0}
+.mp-card-stats .spell-type{color:rgba(79,195,247,0.85);font-size:17px;font-weight:600}
+.mp-card-stats .trap-type{color:rgba(206,147,216,0.85);font-size:17px;font-weight:600}
+.mp-card-location{font-size:14px;color:rgba(212,200,160,0.35);margin-top:3px}
+.mp-card-buttons{display:flex;gap:0;margin-top:auto;border-top:1px solid rgba(232,200,64,0.05);flex-shrink:0}
+
+/* Grup basligi */
+.mp-group-header{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:rgba(232,200,64,0.4);padding:12px 10px 8px;position:relative}
+.mp-group-header::after{content:'';position:absolute;bottom:0;left:10px;right:10px;height:1px;background:linear-gradient(90deg,rgba(232,200,64,0.15),transparent)}
+
+/* Duz buton satiri */
+.mp-btn-row{display:flex;gap:8px;padding:8px;flex-wrap:wrap}
+
+/* Butonlar — buyuk, tiklanabilir */
+.mp-btn{padding:0;min-height:60px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:0;cursor:pointer;font-family:inherit;font-size:18px;font-weight:700;
+    letter-spacing:1px;text-transform:uppercase;transition:all 0.15s}
+.mp-btn+.mp-btn{border-left:1px solid rgba(232,200,64,0.05)}
+.mp-btn-primary{background:linear-gradient(180deg,rgba(232,200,64,0.1),rgba(232,200,64,0.03));color:#e8c840}
+.mp-btn-primary:hover{background:linear-gradient(180deg,rgba(232,200,64,0.22),rgba(232,200,64,0.08));
+    box-shadow:inset 0 -2px 0 rgba(232,200,64,0.4);text-shadow:0 0 8px rgba(232,200,64,0.3)}
+.mp-btn-purple{background:linear-gradient(180deg,rgba(154,106,186,0.1),rgba(154,106,186,0.03));color:#c49aee}
+.mp-btn-purple:hover{background:linear-gradient(180deg,rgba(154,106,186,0.22),rgba(154,106,186,0.08));
+    box-shadow:inset 0 -2px 0 rgba(154,106,186,0.4);text-shadow:0 0 8px rgba(154,106,186,0.3)}
+.mp-btn-dim{background:rgba(255,255,255,0.015);color:rgba(212,200,160,0.3);font-size:16px}
+.mp-btn-dim:hover{background:rgba(255,255,255,0.04);color:rgba(212,200,160,0.55)}
+.mp-btn.selected{border-color:var(--gold);background:rgba(180,140,60,0.15);color:var(--gold)}
+
+/* Footer */
+.mp-footer{border-top:1px solid rgba(232,200,64,0.08);padding:14px 16px;flex-shrink:0;
+    background:linear-gradient(0deg,rgba(14,10,20,0.98),transparent);display:flex;flex-direction:column;gap:10px}
+.mp-footer-actions{display:flex;gap:8px}
+.mp-footer-actions .mp-btn{min-height:62px;font-size:18px;border-radius:5px;flex-shrink:0}
+.mp-footer-actions .mp-btn-battle{background:linear-gradient(180deg,rgba(232,200,64,0.1),rgba(232,200,64,0.03));
+    color:#e8c840;border:1px solid rgba(232,200,64,0.2)}
+.mp-footer-actions .mp-btn-battle:hover{border-color:rgba(232,200,64,0.45);box-shadow:0 0 20px rgba(232,200,64,0.1)}
+.mp-footer-actions .mp-btn-end{background:linear-gradient(180deg,rgba(224,80,64,0.08),rgba(224,80,64,0.02));
+    color:rgba(224,80,64,0.8);border:1px solid rgba(224,80,64,0.15)}
+.mp-footer-actions .mp-btn-end:hover{border-color:rgba(224,80,64,0.4);color:#e05040}
+.mp-auto-toggle{font-size:12px;color:rgba(212,200,160,0.35);display:flex;align-items:center;gap:8px}
+.mp-auto-toggle input{accent-color:var(--purple);width:16px;height:16px}
+
+/* Kart highlight sahada */
+.card-face.mp-highlight{box-shadow:0 0 16px rgba(232,200,64,0.2);border:2px solid rgba(232,200,64,0.4)!important;cursor:pointer}
+.hand-card.mp-highlight{box-shadow:0 0 20px rgba(232,200,64,0.2);border-color:rgba(232,200,64,0.4)!important}
+
+/* Kart ustu popup menu */
+.card-popup{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    display:none;flex-direction:column;gap:4px;padding:6px;
+    background:rgba(16,10,24,0.95);border:1px solid rgba(232,200,64,0.25);border-radius:6px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 20px rgba(154,106,186,0.1);
+    z-index:100;min-width:120px;backdrop-filter:blur(8px);animation:popup-in 0.15s ease-out}
+.card-popup.open{display:flex}
+@keyframes popup-in{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(0.95)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.card-popup::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(232,200,64,0.25)}
+.popup-btn{padding:10px 16px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;transition:all 0.15s;text-align:center}
+.popup-btn.gold{background:linear-gradient(180deg,rgba(232,200,64,0.15),rgba(232,200,64,0.05));color:#e8c840}
+.popup-btn.gold:hover{background:linear-gradient(180deg,rgba(232,200,64,0.3),rgba(232,200,64,0.1));box-shadow:0 0 12px rgba(232,200,64,0.2)}
+.popup-btn.purple{background:linear-gradient(180deg,rgba(154,106,186,0.15),rgba(154,106,186,0.05));color:#c49aee}
+.popup-btn.purple:hover{background:linear-gradient(180deg,rgba(154,106,186,0.3),rgba(154,106,186,0.1));box-shadow:0 0 12px rgba(154,106,186,0.2)}
+.popup-btn.dim{background:rgba(255,255,255,0.03);color:rgba(212,200,160,0.4);font-size:13px}
+.popup-btn.dim:hover{background:rgba(255,255,255,0.06);color:rgba(212,200,160,0.65)}
+
+/* Efekt paneli — sola geri */
+.float-panel.left{left:8px}
 
 /* SAG TIK ONIZLEME */
 #card-preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:center;justify-content:center;cursor:pointer}

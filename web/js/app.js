@@ -21,7 +21,7 @@
         UI.setStatus("Baglaniliyor...");
         try { await WS.connect(); WS.joinRoom(myName, rid); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
-    document.getElementById("auto-pass-check")?.addEventListener("change",(e)=>{UI.autoPassChain=e.target.checked});
+    document.getElementById("mp-auto-pass")?.addEventListener("change",(e)=>{UI.autoPassChain=e.target.checked});
 
     // WebSocket
     WS.on("room_created",(d)=>{document.getElementById("waiting-room-id").textContent=d.room_id;myTeam=d.team;UI.showScreen("waiting")});
@@ -42,7 +42,7 @@
     });
 
     WS.on("info",(d)=>{if(d.msg) handleInfo(d.msg)});
-    WS.on("select",(d)=>{if(d.msg) UI.handleSelect(d.msg)});
+    WS.on("select",(d)=>{if(d.msg){console.log("[SELECT]",d.msg.name,"type="+d.msg.type,"player="+d.msg.player);UI.handleSelect(d.msg);}});
     WS.on("retry",()=>{UI.log("Gecersiz, tekrar sec!","damage");if(UI.currentSelect)UI.handleSelect(UI.currentSelect)});
     WS.on("duel_end",(d)=>{
         const w=d.winner===myTeam;
@@ -62,7 +62,7 @@
             turnCount++; Field.setTurn(turnCount);
             UI.log(`\u2501\u2501 Tur ${turnCount} (${p(msg.player)}) \u2501\u2501`,"important");
             UI.setGameStatus("Rakibin hamlesini bekle...");
-            UI.hideTurnActions(); UI.hideSelectPanel(); UI.closeAllMenus();
+            UI.hideMotorPanel();
         }
         else if(name==="MSG_NEW_PHASE") Field.setPhase(msg.phase);
         else if(name==="MSG_DRAW"){
@@ -87,8 +87,9 @@
             Field.render(); UI.log(`${p(msg.controller)} kart set etti`,"move");
         }
         else if(name==="MSG_POS_CHANGE"){
-            const z=Field.cards[msg.controller]?.mzone;
-            if(z&&z[msg.sequence]){z[msg.sequence].position=msg.position;Field.render();}
+            const loc=msg.location||0x04;
+            const zone=loc===0x04?"mzone":loc===0x08?"szone":null;
+            if(zone){const z=Field.cards[msg.controller]?.[zone];if(z&&z[msg.sequence]){z[msg.sequence].position=msg.position;Field.render();}}
         }
         else if(name==="MSG_DAMAGE"){Field.damageLP(msg.player,msg.amount);UI.log(`${p(msg.player)} -${msg.amount} LP`,"damage")}
         else if(name==="MSG_RECOVER"){Field.recoverLP(msg.player,msg.amount);UI.log(`${p(msg.player)} +${msg.amount} LP`)}

@@ -66,24 +66,27 @@
                 <div class="fp-list" id="effects-list"></div>
             </div>
 
-            <!-- Floating: Hamle Gecmisi (sag) -->
-            <div class="float-panel right" id="log-panel">
+            <!-- Floating: Hamle Gecmisi (sol) -->
+            <div class="float-panel left" id="log-panel">
                 <div class="fp-title">Hamle Gecmisi</div>
                 <div class="fp-list" id="duel-log"></div>
             </div>
 
-            <!-- Floating: Tur Aksyonlari (sag alt) — SABIT -->
-            <div class="turn-panel" id="turn-panel" style="display:none">
-                <button class="go" id="btn-battle">Savas Fazina Gec</button>
-                <button id="btn-end-turn">Turu Bitir</button>
-                <label class="auto-toggle">
-                    <input type="checkbox" id="auto-pass-check" checked>
-                    <span>Oto-pas</span>
-                </label>
+            <!-- Motor Iletisim Paneli (sol) -->
+            <div id="motor-panel" class="motor-panel">
+                <div class="mp-header">
+                    <div class="mp-phase-badge" id="mp-phase"></div>
+                    <div class="mp-question" id="mp-question">Motor yanit bekliyor...</div>
+                </div>
+                <div class="mp-actions" id="mp-actions"></div>
+                <div class="mp-footer" id="mp-footer">
+                    <div class="mp-footer-actions" id="mp-footer-actions"></div>
+                    <label class="mp-auto-toggle">
+                        <input type="checkbox" id="mp-auto-pass" checked>
+                        <span>Otomatik pas</span>
+                    </label>
+                </div>
             </div>
-
-            <!-- Floating: Dinamik secim paneli (sag alt, tur panelinin ustunde) -->
-            <div class="select-panel" id="select-panel" style="display:none"></div>
 
             <!-- SAHA -->
             <div class="field">
