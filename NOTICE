@@ -1,0 +1,41 @@
+Yuki — Browser-Based Duel Game
+Copyright (C) 2026 Yuki Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+This project uses the following open-source components:
+
+OCGCore — YGOPro Duel Engine
+  Source: https://github.com/edo9300/ygopro-core
+  License: GNU Affero General Public License v3.0
+  Copyright: See ocgcore/LICENSE
+
+Card Database and Scripts
+  Source: Community-maintained (EDOPro project)
+  License: Various / Community
+
+---
+
+TRADEMARK DISCLAIMER
+
+This project is not affiliated with, endorsed by, or sponsored by
+Konami Digital Entertainment Co., Ltd., Kazuki Takahashi, or any
+related entities. All card game names, mechanics, and concepts
+referenced in this project are trademarks and copyrights of their
+respective owners.
+
+No copyrighted card artwork or official imagery is included in
+this repository.

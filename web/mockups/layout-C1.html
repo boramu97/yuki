@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C1 — Medium Panels (1.5x)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Georgia',serif;background:#0d0b0e;color:#d4c8a0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+.hud{display:flex;justify-content:space-between;align-items:center;height:54px;background:#1a1520;border-bottom:1px solid rgba(180,140,60,0.12);padding:0 20px;flex-shrink:0}
+.p-lp{font-size:26px;letter-spacing:2px}.p-lp.gold{color:#e8c840}.p-lp.purple{color:#9a6aba}
+.p-name{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#776a50}
+.hud-mid .turn{font-size:20px;color:#e8c840;letter-spacing:4px;text-align:center}
+.hud-mid .phase{font-size:10px;color:#5a5040;text-align:center}
+
+/* FULL WIDTH SAHA — paneller floating */
+.field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
+
+.field{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8vw;gap:3px;
+    background:radial-gradient(ellipse at 50% 30%,rgba(100,50,20,0.05),transparent 50%),radial-gradient(ellipse at 50% 70%,rgba(60,30,100,0.05),transparent 50%)}
+.field-row{display:flex;gap:0.8vw;justify-content:center}
+
+.slot{width:7.5vw;height:10.2vw;border:1px solid rgba(180,140,60,0.08);border-radius:3px;background:rgba(180,140,60,0.015);position:relative}
+.card{width:100%;height:100%;border-radius:3px;overflow:hidden;position:relative;cursor:pointer}
+.card img{width:100%;height:100%;object-fit:fill}
+.card.facedown{background:#6b4c2a;border:2px solid #b8960a;display:flex;align-items:center;justify-content:center}
+.card.facedown::after{content:"";width:55%;height:60%;background:#1a1a1a;border-radius:50%;border:2px solid #2a2a2a}
+.card .stats{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);font-size:0.7vw;text-align:center;padding:2px;font-weight:700}
+.card .stats .a{color:#c8a030}.card .stats .d{color:#7090c0}
+.card .cbadge{position:absolute;top:3px;right:3px;width:1.5vw;height:1.5vw;min-width:20px;min-height:20px;background:radial-gradient(circle,#4fc3f7,#0288d1);border:2px solid #b3e5fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7vw;font-weight:900;color:#fff;font-family:sans-serif}
+
+/* Kart tikla → aksyon menu kartın ustunde cıkar */
+.card-menu{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:rgba(13,11,14,0.96);border:1px solid rgba(180,140,60,0.25);border-radius:6px;padding:6px;display:none;flex-direction:column;gap:4px;z-index:50;min-width:12vw;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+.card-menu.open{display:flex}
+.card-menu button{padding:7px 12px;border:1px solid rgba(180,140,60,0.15);border-radius:3px;background:rgba(180,140,60,0.05);color:#d4c8a0;font-size:0.8vw;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s}
+.card-menu button:hover{background:rgba(180,80,30,0.2);border-color:#e8c840;color:#e8c840}
+.card-menu button.primary{background:rgba(180,80,30,0.25);border-color:rgba(200,100,40,0.4);color:#e8a040}
+
+/* Durum paneli — sahalar arasinda */
+.status-strip{display:flex;align-items:center;justify-content:center;padding:6px 10vw;gap:14px}
+.status-strip .line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(180,140,60,0.2),transparent)}
+.status-strip .msg{font-size:1.05rem;color:#e8c840;font-style:italic;white-space:nowrap;padding:2px 16px;background:rgba(13,11,14,0.8);border:1px solid rgba(180,140,60,0.1);border-radius:20px}
+
+/* El */
+.hand{display:flex;justify-content:center;padding:4px 15vw;min-height:11vw;margin-top:-1.5vw;position:relative;z-index:20}
+.hc{width:7.5vw;height:10.2vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:all 0.25s;margin-left:-1.2vw;box-shadow:-2px 0 8px rgba(0,0,0,0.5);position:relative;border:1px solid rgba(200,170,60,0.2)}
+.hc:first-child{margin-left:0}
+.hc:hover{transform:translateY(-2vw) scale(1.12);border-color:#e8c840;box-shadow:0 10px 30px rgba(200,160,40,0.3);z-index:30}
+.hc img{width:100%;height:100%;object-fit:fill}
+
+/* FLOATING PANEL: Sol — Aktif Efektler */
+/* C1: MEDIUM 1.5x */
+.float-left{position:absolute;top:10px;left:10px;width:22vw;min-width:300px;max-height:50vh;background:rgba(13,11,14,0.93);border:1px solid rgba(180,140,60,0.12);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
+.float-left .ftitle{font-size:1.25rem;text-transform:uppercase;letter-spacing:2px;color:#5a5040;padding:14px 18px;border-bottom:1px solid rgba(180,140,60,0.08)}
+.float-left .flist{overflow-y:auto;max-height:42vh;padding:10px}
+.fbanner{display:flex;align-items:center;gap:12px;padding:10px 8px;font-size:1.15rem;border-bottom:1px solid rgba(255,255,255,0.03)}
+.fbanner img{width:56px;height:76px;border-radius:3px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)}
+.fbanner .fn{font-weight:600}.fbanner .fn.spell{color:#4fc3f7}.fbanner .fn.counter{color:#e8c840}.fbanner .fn.trap{color:#ce93d8}
+.fbanner .fd{font-size:1rem;color:#5a5040;margin-top:2px}
+
+.float-right{position:absolute;top:10px;right:10px;width:22vw;min-width:300px;max-height:50vh;background:rgba(13,11,14,0.93);border:1px solid rgba(180,140,60,0.12);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
+.float-right .ftitle{font-size:1.25rem;text-transform:uppercase;letter-spacing:2px;color:#5a5040;padding:14px 18px;border-bottom:1px solid rgba(180,140,60,0.08)}
+.float-right .flist{overflow-y:auto;max-height:42vh;padding:10px;font-family:'Segoe UI',sans-serif}
+.flog{display:flex;align-items:center;gap:12px;padding:10px 6px;font-size:1.15rem;color:#776a50;border-bottom:1px solid rgba(255,255,255,0.03);line-height:1.5}
+.flog.imp{color:#e8c840;font-weight:600}.flog.dmg{color:#e05040}
+.flog img{width:48px;height:66px;border-radius:3px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)}
+
+/* TUR AKSYON — sag alt floating */
+.turn-panel{position:absolute;bottom:12vw;right:10px;display:flex;flex-direction:column;gap:6px;z-index:40;background:rgba(13,11,14,0.93);border:1px solid rgba(180,140,60,0.12);border-radius:8px;padding:10px}
+.turn-panel button{padding:9px 18px;border:1px solid rgba(180,140,60,0.2);border-radius:4px;background:rgba(180,140,60,0.04);color:#d4c8a0;font-family:inherit;font-size:0.95rem;cursor:pointer;white-space:nowrap}
+.turn-panel button:hover{border-color:#e8c840;color:#e8c840}
+.turn-panel button.go{background:linear-gradient(135deg,rgba(180,80,30,0.3),rgba(140,60,20,0.3));border-color:rgba(200,100,40,0.4);color:#e8a040}
+</style>
+</head>
+<body>
+
+<div class="hud">
+    <div><div class="p-name">Kaiba</div><div class="p-lp purple">4960</div></div>
+    <div class="hud-mid"><div class="turn">V</div><div class="phase">Main Phase</div></div>
+    <div style="text-align:right"><div class="p-name">Yugi</div><div class="p-lp gold">8000</div></div>
+</div>
+
+<div class="field-wrap">
+    <!-- Floating Panels -->
+    <div class="float-left">
+        <div class="ftitle">Aktif Efektler</div>
+        <div class="flist">
+            <div class="fbanner"><img src="https://images.ygoprodeck.com/images/cards_small/72302403.jpg"><div><div class="fn spell">Swords of Revealing Light</div><div class="fd">2 tur kaldi</div></div></div>
+            <div class="fbanner"><img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg"><div><div class="fn counter">Breaker — 1 Counter</div><div class="fd">ATK +300</div></div></div>
+            <div class="fbanner"><img src="https://images.ygoprodeck.com/images/cards_small/18807108.jpg"><div><div class="fn trap">Spellbinding Circle</div><div class="fd">Vorse Raider</div></div></div>
+        </div>
+    </div>
+
+    <div class="float-right">
+        <div class="ftitle">Hamle Gecmisi</div>
+        <div class="flist">
+            <div class="flog imp"><img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg"><span>Breaker cagrildi</span></div>
+            <div class="flog"><img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg"><span>+1 Spell Counter</span></div>
+            <div class="flog dmg"><span>Kaiba -1900 LP</span></div>
+            <div class="flog imp">━━━ Tur 5 (Yugi) ━━━</div>
+        </div>
+    </div>
+
+    <div class="turn-panel">
+        <button class="go">Savas Fazina Gec</button>
+        <button>Turu Bitir</button>
+    </div>
+
+    <div class="field">
+        <div class="field-row">
+            <div class="slot"></div><div class="slot"></div>
+            <div class="slot"><div class="card facedown"></div></div>
+            <div class="slot"></div><div class="slot"></div>
+        </div>
+        <div class="field-row">
+            <div class="slot"></div>
+            <div class="slot"><div class="card"><img src="https://images.ygoprodeck.com/images/cards_small/14898066.jpg"><div class="stats"><span class="a">1900</span>/<span class="d">1200</span></div></div></div>
+            <div class="slot"></div><div class="slot"></div><div class="slot"></div>
+        </div>
+
+        <div class="status-strip">
+            <div class="line"></div>
+            <div class="msg">Saldiri hedefi sec...</div>
+            <div class="line"></div>
+        </div>
+
+        <div class="field-row">
+            <div class="slot"></div>
+            <div class="slot">
+                <div class="card">
+                    <img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg">
+                    <div class="stats"><span class="a">1900</span>/<span class="d">1000</span></div>
+                    <div class="cbadge">1</div>
+                    <div class="card-menu open">
+                        <button class="primary">Saldir</button>
+                        <button>Pozisyon Degistir</button>
+                        <button>Efekt: Counter Kaldir</button>
+                    </div>
+                </div>
+            </div>
+            <div class="slot"><div class="card"><img src="https://images.ygoprodeck.com/images/cards_small/43096270.jpg"><div class="stats"><span class="a">2000</span>/<span class="d">100</span></div></div></div>
+            <div class="slot"></div><div class="slot"></div>
+        </div>
+        <div class="field-row">
+            <div class="slot"></div><div class="slot"></div>
+            <div class="slot"><div class="card"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg"></div></div>
+            <div class="slot"></div><div class="slot"></div>
+        </div>
+    </div>
+
+    <div class="hand">
+        <div class="hc"><img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg"></div>
+        <div class="hc"><img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg"></div>
+        <div class="hc"><img src="https://images.ygoprodeck.com/images/cards_small/40640057.jpg"></div>
+        <div class="hc"><img src="https://images.ygoprodeck.com/images/cards_small/83764718.jpg"></div>
+    </div>
+</div>
+
+</body>
+</html>

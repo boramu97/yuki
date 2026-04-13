@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konsept 2 — Neon Arena</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #050510;
+    color: #eee;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== HUD ===== */
+.hud {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 24px;
+    position: relative;
+    z-index: 10;
+}
+.player-hud {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.player-hud.right { flex-direction: row-reverse; }
+
+.avatar-ring {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700;
+    position: relative;
+}
+.avatar-ring.blue {
+    background: conic-gradient(#00d4ff 0%, #0066ff 50%, #00d4ff 100%);
+    box-shadow: 0 0 20px rgba(0,180,255,0.4);
+}
+.avatar-ring.red {
+    background: conic-gradient(#ff4444 0%, #ff0066 50%, #ff4444 100%);
+    box-shadow: 0 0 20px rgba(255,50,80,0.4);
+}
+.avatar-inner {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: #111;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+}
+
+.lp-display {
+    display: flex;
+    flex-direction: column;
+}
+.lp-name { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+.lp-value {
+    font-size: 32px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.lp-value.blue { color: #00d4ff; text-shadow: 0 0 20px rgba(0,180,255,0.5); }
+.lp-value.red { color: #ff4466; text-shadow: 0 0 20px rgba(255,50,80,0.5); }
+
+.lp-bar-track {
+    width: 140px; height: 3px;
+    background: #1a1a2a;
+    border-radius: 2px;
+    margin-top: 4px;
+}
+.lp-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.lp-bar-fill.blue { background: linear-gradient(90deg, #0066ff, #00d4ff); width: 100%; }
+.lp-bar-fill.red { background: linear-gradient(90deg, #ff0066, #ff4444); width: 62%; }
+
+.center-hud {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+.turn-num {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    letter-spacing: 3px;
+}
+.phase-tag {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ===== ARENA ===== */
+.arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    padding: 0 60px;
+    /* Perspective grid */
+    background:
+        linear-gradient(rgba(0,100,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,100,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+.arena::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(0,50,150,0.08), transparent 60%);
+    pointer-events: none;
+}
+
+.zone-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 3px 0;
+    position: relative;
+    z-index: 2;
+}
+
+/* Neon kart slotu */
+.slot {
+    width: 72px;
+    height: 96px;
+    border: 1px solid rgba(0,150,255,0.12);
+    border-radius: 4px;
+    background: rgba(0,20,60,0.3);
+    position: relative;
+    transition: all 0.3s;
+}
+.slot::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.slot.glow::before {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(255,215,0,0.4), inset 0 0 15px rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.5);
+}
+
+/* Kart */
+.card {
+    width: 100%; height: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+.card.facedown {
+    background: linear-gradient(135deg, #1a0a05, #2a1510, #1a0a05);
+    border: 1px solid rgba(120,60,30,0.6);
+    box-shadow: inset 0 0 20px rgba(80,40,20,0.3);
+}
+.card.facedown::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 2px;
+}
+
+.card.monster-atk {
+    background: linear-gradient(180deg, #1a1800, #0a0a00);
+    border: 1px solid rgba(200,180,50,0.4);
+    box-shadow: 0 0 8px rgba(200,180,50,0.15);
+}
+.card.monster-def {
+    background: linear-gradient(180deg, #1a1800, #0a0a00);
+    border: 1px solid rgba(100,180,200,0.4);
+    box-shadow: 0 0 8px rgba(100,180,200,0.15);
+    transform: rotate(90deg) scale(0.82);
+}
+
+.c-name {
+    font-size: 7px;
+    font-weight: 700;
+    padding: 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #ddd;
+    background: rgba(0,0,0,0.5);
+}
+.c-icon {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+.c-stats {
+    text-align: center;
+    padding: 3px;
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(0,0,0,0.6);
+}
+.atk-val { color: #ff6644; }
+.def-val { color: #44aaff; }
+
+/* Divider — neon line */
+.divider {
+    height: 2px;
+    margin: 8px 40px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0,150,255,0.2),
+        rgba(255,0,100,0.4),
+        rgba(0,150,255,0.2),
+        transparent
+    );
+    position: relative;
+    z-index: 2;
+}
+.divider::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: -4px;
+    transform: translateX(-50%);
+    width: 80px; height: 10px;
+    background: radial-gradient(ellipse, rgba(255,0,100,0.3), transparent);
+}
+
+/* Side piles */
+.side-col {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 3;
+}
+.side-col.left { left: 10px; top: 50%; transform: translateY(-50%); }
+.side-col.right { right: 10px; top: 50%; transform: translateY(-50%); }
+
+.pile {
+    width: 48px; height: 64px;
+    border-radius: 3px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 8px;
+    color: #555;
+    gap: 2px;
+}
+.pile.deck {
+    background: linear-gradient(145deg, #1a0a05, #2a1510);
+    border: 1px solid #4a2a1a;
+}
+.pile.grave {
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed rgba(255,255,255,0.08);
+}
+.pile-count {
+    font-size: 14px;
+    font-weight: 800;
+    color: #888;
+}
+
+/* ===== EL ===== */
+.hand {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    position: relative;
+    z-index: 10;
+    background: linear-gradient(180deg, transparent, rgba(0,0,20,0.6));
+}
+.hand-card {
+    width: 72px; height: 96px;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #1a1800, #0a0a00);
+    border: 1px solid rgba(200,180,50,0.3);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    flex-shrink: 0;
+}
+.hand-card:hover {
+    transform: translateY(-16px) scale(1.05);
+    border-color: #ffd700;
+    box-shadow: 0 12px 30px rgba(255,215,0,0.25), 0 0 15px rgba(255,215,0,0.15);
+    z-index: 20;
+}
+
+/* ===== AKSIYON ===== */
+.actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 24px;
+    background: rgba(10,10,30,0.9);
+    border-top: 1px solid rgba(0,100,255,0.15);
+}
+.action-label {
+    font-size: 12px;
+    color: #ffd700;
+    font-weight: 600;
+    margin-right: 8px;
+}
+.act-btn {
+    padding: 8px 20px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.04);
+    color: #ccc;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+}
+.act-btn:hover {
+    border-color: rgba(0,200,255,0.5);
+    background: rgba(0,100,255,0.1);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(0,150,255,0.2);
+}
+.act-btn.go {
+    background: linear-gradient(135deg, #e94560, #c73050);
+    border-color: #e94560;
+    color: #fff;
+    font-weight: 600;
+}
+.act-btn.go:hover {
+    box-shadow: 0 0 20px rgba(233,69,96,0.4);
+}
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div class="hud">
+    <div class="player-hud">
+        <div class="avatar-ring red"><div class="avatar-inner">K</div></div>
+        <div class="lp-display">
+            <div class="lp-name">Kaiba</div>
+            <div class="lp-value red">4960</div>
+            <div class="lp-bar-track"><div class="lp-bar-fill red"></div></div>
+        </div>
+    </div>
+    <div class="center-hud">
+        <div class="turn-num">TUR 5</div>
+        <div class="phase-tag">Main Phase 1</div>
+    </div>
+    <div class="player-hud right">
+        <div class="avatar-ring blue"><div class="avatar-inner">Y</div></div>
+        <div class="lp-display" style="text-align:right">
+            <div class="lp-name">Yugi</div>
+            <div class="lp-value blue">8000</div>
+            <div class="lp-bar-track"><div class="lp-bar-fill blue"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ARENA -->
+<div class="arena">
+    <!-- Rakip -->
+    <div class="zone-row">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"><div class="card facedown"></div></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+    <div class="zone-row">
+        <div class="slot"></div>
+        <div class="slot">
+            <div class="card monster-atk" style="display:flex;flex-direction:column">
+                <div class="c-name">Vorse Raider</div>
+                <div class="c-icon">⚔️</div>
+                <div class="c-stats"><span class="atk-val">1900</span> / <span class="def-val">1200</span></div>
+            </div>
+        </div>
+        <div class="slot"><div class="card facedown"></div></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Kendi -->
+    <div class="zone-row">
+        <div class="slot"></div>
+        <div class="slot glow">
+            <div class="card monster-atk" style="display:flex;flex-direction:column">
+                <div class="c-name">Alexandrite Dragon</div>
+                <div class="c-icon">🐉</div>
+                <div class="c-stats"><span class="atk-val">2000</span> / <span class="def-val">100</span></div>
+            </div>
+        </div>
+        <div class="slot">
+            <div class="card monster-atk" style="display:flex;flex-direction:column">
+                <div class="c-name">Gemini Elf</div>
+                <div class="c-icon">🧝</div>
+                <div class="c-stats"><span class="atk-val">1900</span> / <span class="def-val">900</span></div>
+            </div>
+        </div>
+        <div class="slot">
+            <div class="card monster-def" style="display:flex;flex-direction:column">
+                <div class="c-name">Luster Dragon</div>
+                <div class="c-icon">🐲</div>
+                <div class="c-stats"><span class="atk-val">1900</span> / <span class="def-val">1600</span></div>
+            </div>
+        </div>
+        <div class="slot"></div>
+    </div>
+    <div class="zone-row">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+
+    <!-- Side -->
+    <div class="side-col left">
+        <div class="pile grave"><div class="pile-count">2</div>GY</div>
+        <div class="pile deck"><div class="pile-count">30</div>DECK</div>
+    </div>
+    <div class="side-col right">
+        <div class="pile deck"><div class="pile-count">33</div>DECK</div>
+        <div class="pile grave"><div class="pile-count">0</div>GY</div>
+    </div>
+</div>
+
+<!-- EL -->
+<div class="hand">
+    <div class="hand-card">
+        <div class="c-name">Insect Knight</div>
+        <div class="c-icon">🦗</div>
+        <div class="c-stats"><span class="atk-val">1900</span>/<span class="def-val">1500</span></div>
+    </div>
+    <div class="hand-card">
+        <div class="c-name">Gene-Warped Warwolf</div>
+        <div class="c-icon">🐺</div>
+        <div class="c-stats"><span class="atk-val">2000</span>/<span class="def-val">100</span></div>
+    </div>
+    <div class="hand-card">
+        <div class="c-name">Sabersaurus</div>
+        <div class="c-icon">🦕</div>
+        <div class="c-stats"><span class="atk-val">1900</span>/<span class="def-val">500</span></div>
+    </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+    <span class="action-label">Ana Faz</span>
+    <button class="act-btn">Cagir: Insect Knight</button>
+    <button class="act-btn">Cagir: Warwolf</button>
+    <button class="act-btn go">Savas Fazina Gec</button>
+    <button class="act-btn">Turu Bitir</button>
+</div>
+
+</body>
+</html>

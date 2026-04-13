@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# OCGCore build artifacts
+ocgcore/build/
+ocgcore/bin/
+ocgcore/obj/
+ocgcore/*.dll
+ocgcore/*.so
+ocgcore/*.dylib
+ocgcore/*.sln
+ocgcore/*.vcxproj*
+ocgcore/Makefile
+ocgcore/*.make
+
+# Build output (our compiled binaries go here)
+bin/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Card data (downloaded separately)
+data/cards.cdb
+data/script/
+
+# Logs
+*.log
+
+# Claude Code
+.agents/
+.claude/
+skills-lock.json
+
+# Internal dev docs
+PROJE_BAGLAM.md
+duel_engine_architecture_classic.md
+
+# Additional card data
+data/cards.db

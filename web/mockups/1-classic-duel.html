@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konsept 1 — Classic Duel Station</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a1a;
+    color: #ddd;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== HUD — Ust Bar ===== */
+.hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px;
+    background: linear-gradient(180deg, #1a1a3a, #0f0f2a);
+    border-bottom: 1px solid #2a2a5a;
+}
+.hud-player {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.hud-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid #444;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+}
+.hud-avatar.self { border-color: #4fc3f7; }
+.hud-avatar.opp { border-color: #ef5350; }
+.hud-name { font-size: 13px; font-weight: 600; }
+.hud-lp {
+    font-size: 28px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -1px;
+}
+.hud-lp.self { color: #4fc3f7; }
+.hud-lp.opp { color: #ef5350; }
+.lp-bar {
+    width: 120px; height: 4px;
+    background: #222;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.lp-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+.lp-bar-fill.self { background: #4fc3f7; width: 100%; }
+.lp-bar-fill.opp { background: #ef5350; width: 62%; }
+
+.hud-center {
+    text-align: center;
+}
+.turn-badge {
+    background: linear-gradient(135deg, #f0c040, #d4a030);
+    color: #1a1a1a;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+.phase-label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+}
+
+/* ===== ANA ALAN ===== */
+.field-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px 40px;
+    gap: 4px;
+    background:
+        radial-gradient(ellipse at 50% 50%, rgba(20,20,60,0.8) 0%, transparent 70%),
+        linear-gradient(180deg, #0a0a1a, #0e0e24, #0a0a1a);
+}
+
+/* Rakip taraf (ust) */
+.field-half {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.field-half.opp { align-items: center; }
+.field-half.self { align-items: center; }
+
+.zone-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+/* Kart Slotu */
+.slot {
+    width: 68px;
+    height: 92px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.02);
+    position: relative;
+    transition: all 0.2s;
+}
+.slot.monster { border-color: rgba(180,160,60,0.2); }
+.slot.spell   { border-color: rgba(60,160,180,0.2); }
+
+/* Kart */
+.card {
+    width: 100%; height: 100%;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+.card.facedown {
+    background: linear-gradient(145deg, #3a2015, #5a3525);
+    border: 1px solid #7a4a30;
+}
+.card.facedown::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 2px;
+}
+.card.faceup-atk {
+    background: linear-gradient(180deg, #2a2a0a, #1a1a05);
+    border: 1px solid #5a5a20;
+}
+.card.faceup-def {
+    background: linear-gradient(180deg, #2a2a0a, #1a1a05);
+    border: 1px solid #5a5a20;
+    transform: rotate(90deg) scale(0.85);
+}
+.card-name {
+    font-size: 7px;
+    font-weight: 600;
+    padding: 3px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(0,0,0,0.4);
+    text-align: center;
+}
+.card-img {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+.card-stats {
+    font-size: 9px;
+    font-weight: 700;
+    color: #f0c040;
+    text-align: center;
+    padding: 2px;
+    background: rgba(0,0,0,0.5);
+}
+
+/* Bolgeler arasi cizgi */
+.field-divider {
+    height: 1px;
+    margin: 6px 60px;
+    background: linear-gradient(90deg, transparent, rgba(233,69,96,0.4), transparent);
+}
+
+/* Side zones */
+.side-zones {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+.side-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.deck-pile, .grave-pile, .extra-pile {
+    width: 54px; height: 72px;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    color: #666;
+    position: relative;
+}
+.deck-pile {
+    background: linear-gradient(145deg, #2a1810, #4a2820);
+    border: 1px solid #5a3525;
+}
+.deck-pile .count {
+    position: absolute;
+    bottom: -2px; right: -2px;
+    background: #333;
+    color: #ccc;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 8px;
+}
+.grave-pile {
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed rgba(255,255,255,0.1);
+}
+
+/* ===== EL KARTLARI ===== */
+.hand-area {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: linear-gradient(180deg, transparent, rgba(10,10,30,0.8));
+    min-height: 100px;
+}
+.hand-card {
+    width: 68px;
+    height: 92px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #2a2a0a, #1a1a05);
+    border: 1px solid #4a4a1a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.hand-card:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 8px 20px rgba(240,192,64,0.3);
+    border-color: #f0c040;
+}
+
+/* ===== AKSIYON PANELI ===== */
+.action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #12122a;
+    border-top: 1px solid #2a2a5a;
+}
+.action-prompt {
+    color: #f0c040;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 12px;
+}
+.action-btn {
+    padding: 6px 18px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #1a1a3a;
+    color: #ddd;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.action-btn:hover { border-color: #e94560; background: #2a1a3a; }
+.action-btn.primary { background: #e94560; border-color: #e94560; color: #fff; }
+.action-btn.primary:hover { background: #ff6b81; }
+
+/* ===== LOG ===== */
+.log {
+    position: fixed;
+    bottom: 50px; right: 8px;
+    width: 200px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 10px;
+    color: #555;
+    padding: 6px;
+}
+.log div { padding: 1px 0; }
+.log .important { color: #f0c040; }
+.log .damage { color: #ef5350; }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div class="hud">
+    <div class="hud-player">
+        <div class="hud-avatar opp">K</div>
+        <div>
+            <div class="hud-name">Kaiba</div>
+            <div class="hud-lp opp">4960</div>
+            <div class="lp-bar"><div class="lp-bar-fill opp"></div></div>
+        </div>
+    </div>
+    <div class="hud-center">
+        <div class="turn-badge">TUR 5</div>
+        <div class="phase-label">Main Phase 1</div>
+    </div>
+    <div class="hud-player">
+        <div>
+            <div class="hud-name" style="text-align:right">Yugi</div>
+            <div class="hud-lp self" style="text-align:right">8000</div>
+            <div class="lp-bar"><div class="lp-bar-fill self"></div></div>
+        </div>
+        <div class="hud-avatar self">Y</div>
+    </div>
+</div>
+
+<!-- OYUN ALANI -->
+<div class="field-container">
+    <!-- Rakip -->
+    <div class="field-half opp">
+        <div class="zone-row">
+            <div class="slot spell"></div>
+            <div class="slot spell"></div>
+            <div class="slot spell">
+                <div class="card facedown"></div>
+            </div>
+            <div class="slot spell"></div>
+            <div class="slot spell"></div>
+        </div>
+        <div class="zone-row">
+            <div class="slot monster"></div>
+            <div class="slot monster">
+                <div class="card faceup-atk">
+                    <div class="card-name">Vorse Raider</div>
+                    <div class="card-img">⚔️</div>
+                    <div class="card-stats">1900/1200</div>
+                </div>
+            </div>
+            <div class="slot monster">
+                <div class="card facedown"></div>
+            </div>
+            <div class="slot monster"></div>
+            <div class="slot monster"></div>
+        </div>
+    </div>
+
+    <div class="field-divider"></div>
+
+    <!-- Kendi -->
+    <div class="field-half self">
+        <div class="zone-row">
+            <div class="slot monster"></div>
+            <div class="slot monster">
+                <div class="card faceup-atk">
+                    <div class="card-name">Alexandrite Dragon</div>
+                    <div class="card-img">🐉</div>
+                    <div class="card-stats">2000/100</div>
+                </div>
+            </div>
+            <div class="slot monster">
+                <div class="card faceup-atk">
+                    <div class="card-name">Gemini Elf</div>
+                    <div class="card-img">🧝</div>
+                    <div class="card-stats">1900/900</div>
+                </div>
+            </div>
+            <div class="slot monster">
+                <div class="card faceup-def">
+                    <div class="card-name">Luster Dragon</div>
+                    <div class="card-img">🐲</div>
+                    <div class="card-stats">1900/1600</div>
+                </div>
+            </div>
+            <div class="slot monster"></div>
+        </div>
+        <div class="zone-row">
+            <div class="slot spell"></div>
+            <div class="slot spell"></div>
+            <div class="slot spell"></div>
+            <div class="slot spell"></div>
+            <div class="slot spell"></div>
+        </div>
+    </div>
+</div>
+
+<!-- EL -->
+<div class="hand-area">
+    <div class="hand-card">
+        <div class="card-name">Insect Knight</div>
+        <div class="card-img">🦗</div>
+        <div class="card-stats">1900/1500</div>
+    </div>
+    <div class="hand-card">
+        <div class="card-name">Gene-Warped Warwolf</div>
+        <div class="card-img">🐺</div>
+        <div class="card-stats">2000/100</div>
+    </div>
+    <div class="hand-card">
+        <div class="card-name">Sabersaurus</div>
+        <div class="card-img">🦕</div>
+        <div class="card-stats">1900/500</div>
+    </div>
+</div>
+
+<!-- AKSIYON BAR -->
+<div class="action-bar">
+    <span class="action-prompt">Ana Faz — Bir aksiyon sec</span>
+    <button class="action-btn">Cagir: Insect Knight</button>
+    <button class="action-btn">Cagir: Warwolf</button>
+    <button class="action-btn primary">Savas Fazina Gec</button>
+    <button class="action-btn">Turu Bitir</button>
+</div>
+
+<!-- LOG -->
+<div class="log">
+    <div class="important">--- Tur 5 (Yugi) ---</div>
+    <div>1 kart cektin</div>
+    <div>Faz: Main 1</div>
+    <div class="damage">Kaiba -2000 LP</div>
+    <div>Saldiri: Alexandrite Dragon</div>
+</div>
+
+</body>
+</html>

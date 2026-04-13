@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konsept 3 — Shadow Realm</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: #0d0b0e;
+    color: #d4c8a0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== HUD ===== */
+.hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    height: 56px;
+    background: linear-gradient(180deg, #1a1520, #0d0b0e);
+    border-bottom: 1px solid rgba(180,140,60,0.15);
+    flex-shrink: 0;
+}
+.p-block {
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 18px;
+    flex: 1;
+}
+.p-block.right { justify-content: flex-end; }
+
+.p-emblem {
+    width: 36px; height: 36px;
+    border: 2px solid;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+}
+.p-emblem > span { transform: rotate(-45deg); }
+.p-emblem.gold { border-color: #b8960a; color: #e8c840; box-shadow: 0 0 12px rgba(200,160,20,0.2); }
+.p-emblem.purple { border-color: #6a3a8a; color: #9a6aba; box-shadow: 0 0 12px rgba(120,60,160,0.2); }
+
+.p-info { display: flex; flex-direction: column; }
+.p-name-tag {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #776a50;
+}
+.p-lp {
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 2px;
+}
+.p-lp.gold { color: #e8c840; }
+.p-lp.purple { color: #9a6aba; }
+
+.lp-gauge {
+    width: 100%; height: 3px;
+    background: #1a1520;
+    margin-top: 4px;
+    border-radius: 1px;
+}
+.lp-gauge-fill { height: 100%; border-radius: 1px; transition: width 0.8s ease; }
+.lp-gauge-fill.gold { background: linear-gradient(90deg, #8a6a10, #e8c840); width: 100%; }
+.lp-gauge-fill.purple { background: linear-gradient(90deg, #4a2a6a, #9a6aba); width: 62%; }
+
+.mid-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 32px;
+    border-left: 1px solid rgba(180,140,60,0.08);
+    border-right: 1px solid rgba(180,140,60,0.08);
+}
+.mid-turn {
+    font-size: 26px;
+    color: #e8c840;
+    font-weight: 400;
+    letter-spacing: 4px;
+}
+.mid-phase {
+    font-size: 11px;
+    color: #5a5040;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* ===== ARENA ===== */
+.arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4px 2vw;
+    gap: 4px;
+    position: relative;
+    min-height: 0;
+    background:
+        radial-gradient(ellipse at 50% 30%, rgba(100,50,20,0.06), transparent 50%),
+        radial-gradient(ellipse at 50% 70%, rgba(60,30,100,0.06), transparent 50%);
+}
+
+.arena::before, .arena::after {
+    content: "";
+    position: absolute;
+    left: 4vw; right: 4vw;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180,140,60,0.1), transparent);
+}
+.arena::before { top: 8px; }
+.arena::after { bottom: 8px; }
+
+.row {
+    display: flex;
+    gap: 1vw;
+    justify-content: center;
+}
+
+/* Slot — tam ekran dolduran kartlar */
+.slot {
+    width: 8vw;
+    height: 10.8vw;
+    border: 1px solid rgba(180,140,60,0.08);
+    border-radius: 3px;
+    background: rgba(180,140,60,0.015);
+    position: relative;
+}
+.slot::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(180,140,60,0.04);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Kart */
+.card {
+    width: 100%; height: 100%;
+    border-radius: 3px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+.card.facedown {
+    background:
+        repeating-linear-gradient(45deg, #1a100a, #1a100a 4px, #201510 4px, #201510 8px);
+    border: 1px solid #4a3020;
+}
+.card.facedown::before {
+    content: "☽";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 2.5vw;
+    color: rgba(180,140,60,0.2);
+}
+
+.card.up-atk {
+    background: linear-gradient(180deg, #1c1a10, #100e08);
+    border: 1px solid rgba(200,170,60,0.35);
+}
+.card.up-def {
+    background: linear-gradient(180deg, #10101c, #08080e);
+    border: 1px solid rgba(100,120,200,0.35);
+    transform: rotate(90deg) scale(0.82);
+}
+
+.cn {
+    font-size: 1.1vw;
+    font-weight: 600;
+    padding: 4px 6px;
+    text-align: center;
+    color: #a09070;
+    background: rgba(0,0,0,0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ci {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8vw;
+    filter: saturate(0.6);
+}
+.cs {
+    text-align: center;
+    padding: 4px;
+    font-size: 1.1vw;
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.4);
+    font-weight: 600;
+}
+.cs .a { color: #c8a030; }
+.cs .d { color: #7090c0; }
+
+/* Divider */
+.sep {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px 0;
+    gap: 20px;
+}
+.sep-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180,140,60,0.15), transparent);
+}
+.sep-icon {
+    font-size: 18px;
+    color: rgba(200,160,40,0.3);
+    letter-spacing: 8px;
+}
+
+/* ===== EL ===== */
+.hand {
+    display: flex;
+    justify-content: center;
+    gap: 1vw;
+    padding: 6px 20px;
+    background: linear-gradient(180deg, transparent, rgba(20,15,10,0.6));
+    flex-shrink: 0;
+}
+.hc {
+    width: 7vw;
+    height: 9.45vw;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #1c1a10, #100e08);
+    border: 1px solid rgba(200,170,60,0.25);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+.hc:hover {
+    transform: translateY(-18px);
+    border-color: #e8c840;
+    box-shadow: 0 12px 35px rgba(200,160,40,0.2), 0 0 24px rgba(200,160,40,0.1);
+}
+
+/* ===== ACTIONS ===== */
+.actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 8px 28px;
+    background: #0d0b0e;
+    border-top: 1px solid rgba(180,140,60,0.08);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.act-label {
+    font-size: 14px;
+    color: #e8c840;
+    font-style: italic;
+    margin-right: 14px;
+}
+.ab {
+    padding: 10px 26px;
+    border: 1px solid rgba(180,140,60,0.2);
+    border-radius: 3px;
+    background: rgba(180,140,60,0.04);
+    color: #a09070;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+}
+.ab:hover {
+    border-color: rgba(200,170,60,0.5);
+    color: #d4c8a0;
+    background: rgba(180,140,60,0.08);
+}
+.ab.main {
+    background: linear-gradient(135deg, rgba(180,80,30,0.3), rgba(140,60,20,0.3));
+    border-color: rgba(200,100,40,0.4);
+    color: #e8a040;
+}
+.ab.main:hover {
+    box-shadow: 0 0 15px rgba(200,100,40,0.2);
+    color: #ffb860;
+}
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div class="hud">
+    <div class="p-block">
+        <div class="p-emblem purple"><span>K</span></div>
+        <div class="p-info">
+            <div class="p-name-tag">Kaiba</div>
+            <div class="p-lp purple">4960</div>
+            <div class="lp-gauge"><div class="lp-gauge-fill purple"></div></div>
+        </div>
+    </div>
+    <div class="mid-block">
+        <div class="mid-turn">V</div>
+        <div class="mid-phase">Main Phase</div>
+    </div>
+    <div class="p-block right">
+        <div class="p-info" style="text-align:right">
+            <div class="p-name-tag">Yugi</div>
+            <div class="p-lp gold">8000</div>
+            <div class="lp-gauge"><div class="lp-gauge-fill gold"></div></div>
+        </div>
+        <div class="p-emblem gold"><span>Y</span></div>
+    </div>
+</div>
+
+<!-- ARENA -->
+<div class="arena">
+    <!-- Rakip Spell/Trap -->
+    <div class="row">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"><div class="card facedown"></div></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+    <!-- Rakip Monster -->
+    <div class="row">
+        <div class="slot"></div>
+        <div class="slot">
+            <div class="card up-atk">
+                <div class="cn">Vorse Raider</div>
+                <div class="ci">⚔️</div>
+                <div class="cs"><span class="a">1900</span> / <span class="d">1200</span></div>
+            </div>
+        </div>
+        <div class="slot"><div class="card facedown"></div></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+
+    <div class="sep">
+        <div class="sep-line"></div>
+        <div class="sep-icon">◆ ◆ ◆</div>
+        <div class="sep-line"></div>
+    </div>
+
+    <!-- Kendi Monster -->
+    <div class="row">
+        <div class="slot"></div>
+        <div class="slot">
+            <div class="card up-atk">
+                <div class="cn">Alexandrite Dragon</div>
+                <div class="ci">🐉</div>
+                <div class="cs"><span class="a">2000</span> / <span class="d">100</span></div>
+            </div>
+        </div>
+        <div class="slot">
+            <div class="card up-atk">
+                <div class="cn">Gemini Elf</div>
+                <div class="ci">🧝</div>
+                <div class="cs"><span class="a">1900</span> / <span class="d">900</span></div>
+            </div>
+        </div>
+        <div class="slot">
+            <div class="card up-def">
+                <div class="cn">Luster Dragon</div>
+                <div class="ci">🐲</div>
+                <div class="cs"><span class="a">1900</span> / <span class="d">1600</span></div>
+            </div>
+        </div>
+        <div class="slot"></div>
+    </div>
+    <!-- Kendi Spell/Trap -->
+    <div class="row">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+</div>
+
+<!-- EL -->
+<div class="hand">
+    <div class="hc">
+        <div class="cn">Insect Knight</div>
+        <div class="ci">🦗</div>
+        <div class="cs"><span class="a">1900</span>/<span class="d">1500</span></div>
+    </div>
+    <div class="hc">
+        <div class="cn">Gene-Warped Warwolf</div>
+        <div class="ci">🐺</div>
+        <div class="cs"><span class="a">2000</span>/<span class="d">100</span></div>
+    </div>
+    <div class="hc">
+        <div class="cn">Sabersaurus</div>
+        <div class="ci">🦕</div>
+        <div class="cs"><span class="a">1900</span>/<span class="d">500</span></div>
+    </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+    <span class="act-label">Hamle yap...</span>
+    <button class="ab">Cagir: Insect Knight</button>
+    <button class="ab">Cagir: Warwolf</button>
+    <button class="ab main">Savas Fazina Gec</button>
+    <button class="ab">Turu Bitir</button>
+</div>
+
+</body>
+</html>
