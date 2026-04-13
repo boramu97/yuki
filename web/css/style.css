@@ -213,7 +213,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .hand-card .card-stats-bar .def{border-radius:2px 0 4px 0}
 
 /* FLOATING PANELLER */
-.float-panel{position:absolute;top:8px;width:auto;max-width:16vw;max-height:40vh;background:var(--panel-bg);border:1px solid var(--gold-border);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
+.float-panel{position:absolute;top:8px;width:auto;max-width:16vw;max-height:50vh;background:var(--panel-bg);border:1px solid var(--gold-border);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
 .float-panel.left{left:8px}
 .float-panel.right{right:8px}
 #log-panel{left:8px;top:8px}
@@ -235,8 +235,8 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 /* Log banner */
 .log-banner{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,0.03);overflow:hidden}
 .log-banner:hover{background:rgba(180,140,60,0.03)}
-.log-banner img{width:86px;min-height:104px;flex-shrink:0;object-fit:cover}
-.log-banner .lb-text{flex:1;padding:10px 14px;display:flex;align-items:center;font-size:1.45rem;color:var(--text-dim);line-height:1.45;min-width:0}
+.log-banner img{width:42px;min-height:52px;flex-shrink:0;object-fit:cover}
+.log-banner .lb-text{flex:1;padding:6px 10px;display:flex;align-items:center;font-size:0.85rem;color:var(--text-dim);line-height:1.35;min-width:0}
 .log-banner.important .lb-text{color:var(--gold);font-weight:600}
 .log-banner.damage .lb-text{color:var(--danger);font-weight:600}
 .log-banner.summon .lb-text{color:#8bc34a}
@@ -245,7 +245,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 
 /* ===== MOTOR ILETISIM PANELI — Sag alt, 50vh ===== */
 .motor-panel{
-    position:fixed;right:0;bottom:0;width:18vw;min-width:280px;height:42vh;
+    position:fixed;right:0;bottom:0;width:18vw;min-width:280px;height:50vh;
     display:none;flex-direction:column;z-index:60;
     background:linear-gradient(175deg,rgba(22,14,32,0.96),rgba(12,8,18,0.98));
     border-left:1px solid rgba(232,200,64,0.1);border-top:1px solid rgba(232,200,64,0.1);
@@ -258,18 +258,18 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 @keyframes mp-border-shimmer{0%,100%{opacity:.6}50%{opacity:1}}
 .motor-panel.open{display:flex}
 
-.mp-header{padding:18px 20px 16px;border-bottom:1px solid rgba(232,200,64,0.08);flex-shrink:0;
+.mp-header{padding:10px 14px 8px;border-bottom:1px solid rgba(232,200,64,0.08);flex-shrink:0;
     background:linear-gradient(180deg,rgba(232,200,64,0.03),transparent)}
-.mp-phase-badge{display:inline-flex;align-items:center;gap:10px;padding:6px 16px;font-size:15px;font-weight:700;
-    letter-spacing:3px;text-transform:uppercase;color:#e8c840;
+.mp-phase-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;font-size:11px;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;color:#e8c840;
     border:1px solid rgba(232,200,64,0.2);border-radius:2px;background:rgba(232,200,64,0.04)}
 .mp-phase-badge::before{content:'';width:8px;height:8px;background:#e8c840;border-radius:1px;
     transform:rotate(45deg);flex-shrink:0;animation:mp-badge-pulse 2s ease-in-out infinite;
     box-shadow:0 0 6px rgba(232,200,64,0.4)}
 @keyframes mp-badge-pulse{0%,100%{opacity:1;box-shadow:0 0 6px rgba(232,200,64,0.4)}50%{opacity:.35;box-shadow:none}}
-.mp-question{font-size:20px;font-weight:600;color:#d4c8a0;line-height:1.35;margin-top:10px}
+.mp-question{font-size:13px;font-weight:600;color:#d4c8a0;line-height:1.3;margin-top:6px}
 
-.mp-actions{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px;min-height:0;display:flex;flex-direction:column;gap:6px;scroll-padding-bottom:8px}
+.mp-actions{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px;min-height:0;display:flex;flex-direction:column;gap:4px;scroll-padding-bottom:4px}
 .mp-actions::-webkit-scrollbar{width:5px}
 .mp-actions::-webkit-scrollbar-track{background:transparent}
 .mp-actions::-webkit-scrollbar-thumb{background:rgba(232,200,64,0.15);border-radius:3px}
@@ -278,32 +278,32 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .mp-action-card{display:flex;overflow:hidden;border:1px solid rgba(154,106,186,0.1);border-radius:6px;
     background:rgba(20,14,30,0.6);transition:border-color 0.2s,background 0.2s;flex-shrink:0}
 .mp-action-card:hover{border-color:rgba(232,200,64,0.25);background:rgba(30,20,44,0.7)}
-.mp-card-img{width:130px;flex-shrink:0;object-fit:cover;display:block;border-right:1px solid rgba(232,200,64,0.06)}
-.mp-card-back{background:#b8860b;display:flex;align-items:center;justify-content:center;min-height:130px;padding:5%}
+.mp-card-img{width:60px;flex-shrink:0;object-fit:cover;display:block;border-right:1px solid rgba(232,200,64,0.06)}
+.mp-card-back{background:#b8860b;display:flex;align-items:center;justify-content:center;min-height:70px;padding:5%}
 .mp-card-back .mp-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
 .mp-back-oval{width:50%;height:55%;background:#2a2a2a;border-radius:50%;border:2px solid #1a1a1a}
 .mp-card-info{flex:1;display:flex;flex-direction:column;min-width:0}
-.mp-card-info-text{padding:12px 14px 10px}
-.mp-card-name{font-size:20px;font-weight:700;color:#d4c8a0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mp-card-stats{font-size:18px;font-weight:700;margin-top:5px;display:flex;gap:16px}
+.mp-card-info-text{padding:6px 10px 4px}
+.mp-card-name{font-size:12px;font-weight:700;color:#d4c8a0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-card-stats{font-size:11px;font-weight:700;margin-top:2px;display:flex;gap:10px}
 .mp-card-stats .atk-val{color:#c8a030}
 .mp-card-stats .def-val{color:#7090c0}
-.mp-card-stats .spell-type{color:rgba(79,195,247,0.85);font-size:17px;font-weight:600}
-.mp-card-stats .trap-type{color:rgba(206,147,216,0.85);font-size:17px;font-weight:600}
-.mp-card-location{font-size:14px;color:rgba(212,200,160,0.35);margin-top:3px}
+.mp-card-stats .spell-type{color:rgba(79,195,247,0.85);font-size:11px;font-weight:600}
+.mp-card-stats .trap-type{color:rgba(206,147,216,0.85);font-size:11px;font-weight:600}
+.mp-card-location{font-size:10px;color:rgba(212,200,160,0.35);margin-top:2px}
 .mp-card-buttons{display:flex;gap:0;margin-top:auto;border-top:1px solid rgba(232,200,64,0.05);flex-shrink:0}
 
 /* Grup basligi */
-.mp-group-header{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:rgba(232,200,64,0.4);padding:12px 10px 8px;position:relative}
+.mp-group-header{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(232,200,64,0.4);padding:6px 8px 4px;position:relative}
 .mp-group-header::after{content:'';position:absolute;bottom:0;left:10px;right:10px;height:1px;background:linear-gradient(90deg,rgba(232,200,64,0.15),transparent)}
 
 /* Duz buton satiri */
 .mp-btn-row{display:flex;gap:8px;padding:8px;flex-wrap:wrap}
 
 /* Butonlar — buyuk, tiklanabilir */
-.mp-btn{padding:0;min-height:60px;flex:1;display:flex;align-items:center;justify-content:center;
-    border:none;border-radius:0;cursor:pointer;font-family:inherit;font-size:18px;font-weight:700;
-    letter-spacing:1px;text-transform:uppercase;transition:all 0.15s}
+.mp-btn{padding:0;min-height:34px;flex:1;display:flex;align-items:center;justify-content:center;
+    border:none;border-radius:0;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;
+    letter-spacing:0.5px;text-transform:uppercase;transition:all 0.15s}
 .mp-btn+.mp-btn{border-left:1px solid rgba(232,200,64,0.05)}
 .mp-btn-primary{background:linear-gradient(180deg,rgba(232,200,64,0.1),rgba(232,200,64,0.03));color:#e8c840}
 .mp-btn-primary:hover{background:linear-gradient(180deg,rgba(232,200,64,0.22),rgba(232,200,64,0.08));
@@ -311,15 +311,15 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .mp-btn-purple{background:linear-gradient(180deg,rgba(154,106,186,0.1),rgba(154,106,186,0.03));color:#c49aee}
 .mp-btn-purple:hover{background:linear-gradient(180deg,rgba(154,106,186,0.22),rgba(154,106,186,0.08));
     box-shadow:inset 0 -2px 0 rgba(154,106,186,0.4);text-shadow:0 0 8px rgba(154,106,186,0.3)}
-.mp-btn-dim{background:rgba(255,255,255,0.015);color:rgba(212,200,160,0.3);font-size:16px}
+.mp-btn-dim{background:rgba(255,255,255,0.015);color:rgba(212,200,160,0.3);font-size:11px}
 .mp-btn-dim:hover{background:rgba(255,255,255,0.04);color:rgba(212,200,160,0.55)}
 .mp-btn.selected{border-color:var(--gold);background:rgba(180,140,60,0.15);color:var(--gold)}
 
 /* Footer */
-.mp-footer{border-top:1px solid rgba(232,200,64,0.08);padding:14px 16px;flex-shrink:0;
+.mp-footer{border-top:1px solid rgba(232,200,64,0.08);padding:8px 10px;flex-shrink:0;
     background:linear-gradient(0deg,rgba(14,10,20,0.98),transparent);display:flex;flex-direction:column;gap:10px}
 .mp-footer-actions{display:flex;gap:8px}
-.mp-footer-actions .mp-btn{min-height:62px;font-size:18px;border-radius:5px;flex-shrink:0}
+.mp-footer-actions .mp-btn{min-height:36px;font-size:12px;border-radius:4px;flex-shrink:0}
 .mp-footer-actions .mp-btn-battle{background:linear-gradient(180deg,rgba(232,200,64,0.1),rgba(232,200,64,0.03));
     color:#e8c840;border:1px solid rgba(232,200,64,0.2)}
 .mp-footer-actions .mp-btn-battle:hover{border-color:rgba(232,200,64,0.45);box-shadow:0 0 20px rgba(232,200,64,0.1)}
