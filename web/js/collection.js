@@ -157,7 +157,7 @@ const Collection = {
             }
             const copyBadge = copies > 0 ? `<span class="coll-copy-badge">x${copies}</span>` : "";
 
-            return `<div class="${cls}" onclick="Collection.toggleDeck(${card.c})" oncontextmenu="event.preventDefault();Collection.preview(${card.c})">
+            return `<div class="${cls}" onclick="Collection.preview(${card.c})">
                 <span class="coll-lock">&#x1F512;</span>
                 ${badge}${copyBadge}
                 <img class="coll-card-img" src="${this.IMG(card.c)}" alt="${card.n}" loading="lazy">
@@ -276,26 +276,36 @@ const Collection = {
         img.src = this.IMG_BIG(code);
         img.className = owned ? "" : "locked";
 
-        if (card && !owned) {
-            // Kilitli kart — Aç butonu
-            const cost = this.craftCost(card);
-            const canAfford = this.dust >= cost;
-            actions.innerHTML = `<button class="coll-prev-btn craft" ${canAfford ? "" : "disabled"}
-                onclick="Collection.doCraft(${code})">Ac — ${cost} toz</button>`;
-        } else if (card && owned) {
-            // Sahip — Bozdur butonu
+        let html = "";
+
+        if (card && owned) {
+            // Desteye ekle/cikar butonu
+            const copies = this.countInDeck(code);
+            const max = this.maxCopies(code);
+            if (copies < max) {
+                html += `<button class="coll-prev-btn deck-add" onclick="Collection.toggleDeck(${code});Collection.preview(${code})">Desteye Ekle (${copies}/${max})</button>`;
+            } else {
+                html += `<button class="coll-prev-btn deck-add" disabled>Destede (${copies}/${max})</button>`;
+            }
+            if (copies > 0) {
+                html += `<button class="coll-prev-btn deck-rm" onclick="Collection.removeOne(${code});Collection.preview(${code})">Desteden Cikar</button>`;
+            }
+            // Bozdur butonu
             const gain = this.disCost(card);
             const inDeck = this.isCardInAnyDeck(code);
             if (inDeck) {
-                actions.innerHTML = `<button class="coll-prev-btn dis" disabled>Destede kullaniliyor</button>`;
+                html += `<button class="coll-prev-btn dis" disabled>Destede — bozdurulamaz</button>`;
             } else {
-                actions.innerHTML = `<button class="coll-prev-btn dis"
-                    onclick="Collection.confirmDisenchant(${code}, '${card.n.replace(/'/g,"\\'")}', ${gain})">Bozdur — +${gain} toz</button>`;
+                html += `<button class="coll-prev-btn dis" onclick="Collection.confirmDisenchant(${code}, '${card.n.replace(/'/g,"\\'")}', ${gain})">Bozdur — +${gain} toz</button>`;
             }
-        } else {
-            actions.innerHTML = "";
+        } else if (card && !owned) {
+            // Kilitli kart — Aç butonu
+            const cost = this.craftCost(card);
+            const canAfford = this.dust >= cost;
+            html += `<button class="coll-prev-btn craft" ${canAfford ? "" : "disabled"} onclick="Collection.doCraft(${code})">Ac — ${cost} toz</button>`;
         }
 
+        actions.innerHTML = html;
         overlay.classList.add("active");
     },
 

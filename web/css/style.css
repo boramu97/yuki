@@ -22,7 +22,9 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ===== EKRANLAR ===== */
 .screen{display:none;width:100vw;height:100vh;flex-direction:column}
@@ -566,7 +568,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 
 /* Preview inner — kart + butonlar */
 .coll-preview-inner{display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default}
-.coll-preview-actions{display:flex;gap:8px}
+.coll-preview-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .coll-prev-btn{padding:10px 28px;border-radius:4px;font-family:inherit;font-size:0.9rem;letter-spacing:1px;cursor:pointer;transition:all 0.2s;border:1px solid}
 .coll-prev-btn.craft{background:linear-gradient(135deg,rgba(74,154,106,0.3),rgba(50,120,80,0.3));border-color:rgba(74,154,106,0.5);color:#80e0a0}
 .coll-prev-btn.craft:hover{box-shadow:0 0 15px rgba(74,154,106,0.3);color:#a0ffb8}
@@ -574,6 +576,11 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .coll-prev-btn.dis{background:linear-gradient(135deg,rgba(200,100,40,0.25),rgba(160,70,30,0.25));border-color:rgba(200,100,40,0.4);color:#e8a040}
 .coll-prev-btn.dis:hover{box-shadow:0 0 15px rgba(200,100,40,0.2);color:#ffb860}
 .coll-prev-btn.dis:disabled{opacity:0.35;cursor:not-allowed;box-shadow:none}
+.coll-prev-btn.deck-add{background:linear-gradient(135deg,rgba(88,160,240,0.25),rgba(60,120,200,0.25));border-color:rgba(88,160,240,0.4);color:#70b8f0}
+.coll-prev-btn.deck-add:hover{box-shadow:0 0 15px rgba(88,160,240,0.2);color:#90d0ff}
+.coll-prev-btn.deck-add:disabled{opacity:0.35;cursor:not-allowed;box-shadow:none}
+.coll-prev-btn.deck-rm{background:linear-gradient(135deg,rgba(180,80,80,0.25),rgba(140,50,50,0.25));border-color:rgba(180,80,80,0.4);color:#e08080}
+.coll-prev-btn.deck-rm:hover{box-shadow:0 0 15px rgba(180,80,80,0.2);color:#ff9090}
 
 /* Onay dialogu */
 .coll-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10001;align-items:center;justify-content:center}
@@ -582,3 +589,152 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .coll-confirm-title{font-size:1.1rem;color:var(--gold);letter-spacing:2px;margin-bottom:16px}
 .coll-confirm-text{font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:20px}
 .coll-confirm-buttons{display:flex;gap:12px;justify-content:center}
+
+/* ==========================================================
+   MOBILE RESPONSIVE — Telefon ve tablet uyumu
+   ========================================================== */
+
+/* --- Telefon (portrait & landscape, max 768px) --- */
+@media (max-width: 768px) {
+    /* Body: mobil 100vh fix (adres cubugu sorunu) */
+    body { height: 100dvh; }
+    .screen { height: 100dvh; }
+    #duel { height: 100dvh; }
+
+    /* --- AUTH EKRANI --- */
+    #auth-screen { padding: 20px; }
+    #auth-screen h1 { font-size: 2rem; letter-spacing: 0.2em; }
+    .auth-form { width: 100%; max-width: 100%; }
+    .auth-form input { font-size: 1rem; padding: 12px 14px; }
+
+    /* --- ANA SAYFA --- */
+    #home-screen { padding: 16px; }
+    .home-nav { flex-direction: column; gap: 12px; width: 100%; max-width: 100%; padding: 0 16px; }
+    .home-card { padding: 18px 20px; flex-direction: row; gap: 16px; min-width: unset; width: 100%; }
+    .home-card-icon { font-size: 1.8rem; }
+    .home-card-title { font-size: 0.95rem; }
+    .home-card-desc { font-size: 0.72rem; text-align: left; padding: 0; }
+
+    /* --- LOBI --- */
+    .lobby-form { width: 90%; max-width: 100%; }
+    .lobby-buttons { flex-direction: column; }
+    .join-section { flex-direction: column; }
+    #lobby h1 { font-size: 2rem; letter-spacing: 0.15em; }
+
+    /* --- MACERALAR MENU --- */
+    .adv-menu { padding: 20px 16px; }
+    .adv-banner { padding: 16px 18px; gap: 14px; }
+    .banner-name { font-size: 1rem; }
+
+    /* --- ANTRENMAN (bot grid) --- */
+    .adv-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+    .adv-card { padding: 16px 10px; gap: 6px; }
+    .adv-icon { font-size: 1.8rem; }
+    .adv-name { font-size: 0.82rem; }
+    .adv-subtitle { margin-top: 16px; font-size: 0.85rem; }
+
+    /* --- DUELLO ADASI (harita) --- */
+    .island-map-wrap { padding: 8px; }
+    .stage { padding: 5px 8px; min-width: 72px; border-radius: 8px; }
+    .stage-icon { font-size: 1.1rem; }
+    .stage-label { font-size: 0.45rem; }
+    .stage-name { font-size: 0.62rem; }
+    .stage-reward { font-size: 0.5rem; }
+
+    /* --- KOLEKSIYON --- */
+    .coll-header { height: auto; padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+    .coll-title { font-size: 1.1rem; }
+    .coll-toolbar { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
+    .coll-search { flex: 1 1 100%; }
+    .coll-filters { flex-wrap: wrap; }
+    .coll-main { flex-direction: column; min-height: 0; overflow: auto; }
+    .coll-sidebar { width: 100%; max-height: 35vh; border-left: none; border-top: 1px solid var(--gold-border); }
+    .coll-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+    .coll-deck-header { flex-wrap: wrap; gap: 4px; }
+    .coll-deck-header input { font-size: 0.8rem; width: 100px; }
+    #btn-duel-with-deck { font-size: 0.7rem; padding: 6px 10px; }
+    .coll-slot-tab { font-size: 0.62rem; padding: 8px 2px; }
+    .slot-active-badge { font-size: 0.42rem; padding: 1px 3px; }
+
+    /* --- DUELLO HUD --- */
+    .duel-hud { height: 42px; padding: 0 8px; gap: 4px; }
+    .player-info { gap: 6px; }
+    .p-emblem { width: 28px; height: 28px; font-size: 12px; }
+    .player-name { font-size: 9px; letter-spacing: 1px; }
+    .player-lp { font-size: 18px; letter-spacing: 1px; }
+    .turn-info { padding: 0 10px; }
+    #turn-counter { font-size: 14px; letter-spacing: 2px; }
+    #phase-name { font-size: 8px; }
+    .btn-surrender { font-size: 0.6rem; padding: 1px 5px; }
+
+    /* --- DUELLO SAHA --- */
+    .field { padding: 2px 2px; gap: 2px; }
+    .field-row { gap: 1.2vw; }
+    .card-slot { width: 16vw; height: 21.8vw; border-radius: 3px; }
+    .card-slot::before, .card-slot::after { display: none; } /* Rune dekorasyonlari kaldir */
+    .card-stats-bar .atk, .card-stats-bar .def { font-size: 1.6vw; padding: 0 2px; }
+    .counter-badge { width: 3.5vw; height: 3.5vw; min-width: 14px; min-height: 14px; font-size: 1.6vw; border-width: 1px; }
+    .status-strip { padding: 4px 8px; gap: 8px; }
+    #status-text { font-size: 0.7rem; padding: 2px 10px; white-space: normal; text-align: center; }
+
+    /* --- DUELLO EL --- */
+    .hand-area { padding: 0 4px 2px; }
+    .hand-card { width: 13vw; height: 17.8vw; margin-left: -2vw; border-width: 1px; }
+    .hand-card:first-child { margin-left: 0; }
+    .hand-card:hover { transform: translateY(-2vw) scale(1.12) rotate(0deg) !important; }
+    .hand-card .card-stats-bar .atk, .hand-card .card-stats-bar .def { font-size: 1.3vw; }
+
+    /* --- FLOAT PANELLER (log/effects) — mobilde gizle --- */
+    .float-panel { display: none !important; }
+
+    /* --- MOTOR PANEL — tam genis bottom sheet --- */
+    .motor-panel { width: 100%; min-width: unset; height: 45vh; right: 0; bottom: 0;
+        border-radius: 12px 12px 0 0; border-left: none; border-top: 2px solid rgba(232,200,64,0.15); }
+    .mp-card-img { width: 44px; }
+    .mp-card-name { font-size: 11px; }
+    .mp-btn { min-height: 38px; font-size: 11px; }
+    .mp-footer-actions .mp-btn { min-height: 40px; font-size: 12px; }
+
+    /* --- POPUP MENU (kart uzerindeki) --- */
+    .card-popup { min-width: 100px; }
+    .popup-btn { padding: 8px 12px; font-size: 12px; }
+
+    /* --- SONUC EKRANI --- */
+    #result { padding: 20px; text-align: center; }
+    #result h2 { font-size: 2rem; }
+    .reward-box { padding: 12px 16px; }
+}
+
+/* --- Cok kucuk telefonlar (max 400px) --- */
+@media (max-width: 400px) {
+    .card-slot { width: 17vw; height: 23.2vw; }
+    .hand-card { width: 14vw; height: 19.2vw; margin-left: -2.5vw; }
+    .duel-hud { height: 38px; }
+    .player-lp { font-size: 15px; }
+    .p-emblem { width: 24px; height: 24px; font-size: 10px; }
+    .stage { padding: 4px 6px; min-width: 60px; }
+    .stage-name { font-size: 0.55rem; }
+    .adv-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
+}
+
+/* --- Yatay telefon (landscape) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+    .duel-hud { height: 32px; padding: 0 8px; }
+    .player-lp { font-size: 14px; }
+    .player-name { font-size: 8px; }
+    .p-emblem { width: 22px; height: 22px; font-size: 9px; }
+    #turn-counter { font-size: 12px; }
+    .btn-surrender { font-size: 0.5rem; }
+
+    .field { padding: 1px 2vw; gap: 1px; }
+    .card-slot { width: 7vw; height: 9.5vw; }
+    .card-stats-bar .atk, .card-stats-bar .def { font-size: 0.6vw; }
+    .hand-area { padding: 0 4vw 1px; }
+    .hand-card { width: 5.8vw; height: 7.9vw; margin-left: -0.8vw; }
+    .hand-card:hover { transform: translateY(-1.2vw) scale(1.1) rotate(0deg) !important; }
+    .status-strip { padding: 1px 4vw; }
+    #status-text { font-size: 0.6rem; padding: 1px 8px; }
+
+    .motor-panel { height: 50vh; }
+    .float-panel { display: none !important; }
+}

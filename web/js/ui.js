@@ -70,8 +70,8 @@ const UI = {
             img.className = "mp-card-img";
             img.src = `https://images.ygoprodeck.com/images/cards_small/${card.code}.jpg`;
             img.onerror = function () { this.style.display = "none"; };
-            img.oncontextmenu = (e) => {
-                e.preventDefault();
+            img.onclick = (e) => {
+                e.stopPropagation();
                 document.getElementById("preview-img").src = `https://images.ygoprodeck.com/images/cards/${card.code}.jpg`;
                 document.getElementById("card-preview-overlay").classList.add("active");
             };

@@ -202,7 +202,7 @@ document.addEventListener("contextmenu",(e)=>{
 });
 document.getElementById("card-preview-overlay")?.addEventListener("click",function(){this.classList.remove("active")});
 
-// Kart tikla → popup menu ac/kapat
+// Kart tikla → highlight varsa popup, yoksa preview
 document.addEventListener("click",(e)=>{
     // Popup butonuna tiklandi
     if(e.target.closest(".popup-btn")) return;
@@ -211,8 +211,25 @@ document.addEventListener("click",(e)=>{
     document.querySelectorAll(".card-popup.open").forEach(p=>p.remove());
 
     const card=e.target.closest(".hand-card,.card-face");
-    if(!card || !card.classList.contains("mp-highlight")) return;
+    if(!card) return;
 
+    // Highlight yoksa → preview ac
+    if(!card.classList.contains("mp-highlight")){
+        if(card.classList.contains("facedown")){
+            const slot=card.closest(".card-slot");
+            const zone=slot?.parentElement;
+            if(zone&&(zone.id==="opp-mzone"||zone.id==="opp-szone")) return;
+        }
+        const code=card.dataset?.code||card.closest("[data-code]")?.dataset?.code;
+        if(code&&code!=="0"){
+            document.getElementById("preview-img").src=cardImageUrlFull(code);
+            document.getElementById("preview-name").textContent="";
+            document.getElementById("card-preview-overlay").classList.add("active");
+        }
+        return;
+    }
+
+    // Highlight var → popup menu
     const actionsJson=card.dataset.popupActions;
     if(!actionsJson) return;
 
@@ -258,84 +275,3 @@ document.addEventListener("click",(e)=>{
     e.stopPropagation();
 });
 
-// ===== LONG-PRESS = SAG TIK (mobil destek) =====
-(function(){
-    let timer=null, startX=0, startY=0, fired=false;
-    const DELAY=400, MOVE_THRESHOLD=10;
-
-    function showPreview(code){
-        if(!code||code==="0") return;
-        document.getElementById("preview-img").src=cardImageUrlFull(code);
-        document.getElementById("preview-name").textContent="";
-        document.getElementById("card-preview-overlay").classList.add("active");
-    }
-
-    function handleLongPress(e){
-        const touch=e.touches[0];
-        const el=document.elementFromPoint(touch.clientX,touch.clientY);
-        if(!el) return;
-
-        // 1. Duello sahasi / el karti
-        const card=el.closest(".hand-card,.card-face");
-        if(card){
-            if(card.classList.contains("facedown")){
-                const slot=card.closest(".card-slot");
-                const zone=slot?.parentElement;
-                if(zone&&(zone.id==="opp-mzone"||zone.id==="opp-szone")) return;
-            }
-            const code=card.dataset?.code||card.closest("[data-code]")?.dataset?.code;
-            showPreview(code);
-            return;
-        }
-
-        // 2. Motor panel / log gorselleri
-        const img=el.closest(".mp-card-img,.log-banner img");
-        if(img&&img.src){
-            const match=img.src.match(/\/(\d+)\.jpg/);
-            if(match) showPreview(match[1]);
-            return;
-        }
-
-        // 3. Koleksiyon kartlari
-        const collCard=el.closest(".coll-card");
-        if(collCard){
-            const cImg=collCard.querySelector(".coll-card-img");
-            if(cImg&&cImg.src){
-                const match=cImg.src.match(/\/(\d+)\./);
-                if(match&&typeof Collection!=="undefined"){
-                    Collection.preview(parseInt(match[1]));
-                }
-            }
-        }
-    }
-
-    document.addEventListener("touchstart",(e)=>{
-        if(e.touches.length!==1) return;
-        fired=false;
-        startX=e.touches[0].clientX;
-        startY=e.touches[0].clientY;
-        timer=setTimeout(()=>{
-            fired=true;
-            handleLongPress(e);
-        },DELAY);
-    },{passive:true});
-
-    document.addEventListener("touchmove",(e)=>{
-        if(!timer) return;
-        const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
-        if(Math.abs(dx)>MOVE_THRESHOLD||Math.abs(dy)>MOVE_THRESHOLD){
-            clearTimeout(timer);
-            timer=null;
-        }
-    },{passive:true});
-
-    document.addEventListener("touchend",()=>{
-        clearTimeout(timer);
-        timer=null;
-    });
-
-    // Long-press sonrasi normal click'i engelle (ghost click)
-    document.addEventListener("click",(e)=>{
-        if(fired){e.preventDefault();e.stopPropagation();fired=false;}
-    },true);
-})();
