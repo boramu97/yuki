@@ -7,12 +7,62 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- GİRİŞ / KAYIT -->
+    <div id="auth-screen" class="screen active">
+        <h1>Yuki</h1>
+        <p class="subtitle">Browser-Based Duel Game</p>
+        <div class="auth-form">
+            <input type="text" id="auth-username" placeholder="Kullanici adi..." maxlength="20">
+            <input type="password" id="auth-password" placeholder="Sifre..." maxlength="50">
+            <div id="auth-status" class="status"></div>
+            <div class="lobby-buttons">
+                <button id="btn-login" class="btn primary">Giris Yap</button>
+                <button id="btn-register" class="btn">Kayit Ol</button>
+            </div>
+        </div>
+        <div class="lobby-footer">
+            <span>AGPLv3 — <a href="https://github.com/boramu97/yuki" target="_blank">Kaynak Kod</a></span>
+            <span>Motor: <a href="https://github.com/edo9300/ygopro-core" target="_blank">OCGCore</a> (edo9300)</span>
+        </div>
+    </div>
+
+    <!-- ANA SAYFA -->
+    <div id="home-screen" class="screen">
+        <div class="home-header">
+            <h1>Yuki</h1>
+            <div class="home-user">
+                <span id="home-username"></span>
+                <button id="btn-logout" class="btn btn-small">Cikis</button>
+            </div>
+        </div>
+        <div class="home-nav">
+            <button class="home-card" id="nav-duel">
+                <div class="home-card-icon">⚔</div>
+                <div class="home-card-title">Duello</div>
+                <div class="home-card-desc">Rakiplerle canli duel yap</div>
+            </button>
+            <button class="home-card" id="nav-collection" disabled>
+                <div class="home-card-icon">🃏</div>
+                <div class="home-card-title">Koleksiyonum</div>
+                <div class="home-card-desc">Yakin zamanda...</div>
+            </button>
+            <button class="home-card" id="nav-adventures" disabled>
+                <div class="home-card-icon">🗺</div>
+                <div class="home-card-title">Maceralar</div>
+                <div class="home-card-desc">Yakin zamanda...</div>
+            </button>
+        </div>
+        <div class="lobby-footer">
+            <span>AGPLv3 — <a href="https://github.com/boramu97/yuki" target="_blank">Kaynak Kod</a></span>
+            <span>Motor: <a href="https://github.com/edo9300/ygopro-core" target="_blank">OCGCore</a> (edo9300)</span>
+        </div>
+    </div>
+
     <!-- LOBI -->
-    <div id="lobby" class="screen active">
+    <div id="lobby" class="screen">
         <h1>Yuki</h1>
         <p class="subtitle">Browser-Based Duel Game</p>
         <div class="lobby-form">
-            <input type="text" id="player-name" placeholder="Adini gir..." maxlength="20">
             <div class="lobby-buttons">
                 <button id="btn-quick-match" class="btn primary">Hizli Eslesme</button>
                 <button id="btn-create-room" class="btn">Oda Olustur</button>
@@ -21,12 +71,9 @@
                 <input type="text" id="room-code" placeholder="Oda kodu..." maxlength="8">
                 <button id="btn-join-room" class="btn">Katil</button>
             </div>
+            <button id="btn-back-home" class="btn" style="margin-top:1rem;width:100%">← Ana Sayfa</button>
         </div>
         <div id="lobby-status" class="status"></div>
-        <div class="lobby-footer">
-            <span>AGPLv3 — <a href="https://github.com/boramu97/yuki" target="_blank">Kaynak Kod</a></span>
-            <span>Motor: <a href="https://github.com/edo9300/ygopro-core" target="_blank">OCGCore</a> (edo9300)</span>
-        </div>
     </div>
 
     <!-- BEKLEME -->
@@ -132,7 +179,7 @@
     <!-- SONUC -->
     <div id="result" class="screen">
         <h2 id="result-text"></h2>
-        <button class="btn primary" style="font-size:1.1rem;padding:12px 32px" onclick="location.reload()">Lobiye Don</button>
+        <button class="btn primary" style="font-size:1.1rem;padding:12px 32px" onclick="location.reload()">Ana Sayfaya Don</button>
     </div>
 
     <script src="js/websocket.js"></script>

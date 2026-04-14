@@ -54,17 +54,30 @@ const WS = {
         this.handlers[action] = callback;
     },
 
+    // Auth metodlari
+    register(username, password) {
+        this.send({ action: "register", username, password });
+    },
+
+    login(username, password) {
+        this.send({ action: "login", username, password });
+    },
+
+    auth(token) {
+        this.send({ action: "auth", token });
+    },
+
     // Kisayol metodlari
-    createRoom(name, deck) {
-        this.send({ action: "create_room", name, deck });
+    createRoom(deck) {
+        this.send({ action: "create_room", deck });
     },
 
-    joinRoom(name, roomId, deck) {
-        this.send({ action: "join_room", name, room_id: roomId, deck });
+    joinRoom(roomId, deck) {
+        this.send({ action: "join_room", room_id: roomId, deck });
     },
 
-    quickMatch(name, deck) {
-        this.send({ action: "quick_match", name, deck });
+    quickMatch(deck) {
+        this.send({ action: "quick_match", deck });
     },
 
     sendResponse(msgType, data) {

@@ -15,6 +15,9 @@ CORE_LIB_PATH = PROJECT_ROOT / "bin" / "ocgcore.dll"
 # Kart veritabanı
 CARD_DB_PATH = PROJECT_ROOT / "data" / "cards.cdb"
 
+# Kullanıcı veritabanı
+USER_DB_PATH = PROJECT_ROOT / "data" / "users.db"
+
 # Lua script dizini
 SCRIPT_DIR = PROJECT_ROOT / "data" / "script"
 

@@ -3,27 +3,121 @@
 (function() {
     let myTeam = -1, myName = "", oppName = "Rakip", turnCount = 0;
 
-    // Lobi
+    // ===== AUTH =====
+    const authUsername = document.getElementById("auth-username");
+    const authPassword = document.getElementById("auth-password");
+    const authStatus = document.getElementById("auth-status");
+
+    function setAuthStatus(msg, isError) {
+        authStatus.textContent = msg;
+        authStatus.className = "status " + (isError ? "error" : "success");
+    }
+
+    async function ensureConnected() {
+        if (!WS.connected) {
+            await WS.connect();
+        }
+    }
+
+    document.getElementById("btn-login").onclick = async () => {
+        const u = authUsername.value.trim();
+        const p = authPassword.value;
+        if (!u || !p) { setAuthStatus("Kullanici adi ve sifre gir", true); return; }
+        try {
+            await ensureConnected();
+            WS.login(u, p);
+        } catch(e) { setAuthStatus("Sunucuya baglanilamadi!", true); }
+    };
+
+    document.getElementById("btn-register").onclick = async () => {
+        const u = authUsername.value.trim();
+        const p = authPassword.value;
+        if (!u || !p) { setAuthStatus("Kullanici adi ve sifre gir", true); return; }
+        try {
+            await ensureConnected();
+            WS.register(u, p);
+        } catch(e) { setAuthStatus("Sunucuya baglanilamadi!", true); }
+    };
+
+    // Enter ile giris yap
+    authPassword.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("btn-login").click();
+    });
+
+    WS.on("register_result", (d) => {
+        if (d.success) {
+            setAuthStatus("Kayit basarili! Giris yapabilirsin.", false);
+        } else {
+            setAuthStatus(d.message, true);
+        }
+    });
+
+    WS.on("login_result", (d) => {
+        if (d.success) {
+            myName = d.username;
+            localStorage.setItem("yuki_token", d.token);
+            localStorage.setItem("yuki_username", d.username);
+            goHome();
+        } else {
+            setAuthStatus(d.message, true);
+        }
+    });
+
+    WS.on("auth_result", (d) => {
+        if (d.success) {
+            myName = d.username;
+            goHome();
+        } else {
+            // Token gecersiz — login ekranina don
+            localStorage.removeItem("yuki_token");
+            localStorage.removeItem("yuki_username");
+            UI.showScreen("auth-screen");
+        }
+    });
+
+    // ===== ANA SAYFA =====
+    function goHome() {
+        document.getElementById("home-username").textContent = myName;
+        UI.showScreen("home-screen");
+    }
+
+    document.getElementById("nav-duel").onclick = () => {
+        UI.showScreen("lobby");
+    };
+
+    document.getElementById("btn-back-home").onclick = () => {
+        UI.showScreen("home-screen");
+    };
+
+    document.getElementById("btn-logout").onclick = () => {
+        localStorage.removeItem("yuki_token");
+        localStorage.removeItem("yuki_username");
+        myName = "";
+        if (WS.connected && WS.socket) {
+            WS.socket.close();
+            WS.connected = false;
+        }
+        UI.showScreen("auth-screen");
+    };
+
+    // ===== LOBİ =====
     document.getElementById("btn-quick-match").onclick = async () => {
-        myName = document.getElementById("player-name").value.trim() || "Duelist";
-        UI.setStatus("Baglaniliyor...");
-        try { await WS.connect(); WS.quickMatch(myName); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        UI.setStatus("Eslestiriliyor...");
+        try { await ensureConnected(); WS.quickMatch(); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("btn-create-room").onclick = async () => {
-        myName = document.getElementById("player-name").value.trim() || "Duelist";
-        UI.setStatus("Baglaniliyor...");
-        try { await WS.connect(); WS.createRoom(myName); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        UI.setStatus("Oda olusturuluyor...");
+        try { await ensureConnected(); WS.createRoom(); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("btn-join-room").onclick = async () => {
-        myName = document.getElementById("player-name").value.trim() || "Duelist";
         const rid = document.getElementById("room-code").value.trim();
         if (!rid) { UI.setStatus("Oda kodu gir!"); return; }
-        UI.setStatus("Baglaniliyor...");
-        try { await WS.connect(); WS.joinRoom(myName, rid); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        UI.setStatus("Katiliniyor...");
+        try { await ensureConnected(); WS.joinRoom(rid); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("mp-auto-pass")?.addEventListener("change",(e)=>{UI.autoPassChain=e.target.checked});
 
-    // WebSocket
+    // ===== WebSocket Events =====
     WS.on("room_created",(d)=>{document.getElementById("waiting-room-id").textContent=d.room_id;myTeam=d.team;UI.showScreen("waiting")});
     WS.on("room_joined",(d)=>{myTeam=d.team});
     WS.on("player_joined",(d)=>{oppName=d.name;UI.log(d.name+" katildi!","important")});
@@ -60,7 +154,7 @@
 
         if(name==="MSG_NEW_TURN"){
             turnCount++; Field.setTurn(turnCount);
-            UI.log(`\u2501\u2501 Tur ${turnCount} (${p(msg.player)}) \u2501\u2501`,"important");
+            UI.log(`━━ Tur ${turnCount} (${p(msg.player)}) ━━`,"important");
             UI.setGameStatus("Rakibin hamlesini bekle...");
             UI.hideMotorPanel();
         }
@@ -73,8 +167,8 @@
         else if(name==="MSG_MOVE"){
             Field.moveCard(code,msg.from||{},msg.to||{},{card_name:cname,card_atk:msg.card_atk,card_def:msg.card_def,card_type:msg.card_type});
             const to=msg.to?.location||0;
-            if(cname&&to===0x10)UI.log(`${cname} \u2192 Mezarlik`,"move",code);
-            else if(cname&&to===0x20)UI.log(`${cname} \u2192 Surgun`,"move",code);
+            if(cname&&to===0x10)UI.log(`${cname} → Mezarlik`,"move",code);
+            else if(cname&&to===0x20)UI.log(`${cname} → Surgun`,"move",code);
         }
         else if(name==="MSG_SUMMONING"||name==="MSG_SPSUMMONING"){
             Field.summonCard(msg);
@@ -109,4 +203,18 @@
         else if(name==="MSG_TOSS_COIN"){const r=(msg.results||[]).map(v=>v?"Yazi":"Tura").join(", ");UI.log(`Yazi/Tura: ${r}`)}
         else if(name==="MSG_TOSS_DICE")UI.log(`Zar: ${(msg.results||[]).join(", ")}`);
     }
+
+    // ===== OTOMATIK GİRİŞ =====
+    // Sayfa açılınca localStorage'da token varsa otomatik doğrula
+    (async function autoLogin() {
+        const token = localStorage.getItem("yuki_token");
+        if (token) {
+            try {
+                await ensureConnected();
+                WS.auth(token);
+            } catch(e) {
+                // Bağlanamadı — login ekranında kal
+            }
+        }
+    })();
 })();

@@ -36,6 +36,7 @@ import websockets
 
 from server.room import RoomManager, Player, RoomState
 from server.duel_manager import DuelManager
+from server.user_database import UserDatabase
 from server.response_builder import (
     build_idle_cmd_response,
     build_battle_cmd_response,
@@ -72,12 +73,14 @@ from server.ocg_binding import (
 # Varsayilan test destesi — Yugi Muto
 DEFAULT_DECK = YUGI_DECK
 
-# Global oda yöneticisi
+# Global yöneticiler
 room_manager = RoomManager()
+user_db = UserDatabase()
 
 # Oyuncu → Player eşleştirmesi (bağlantı bazlı)
 _connections: dict[object, Player] = {}
 _player_rooms: dict[object, str] = {}  # ws → room_id
+_auth_tokens: dict[object, str] = {}  # ws → token
 
 
 def _build_response(msg_type: int, data: dict) -> bytes:
@@ -176,9 +179,71 @@ async def handle_connection(ws):
 
             action = data.get("action")
 
+            # --- Kayıt ---
+            if action == "register":
+                username = data.get("username", "")
+                password = data.get("password", "")
+                ok, msg = user_db.register(username, password)
+                await ws.send(json.dumps({
+                    "action": "register_result",
+                    "success": ok,
+                    "message": msg,
+                }))
+                continue
+
+            # --- Giriş ---
+            if action == "login":
+                username = data.get("username", "")
+                password = data.get("password", "")
+                token, msg = user_db.login(username, password)
+                if token:
+                    _auth_tokens[ws] = token
+                    user = user_db.get_user(token)
+                    await ws.send(json.dumps({
+                        "action": "login_result",
+                        "success": True,
+                        "message": msg,
+                        "token": token,
+                        "username": user.username,
+                    }))
+                else:
+                    await ws.send(json.dumps({
+                        "action": "login_result",
+                        "success": False,
+                        "message": msg,
+                    }))
+                continue
+
+            # --- Token ile oturum doğrula ---
+            if action == "auth":
+                token = data.get("token", "")
+                user = user_db.get_user(token)
+                if user:
+                    _auth_tokens[ws] = token
+                    await ws.send(json.dumps({
+                        "action": "auth_result",
+                        "success": True,
+                        "username": user.username,
+                    }))
+                else:
+                    await ws.send(json.dumps({
+                        "action": "auth_result",
+                        "success": False,
+                    }))
+                continue
+
+            # Auth gerektiren actionlar — giriş yapmadan oda oluşturulamaz
+            if ws not in _auth_tokens:
+                await _send_error(ws, "Once giris yap")
+                continue
+
+            # Auth'lu kullanıcı adını al
+            _user = user_db.get_user(_auth_tokens[ws])
+            _username = _user.username if _user else "Player"
+
             # --- Oda Oluştur ---
             if action == "create_room":
-                name = data.get("name", "Player")
+                name = _username
                 room = room_manager.create_room()
                 player = Player(ws=ws, name=name)
                 room.add_player(player)
@@ -198,7 +263,7 @@ async def handle_connection(ws):
             # --- Odaya Katıl ---
             elif action == "join_room":
                 target_id = data.get("room_id", "")
-                name = data.get("name", "Player")
+                name = _username
                 room = room_manager.get_room(target_id)
 
                 if not room:
@@ -237,7 +302,7 @@ async def handle_connection(ws):
 
             # --- Hızlı Eşleştirme ---
             elif action == "quick_match":
-                name = data.get("name", "Player")
+                name = _username
                 deck = data.get("deck", DEFAULT_DECK)
 
                 room = room_manager.find_waiting_room()
@@ -333,6 +398,7 @@ async def handle_connection(ws):
                 if not room.players:
                     room_manager.remove_room(rid)
         _connections.pop(ws, None)
+        _auth_tokens.pop(ws, None)
 
 
 async def start_server(host: str = "0.0.0.0", ws_port: int = 8765, http_port: int = 8080):
