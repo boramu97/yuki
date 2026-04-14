@@ -124,7 +124,7 @@ def _idle_cmd(msg: dict) -> bytes:
     activatable = msg.get("activatable", [])
     spell_setable = msg.get("spell_setable", [])
     monster_setable = msg.get("monster_setable", [])
-    can_battle = msg.get("can_battle", False)
+    can_battle = msg.get("can_battle_phase", False)
 
     # 1) Spell/trap aktifle (eldeki spell'ler — güçlü hamle)
     for i, card in enumerate(activatable):
