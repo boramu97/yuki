@@ -172,6 +172,10 @@
         UI.log("Duello basladi!","important");
     });
 
+    document.getElementById("btn-surrender").onclick=()=>{
+        if(confirm("Teslim olmak istediginize emin misiniz?")) WS.surrender();
+    };
+
     WS.on("info",(d)=>{if(d.msg) handleInfo(d.msg)});
     WS.on("select",(d)=>{if(d.msg){console.log("[SELECT]",d.msg.name,"type="+d.msg.type,"player="+d.msg.player);UI.handleSelect(d.msg);}});
     WS.on("retry",()=>{UI.log("Gecersiz, tekrar sec!","damage");if(UI.currentSelect)UI.handleSelect(UI.currentSelect)});

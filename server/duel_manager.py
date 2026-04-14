@@ -497,20 +497,8 @@ class DuelManager:
         edilmiştir — temizlemeden doğrudan kullanırız.
         """
         if not self._response_event.is_set():
-            # Yanıt henüz gelmedi — bekle
-            try:
-                await asyncio.wait_for(
-                    self._response_event.wait(), timeout=120.0
-                )
-            except asyncio.TimeoutError:
-                await self.room.broadcast({
-                    "action": "duel_end",
-                    "winner": 1 - self._pending_player,
-                    "reason": "timeout",
-                })
-                self._running = False
-                self.room.state = RoomState.FINISHED
-                return None
+            # Yanıt henüz gelmedi — sınırsız bekle (surrender ile bitirilir)
+            await self._response_event.wait()
 
         # Yanıtı al ve sıfırla
         self._response_event.clear()
@@ -518,6 +506,21 @@ class DuelManager:
         self._pending_response = None
         self._pending_player = -1
         return response
+
+    async def surrender(self, player_team: int):
+        """Oyuncu teslim oldu — rakip kazanır."""
+        if not self._running:
+            return
+        self._running = False
+        winner = 1 - player_team
+        await self.room.broadcast({
+            "action": "duel_end",
+            "winner": winner,
+            "reason": "surrender",
+        })
+        self.room.state = RoomState.FINISHED
+        # Yanıt bekliyorsa kilidi aç (döngü dursun)
+        self._response_event.set()
 
     def receive_response(self, player_team: int, response: bytes):
         """Oyuncudan gelen yanıtı motora aktarmak için kaydet."""

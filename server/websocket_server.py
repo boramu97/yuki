@@ -489,6 +489,13 @@ async def handle_connection(ws):
                 response_bytes = _build_response(msg_type, response_data)
                 room.duel_manager.receive_response(player.team, response_bytes)
 
+            # --- Teslim Ol (Surrender) ---
+            elif action == "surrender":
+                if room_id and player:
+                    room = room_manager.get_room(room_id)
+                    if room and room.duel_manager:
+                        await room.duel_manager.surrender(player.team)
+
             # --- Oda Listesi ---
             elif action == "list_rooms":
                 rooms = room_manager.list_rooms()

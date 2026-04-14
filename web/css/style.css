@@ -76,6 +76,8 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .player-info.self .lp-bar-fill{background:linear-gradient(90deg,#8a6a10,var(--gold))}
 .player-info.opponent .lp-bar-fill{background:linear-gradient(90deg,#4a2a6a,var(--purple))}
 .turn-info{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;border-left:1px solid var(--gold-border);border-right:1px solid var(--gold-border)}
+.btn-surrender{background:none;border:1px solid rgba(180,60,60,0.3);color:#c47070;font-size:0.75rem;padding:2px 8px;border-radius:4px;cursor:pointer;margin-top:2px;transition:all 0.15s}
+.btn-surrender:hover{border-color:#e06060;color:#e06060;background:rgba(180,60,60,0.1)}
 #turn-counter{font-size:20px;color:var(--gold);letter-spacing:4px}
 #phase-name{font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
 .lp-hit{animation:lp-flash 0.6s ease-out}

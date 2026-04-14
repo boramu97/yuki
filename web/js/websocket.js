@@ -108,4 +108,8 @@ const WS = {
     playVsBot(bot, deck) {
         this.send({ action: "play_vs_bot", bot, deck });
     },
+
+    surrender() {
+        this.send({ action: "surrender" });
+    },
 };
