@@ -407,7 +407,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .home-card-desc{font-size:0.8rem;color:var(--text-muted);text-align:center;padding:0 16px}
 
 /* ===== MACERALAR EKRANI ===== */
-#adventures-screen,#training-screen,#duel-island-screen{align-items:center;flex-direction:column}
+#adventures-screen,#training-screen,#duel-island-screen{align-items:center;flex-direction:column;overflow-y:auto}
 .adv-header{width:100%;display:flex;align-items:center;gap:20px;padding:20px 24px;border-bottom:1px solid var(--gold-border);background:var(--bg-hud)}
 .adv-title{font-size:1.4rem;font-weight:400;color:var(--gold);letter-spacing:3px}
 .adv-subtitle{color:var(--text-dim);font-style:italic;margin-top:24px;font-size:0.95rem;letter-spacing:1px}
@@ -608,9 +608,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
     .auth-form input { font-size: 1rem; padding: 12px 14px; }
 
     /* --- ANA SAYFA --- */
-    #home-screen { padding: 16px; }
+    #home-screen { padding: 16px; overflow-y: auto; justify-content: center; }
     .home-nav { flex-direction: column; gap: 12px; width: 100%; max-width: 100%; padding: 0 16px; }
-    .home-card { padding: 18px 20px; flex-direction: row; gap: 16px; min-width: unset; width: 100%; }
+    .home-card { padding: 18px 20px; flex-direction: row; gap: 16px; min-width: unset; width: 100%; height: auto; }
     .home-card-icon { font-size: 1.8rem; }
     .home-card-title { font-size: 0.95rem; }
     .home-card-desc { font-size: 0.72rem; text-align: left; padding: 0; }
