@@ -40,7 +40,10 @@ from server.ocg_binding import (
     LOCATION_MZONE, LOCATION_SZONE,
 )
 
+import struct
 import random
+
+def _pack_i32(v): return struct.pack("<i", v)
 
 
 def ai_respond(msg_type: int, msg: dict) -> bytes:
@@ -112,8 +115,9 @@ def ai_respond(msg_type: int, msg: dict) -> bytes:
     if msg_type in (MSG_SORT_CHAIN, MSG_SORT_CARD):
         return build_sort_response([])
 
-    # Bilinmeyen — boş yanıt
-    return b"\x00\x00\x00\x00"
+    # Bilinmeyen — pas/iptal yanıtı
+    print(f"[BOT] Bilinmeyen mesaj tipi: {msg_type:#x} — fallback -1")
+    return _pack_i32(-1)
 
 
 def _idle_cmd(msg: dict) -> bytes:

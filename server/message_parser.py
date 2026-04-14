@@ -794,7 +794,8 @@ def _parse_announce_race(r: BufferReader, msg: dict):
     """MSG_ANNOUNCE_RACE: Irk ilan et."""
     msg["player"] = r.read_u8()
     msg["count"] = r.read_u8()
-    msg["available"] = r.read_u64()
+    # available: u64 (yeni OCGCore) veya u32 (eski) — remaining'e gore sec
+    msg["available"] = r.read_u64() if r.remaining >= 8 else r.read_u32()
 
 
 def _parse_announce_attrib(r: BufferReader, msg: dict):

@@ -305,7 +305,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .mp-card-stats .def-val{color:#7090c0}
 .mp-card-stats .spell-type{color:rgba(79,195,247,0.85);font-size:11px;font-weight:600}
 .mp-card-stats .trap-type{color:rgba(206,147,216,0.85);font-size:11px;font-weight:600}
-.mp-card-location{font-size:10px;color:rgba(212,200,160,0.35);margin-top:2px}
+.mp-card-location{font-size:10px;color:rgba(232,200,64,0.6);margin-top:2px;font-weight:600;letter-spacing:0.5px}
 .mp-card-buttons{display:flex;gap:0;margin-top:auto;border-top:1px solid rgba(232,200,64,0.05);flex-shrink:0}
 
 /* Grup basligi */

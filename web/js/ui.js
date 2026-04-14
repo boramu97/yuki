@@ -138,7 +138,9 @@ const UI = {
         if (locationLabel) {
             const loc = document.createElement("div");
             loc.className = "mp-card-location";
-            loc.textContent = locationLabel;
+            const locCode = card.location || 0;
+            const icon = locCode === 0x02 ? "&#x270B; " : locCode === 0x04 ? "&#x2694; " : locCode === 0x08 ? "&#x2728; " : "";
+            loc.innerHTML = icon + locationLabel;
             infoText.appendChild(loc);
         }
         body.appendChild(infoText);

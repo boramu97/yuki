@@ -250,6 +250,12 @@ class DuelManager:
                 mname = MSG_NAMES.get(msg_type, f"UNKNOWN_{msg_type}")
                 print(f"[PARSE ERROR] {mname}: {e}")
                 import traceback; traceback.print_exc()
+                # Interaktif mesajda exception → bot ise fallback yanıt üret
+                if msg_type in INTERACTIVE_MESSAGES and self.bot_team >= 0:
+                    print(f"[BOT FALLBACK] {mname} parse hatasi — fallback yanit")
+                    self._pending_player = self.bot_team
+                    self._pending_response = b"\xff\xff\xff\xff"  # -1 (pas/iptal)
+                    self._response_event.set()
 
     async def _process_single_message(self, msg_type, msg_data):
             if msg_type == MSG_RETRY:
