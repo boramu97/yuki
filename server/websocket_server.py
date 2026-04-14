@@ -192,6 +192,15 @@ def _build_response(msg_type: int, data: dict) -> bytes:
     return b"\x00\x00\x00\x00"
 
 
+def _resolve_deck(data: dict, user_id: int) -> list[int]:
+    """Client'tan deste geliyorsa onu kullan, yoksa sunucudaki aktif desteyi yükle."""
+    deck = data.get("deck")
+    if deck and len(deck) >= 40:
+        return deck
+    cards = user_db.get_active_deck_cards(user_id)
+    return cards if cards else DEFAULT_DECK
+
+
 async def _send_error(ws, message: str):
     await ws.send(json.dumps({"action": "error", "message": message}))
 
@@ -237,6 +246,7 @@ async def handle_connection(ws):
                         "message": msg,
                         "token": token,
                         "username": user.username,
+                        "active_deck_slot": user_db.get_active_deck_slot(user.user_id),
                     }))
                 else:
                     await ws.send(json.dumps({
@@ -256,6 +266,7 @@ async def handle_connection(ws):
                         "action": "auth_result",
                         "success": True,
                         "username": user.username,
+                        "active_deck_slot": user_db.get_active_deck_slot(user.user_id),
                     }))
                 else:
                     await ws.send(json.dumps({
@@ -330,6 +341,17 @@ async def handle_connection(ws):
                 }))
                 continue
 
+            # --- Aktif Deste ---
+            if action == "set_active_deck":
+                slot = data.get("slot", 0)
+                ok = user_db.set_active_deck_slot(_user.user_id, slot)
+                await ws.send(json.dumps({
+                    "action": "active_deck_set",
+                    "success": ok,
+                    "slot": slot,
+                }))
+                continue
+
             # --- Macera İlerlemesi ---
             if action == "get_adventures":
                 result = {}
@@ -350,7 +372,7 @@ async def handle_connection(ws):
             if action == "play_adventure":
                 adv_id = data.get("adventure", "")
                 stage_num = data.get("stage", 0)
-                deck = data.get("deck", DEFAULT_DECK)
+                deck = _resolve_deck(data, _user.user_id)
 
                 adv = ADVENTURES.get(adv_id)
                 if not adv or stage_num < 0 or stage_num >= len(adv["stages"]):
@@ -407,7 +429,7 @@ async def handle_connection(ws):
             # --- Bot ile Oyna (PvE) ---
             if action == "play_vs_bot":
                 name = _username
-                deck = data.get("deck", DEFAULT_DECK)
+                deck = _resolve_deck(data, _user.user_id)
                 bot_name_key = data.get("bot", None)
 
                 # Bot destesi seç
@@ -458,7 +480,7 @@ async def handle_connection(ws):
                 room_id = room.room_id
 
                 # Deste yoksa varsayılanı kullan
-                player.deck = data.get("deck", DEFAULT_DECK)
+                player.deck = _resolve_deck(data, _user.user_id)
 
                 await ws.send(json.dumps({
                     "action": "room_created",
@@ -480,7 +502,7 @@ async def handle_connection(ws):
                     continue
 
                 player = Player(ws=ws, name=name)
-                player.deck = data.get("deck", DEFAULT_DECK)
+                player.deck = _resolve_deck(data, _user.user_id)
                 room.add_player(player)
                 _connections[ws] = player
                 _player_rooms[ws] = room.room_id
@@ -509,7 +531,7 @@ async def handle_connection(ws):
             # --- Hızlı Eşleştirme ---
             elif action == "quick_match":
                 name = _username
-                deck = data.get("deck", DEFAULT_DECK)
+                deck = _resolve_deck(data, _user.user_id)
 
                 room = room_manager.find_waiting_room()
                 if room:

@@ -113,6 +113,10 @@ const WS = {
         this.send({ action: "surrender" });
     },
 
+    setActiveDeck(slot) {
+        this.send({ action: "set_active_deck", slot });
+    },
+
     getAdventures() {
         this.send({ action: "get_adventures" });
     },

@@ -71,6 +71,13 @@ class UserDatabase:
                 UNIQUE(user_id, adventure, stage)
             )
         """)
+        # Mevcut tabloya yeni kolon ekle (migration)
+        try:
+            self._conn.execute(
+                "ALTER TABLE users ADD COLUMN active_deck_slot INTEGER NOT NULL DEFAULT 0"
+            )
+        except Exception:
+            pass  # Kolon zaten var
         self._conn.commit()
 
     def _load_card_pool(self):
@@ -78,12 +85,12 @@ class UserDatabase:
         from server.decks import (
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
         )
         all_decks = [
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
         ]
         all_codes = set()
         for d in all_decks:
@@ -327,7 +334,7 @@ class UserDatabase:
         from server.decks import (
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
         )
         return {
             "Yugi Muto": sorted(set(YUGI_DECK)),
@@ -340,6 +347,7 @@ class UserDatabase:
             "Dino (Hassleberry)": sorted(set(DINO_DECK)),
             "Weevil Underwood": sorted(set(INSECT_DECK)),
             "Rex Raptor": sorted(set(REX_RAPTOR_DECK)),
+            "Pegasus (Toon)": sorted(set(PEGASUS_DECK)),
         }
 
     # --- Koleksiyon ---
@@ -350,6 +358,35 @@ class UserDatabase:
             "SELECT card_code FROM collections WHERE user_id = ?", (user_id,)
         ).fetchall()
         return [row["card_code"] for row in rows]
+
+    # --- Aktif Deste ---
+
+    def get_active_deck_slot(self, user_id: int) -> int:
+        row = self._conn.execute(
+            "SELECT active_deck_slot FROM users WHERE id=?", (user_id,)
+        ).fetchone()
+        return row["active_deck_slot"] if row else 0
+
+    def set_active_deck_slot(self, user_id: int, slot: int) -> bool:
+        if slot < 0 or slot > 2:
+            return False
+        self._conn.execute(
+            "UPDATE users SET active_deck_slot=? WHERE id=?", (slot, user_id)
+        )
+        self._conn.commit()
+        return True
+
+    def get_active_deck_cards(self, user_id: int) -> list[int]:
+        slot = self.get_active_deck_slot(user_id)
+        row = self._conn.execute(
+            "SELECT cards FROM user_decks WHERE user_id=? AND slot=?",
+            (user_id, slot),
+        ).fetchone()
+        if row:
+            cards = json.loads(row["cards"])
+            if len(cards) >= 40:
+                return cards
+        return []
 
     # --- Desteler ---
 

@@ -529,6 +529,8 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .coll-slot-tab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--gold);border-radius:1px}
 .coll-slot-tab .slot-cnt{display:block;font-size:0.6rem;margin-top:2px;opacity:0.6}
 .coll-slot-tab.ready .slot-cnt{color:#4a9a6a;opacity:1}
+.coll-slot-tab.is-active{border-bottom:2px solid #5cb85c}
+.slot-active-badge{display:inline-block;font-size:0.5rem;background:rgba(80,180,80,0.2);color:#5cb85c;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:1px;vertical-align:middle}
 .coll-deck-header{padding:10px 16px;border-bottom:1px solid var(--gold-border);display:flex;align-items:center;justify-content:space-between}
 .coll-deck-name{font-size:0.9rem;font-weight:400;color:var(--gold);letter-spacing:2px;background:transparent;border:none;border-bottom:1px solid transparent;font-family:inherit;outline:none;padding:2px 0;width:140px;transition:border-color 0.2s}
 .coll-deck-name:hover{border-bottom-color:var(--gold-border)}

@@ -10,6 +10,7 @@ const Collection = {
         { name: "Deste 3", cards: [] },
     ],
     activeSlot: 0,
+    activeDeckSlot: 0,  // Sunucudaki aktif deste slotu
     filter: "all",
     search: "",
     deckFilter: "",
@@ -214,10 +215,20 @@ const Collection = {
             const cnt = slot.cards.length;
             const active = i === this.activeSlot ? "active" : "";
             const ready = cnt === 40 ? "ready" : "";
-            return `<button class="coll-slot-tab ${active} ${ready}" onclick="Collection.switchSlot(${i})">
-                ${slot.name}<span class="slot-cnt">${cnt}/40</span>
+            const isActive = i === this.activeDeckSlot;
+            const badge = isActive ? '<span class="slot-active-badge">AKTIF</span>' : "";
+            return `<button class="coll-slot-tab ${active} ${ready} ${isActive?"is-active":""}" onclick="Collection.switchSlot(${i})">
+                ${slot.name}<span class="slot-cnt">${cnt}/40</span>${badge}
             </button>`;
         }).join("");
+    },
+
+    setAsActiveDeck() {
+        const slot = this.activeSlot;
+        if (this.deckSlots[slot].cards.length !== 40) return;
+        this.activeDeckSlot = slot;
+        WS.setActiveDeck(slot);
+        this.renderSlotTabs();
     },
 
     switchSlot(i) {
@@ -368,19 +379,16 @@ document.getElementById("coll-deck-name").addEventListener("input", () => {
     Collection.autoSave();
 });
 
-// Duelle gir butonu — secili desteyle lobiye git
+// Aktif deste yap butonu
 document.getElementById("btn-duel-with-deck").addEventListener("click", () => {
-    const dk = Collection.deck();
-    if (dk.length !== 40) return;
-    // Desteyi localStorage'a kaydet, lobi ekranina gec
-    localStorage.setItem("yuki_active_deck", JSON.stringify(dk));
-    UI.showScreen("lobby");
+    Collection.setAsActiveDeck();
 });
 
 // WS handlers
 WS.on("collection", (d) => Collection.init(d));
 WS.on("decks", (d) => Collection.loadDecks(d.decks));
 WS.on("deck_saved", (d) => { /* sessiz */ });
+WS.on("active_deck_set", (d) => { if(d.success) { Collection.activeDeckSlot = d.slot; Collection.renderSlotTabs(); } });
 WS.on("craft_result", (d) => {
     Collection.dust = d.dust;
     Collection.updateDust();

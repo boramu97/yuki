@@ -57,6 +57,7 @@
             myName = d.username;
             localStorage.setItem("yuki_token", d.token);
             localStorage.setItem("yuki_username", d.username);
+            if (d.active_deck_slot !== undefined) Collection.activeDeckSlot = d.active_deck_slot;
             goHome();
         } else {
             setAuthStatus(d.message, true);
@@ -66,6 +67,7 @@
     WS.on("auth_result", (d) => {
         if (d.success) {
             myName = d.username;
+            if (d.active_deck_slot !== undefined) Collection.activeDeckSlot = d.active_deck_slot;
             goHome();
         } else {
             // Token gecersiz — login ekranina don
@@ -134,7 +136,7 @@
             const bot = card.dataset.bot;
             try {
                 await ensureConnected();
-                WS.playVsBot(bot, getActiveDeck());
+                WS.playVsBot(bot);
             } catch(e) {
                 // bağlantı hatası
             }
@@ -155,17 +157,17 @@
     // ===== LOBİ =====
     document.getElementById("btn-quick-match").onclick = async () => {
         UI.setStatus("Eslestiriliyor...");
-        try { await ensureConnected(); WS.quickMatch(getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        try { await ensureConnected(); WS.quickMatch(); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("btn-create-room").onclick = async () => {
         UI.setStatus("Oda olusturuluyor...");
-        try { await ensureConnected(); WS.createRoom(getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        try { await ensureConnected(); WS.createRoom(); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("btn-join-room").onclick = async () => {
         const rid = document.getElementById("room-code").value.trim();
         if (!rid) { UI.setStatus("Oda kodu gir!"); return; }
         UI.setStatus("Katiliniyor...");
-        try { await ensureConnected(); WS.joinRoom(rid, getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        try { await ensureConnected(); WS.joinRoom(rid); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("mp-auto-pass")?.addEventListener("change",(e)=>{UI.autoPassChain=e.target.checked});
 
@@ -251,7 +253,7 @@
                 +(done?`<div class="stage-check">&#x2713;</div>`:"");
             if(unlocked||done){
                 el.addEventListener("click",async()=>{
-                    try{await ensureConnected();WS.playAdventure("duel_island",i,getActiveDeck());}catch(e){}
+                    try{await ensureConnected();WS.playAdventure("duel_island",i);}catch(e){}
                 });
             }
             map.appendChild(el);
