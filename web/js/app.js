@@ -97,9 +97,8 @@
         Collection.open();
     };
 
-    document.getElementById("nav-adventures").onclick = async () => {
+    document.getElementById("nav-adventures").onclick = () => {
         UI.showScreen("adventures-screen");
-        try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
     };
 
     document.getElementById("btn-back-home").onclick = () => {
@@ -108,6 +107,21 @@
 
     document.getElementById("btn-back-adventures").onclick = () => {
         UI.showScreen("home-screen");
+    };
+
+    // Macera menusunden alt ekranlara
+    document.getElementById("banner-training").onclick = () => {
+        UI.showScreen("training-screen");
+    };
+    document.getElementById("banner-duel-island").onclick = async () => {
+        UI.showScreen("duel-island-screen");
+        try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
+    };
+    document.getElementById("btn-back-training").onclick = () => {
+        UI.showScreen("adventures-screen");
+    };
+    document.getElementById("btn-back-island").onclick = () => {
+        UI.showScreen("adventures-screen");
     };
 
     document.getElementById("btn-back-collection").onclick = () => {

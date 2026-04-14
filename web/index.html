@@ -177,23 +177,37 @@
         </div>
     </div>
 
-    <!-- MACERALAR (PvE) -->
+    <!-- MACERALAR — Ana Menu -->
     <div id="adventures-screen" class="screen">
         <div class="adv-header">
             <button class="btn" id="btn-back-adventures">&larr; Ana Sayfa</button>
             <h1 class="adv-title">Maceralar</h1>
         </div>
-
-        <!-- DUELLO ADASI TURNUVASI — Harita -->
-        <div class="island-map-wrap">
-            <div class="island-map" id="island-map">
-                <img src="img/duel-island.png" alt="Duello Adasi" class="island-bg">
-                <!-- JS ile stage butonlari yerlestirilecek -->
-            </div>
+        <div class="adv-menu">
+            <button class="adv-banner" id="banner-training">
+                <div class="banner-icon">&#x2694;</div>
+                <div class="banner-text">
+                    <div class="banner-name">Antrenman</div>
+                    <div class="banner-desc">Istedigin rakibe karsi pratik yap</div>
+                </div>
+            </button>
+            <button class="adv-banner banner-island" id="banner-duel-island">
+                <img src="img/duel-island.png" alt="" class="banner-thumb">
+                <div class="banner-text">
+                    <div class="banner-name">Duello Adasi</div>
+                    <div class="banner-desc">Finale uzanan yolu tamamla!</div>
+                </div>
+            </button>
         </div>
+    </div>
 
-        <!-- SERBEST OYNAMA -->
-        <div class="adv-subtitle">Serbest Oynama</div>
+    <!-- MACERALAR — Antrenman -->
+    <div id="training-screen" class="screen">
+        <div class="adv-header">
+            <button class="btn" id="btn-back-training">&larr; Maceralar</button>
+            <h1 class="adv-title">Antrenman</h1>
+        </div>
+        <div class="adv-subtitle">Bir rakip sec ve savas!</div>
         <div class="adv-grid" id="adv-grid">
             <button class="adv-card" data-bot="Yugi">
                 <div class="adv-icon">&#x1F31F;</div>
@@ -235,6 +249,19 @@
                 <div class="adv-name">Rex Raptor</div>
                 <div class="adv-desc">Tarih oncesi yirticilar</div>
             </button>
+        </div>
+    </div>
+
+    <!-- MACERALAR — Duello Adasi -->
+    <div id="duel-island-screen" class="screen">
+        <div class="adv-header">
+            <button class="btn" id="btn-back-island">&larr; Maceralar</button>
+            <h1 class="adv-title">Duello Adasi</h1>
+        </div>
+        <div class="island-map-wrap">
+            <div class="island-map" id="island-map">
+                <img src="img/duel-island.png" alt="Duello Adasi" class="island-bg">
+            </div>
         </div>
     </div>
 
