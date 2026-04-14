@@ -165,20 +165,36 @@ def _idle_cmd(msg: dict) -> bytes:
 
 
 def _battle_cmd(msg: dict) -> bytes:
-    """Savaş Fazı kararları."""
+    """Savaş Fazı kararları — rakip sahası kontrol edilerek."""
     attackable = msg.get("attackable", [])
     activatable = msg.get("activatable", [])
+    opp_monsters = msg.get("opponent_monsters", [])
 
-    # Saldırabilecek canavarlar — ATK yüksekten başla
     if attackable:
-        best_idx = _best_atk_index(attackable)
-        return build_battle_cmd_response("attack", best_idx)
+        # Rakibin en güçlü yüz yukarı saldırı canavarını bul
+        opp_max_atk = 0
+        for m in opp_monsters:
+            pos = m.get("position", 0)
+            if pos & 0x1:  # Yüz yukarı saldırı (FACEUP_ATTACK)
+                opp_max_atk = max(opp_max_atk, m.get("atk", 0))
+
+        for i, card in enumerate(attackable):
+            my_atk = card.get("card_atk", 0) or 0
+            direct = card.get("direct_attackable", False)
+
+            # Direkt saldırı (rakipte canavar yok) — her zaman saldır
+            if direct:
+                return build_battle_cmd_response("attack", i)
+
+            # Rakipten güçlüyse saldır
+            if my_atk > opp_max_atk and my_atk > 0:
+                return build_battle_cmd_response("attack", i)
 
     # Efekt aktifleştir
     if activatable:
         return build_battle_cmd_response("activate", 0)
 
-    # Savaşı bitir
+    # Saldırmaya değmez — savaşı bitir
     return build_battle_cmd_response("end")
 
 

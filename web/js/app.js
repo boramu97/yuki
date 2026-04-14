@@ -199,35 +199,44 @@
         UI.showScreen("result");
     });
 
-    // Turnuva ilerlemesi
+    // Turnuva ilerlemesi — harita uzerinde butonlar
     WS.on("adventures",(d)=>{
-        const track=document.getElementById("tournament-track");
+        const map=document.getElementById("island-map");
         const adv=d.adventures?.duel_island;
-        if(!adv){track.innerHTML="";return;}
+        if(!adv) return;
+        // Eski butonlari temizle (img haric)
+        map.querySelectorAll(".stage").forEach(el=>el.remove());
         const completed=adv.completed||[];
         const icons=["&#x1F996;","&#x1FAB2;","&#x1F985;","&#x1F3B2;","&#x1F409;"];
         const labels=["1. Tur","2. Tur","3. Tur","4. Tur","Final"];
-        let html="";
+        // Harita uzerinde konumlar (% cinsinden — sahilden kaleye yol)
+        const positions=[
+            {top:82, left:72},  // Rex — sahil (sag alt)
+            {top:65, left:28},  // Weevil — orman/bataklik (sol)
+            {top:48, left:62},  // Mai — orta sag
+            {top:35, left:38},  // Joey — arena/daglara yakin
+            {top:14, left:50},  // Kaiba — kale (ust orta)
+        ];
         adv.stages.forEach((st,i)=>{
             const done=completed.includes(i);
             const unlocked=i===0||completed.includes(i-1);
             const cls=done?"stage done":unlocked?"stage unlocked":"stage locked";
-            html+=`<div class="${cls}" data-stage="${i}" data-adv="duel_island">`;
-            html+=`<div class="stage-icon">${icons[i]||""}</div>`;
-            html+=`<div class="stage-label">${labels[i]}</div>`;
-            html+=`<div class="stage-name">${st.bot_name}</div>`;
-            html+=`<div class="stage-reward">${st.dust} toz + ${st.cards} kart</div>`;
-            if(done) html+=`<div class="stage-check">&#x2713;</div>`;
-            html+=`</div>`;
-            if(i<adv.stages.length-1) html+=`<div class="stage-connector ${done?"done":""}"></div>`;
-        });
-        track.innerHTML=html;
-        // Click handler
-        track.querySelectorAll(".stage.unlocked, .stage.done").forEach(el=>{
-            el.addEventListener("click",async()=>{
-                const stg=parseInt(el.dataset.stage);
-                try{await ensureConnected();WS.playAdventure("duel_island",stg,getActiveDeck());}catch(e){}
-            });
+            const el=document.createElement("div");
+            el.className=cls;
+            el.dataset.stage=i;
+            el.style.top=positions[i].top+"%";
+            el.style.left=positions[i].left+"%";
+            el.innerHTML=`<div class="stage-icon">${icons[i]}</div>`
+                +`<div class="stage-label">${labels[i]}</div>`
+                +`<div class="stage-name">${st.bot_name}</div>`
+                +`<div class="stage-reward">${st.dust} toz + ${st.cards} kart</div>`
+                +(done?`<div class="stage-check">&#x2713;</div>`:"");
+            if(unlocked||done){
+                el.addEventListener("click",async()=>{
+                    try{await ensureConnected();WS.playAdventure("duel_island",i,getActiveDeck());}catch(e){}
+                });
+            }
+            map.appendChild(el);
         });
     });
 

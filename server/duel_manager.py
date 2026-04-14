@@ -25,7 +25,7 @@ from server.ocg_binding import (
     DUEL_STATUS_END, DUEL_STATUS_AWAITING, DUEL_STATUS_CONTINUE,
     MSG_WIN, MSG_RETRY, MSG_ADD_COUNTER, MSG_REMOVE_COUNTER,
     MSG_SUMMONING, MSG_SUMMONED, MSG_SPSUMMONING, MSG_SPSUMMONED,
-    MSG_FLIPSUMMONING, MSG_FLIPSUMMONED,
+    MSG_FLIPSUMMONING, MSG_FLIPSUMMONED, MSG_SELECT_BATTLECMD,
     QUERY_CODE, QUERY_ATTACK, QUERY_DEFENSE, QUERY_POSITION,
 )
 from server.card_database import CardDatabase
@@ -283,6 +283,11 @@ class DuelManager:
 
                 # Bot takımıysa AI yanıt üretir
                 if target_player == self.bot_team:
+                    # Savaş fazında rakibin sahası hakkında bilgi ekle
+                    if msg_type == MSG_SELECT_BATTLECMD:
+                        opp_team = 1 - self.bot_team
+                        msg["opponent_monsters"] = self._query_field_monsters(opp_team)
+
                     from server.ocg_binding import MSG_NAMES
                     mname = MSG_NAMES.get(msg_type, f"{msg_type:#x}")
                     print(f"[BOT] {mname} → ai_respond")
@@ -545,6 +550,41 @@ class DuelManager:
         self.room.state = RoomState.FINISHED
         # Yanıt bekliyorsa kilidi aç (döngü dursun)
         self._response_event.set()
+
+    def _query_field_monsters(self, team: int) -> list[dict]:
+        """Bir oyuncunun MZONE'undaki canavarların ATK/DEF/position bilgisini motordan sorgular."""
+        monsters = []
+        if not self._duel:
+            return monsters
+        for seq in range(7):
+            try:
+                flags = QUERY_CODE | QUERY_ATTACK | QUERY_DEFENSE | QUERY_POSITION
+                raw = self._core.query(self._duel, team, LOCATION_MZONE, seq, flags)
+                if not raw or len(raw) < 10:
+                    continue
+                code = 0; atk = 0; defense = 0; pos = 0
+                off = 0
+                while off + 2 <= len(raw):
+                    sz = _struct.unpack_from("<H", raw, off)[0]; off += 2
+                    if sz < 4: break
+                    flag = _struct.unpack_from("<I", raw, off)[0]; off += 4
+                    data_size = sz - 4
+                    if flag == QUERY_CODE and data_size >= 4:
+                        code = _struct.unpack_from("<I", raw, off)[0]
+                    elif flag == QUERY_ATTACK and data_size >= 4:
+                        atk = _struct.unpack_from("<i", raw, off)[0]
+                    elif flag == QUERY_DEFENSE and data_size >= 4:
+                        defense = _struct.unpack_from("<i", raw, off)[0]
+                    elif flag == QUERY_POSITION and data_size >= 4:
+                        pos = _struct.unpack_from("<I", raw, off)[0]
+                    elif flag == 0x80000000:
+                        break
+                    off += data_size
+                if code:
+                    monsters.append({"code": code, "atk": atk, "def": defense, "position": pos})
+            except Exception:
+                continue
+        return monsters
 
     async def _check_adventure_reward(self, winner: int) -> dict | None:
         """Macera düellosuysa ve insan kazandıysa ödül ver."""
