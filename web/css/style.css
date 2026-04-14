@@ -704,10 +704,10 @@ input,textarea{-webkit-user-select:text;user-select:text}
     .hand-area { margin-top: -5vw; position: relative; z-index: 20; }
 
     /* --- MOTOR PANEL — toggle bottom sheet --- */
-    .motor-panel { width: 100%; min-width: unset; height: 55vh; right: 0; bottom: 0;
+    .motor-panel { width: 100%; min-width: unset; height: 55vh; right: 0;
         border-radius: 12px 12px 0 0; border-left: none; border-top: 2px solid rgba(232,200,64,0.15);
-        transition: transform 0.3s ease; }
-    .motor-panel.minimized { transform: translateY(calc(100% - 44px)); }
+        transition: bottom 0.3s ease; bottom: 0; overflow: visible; }
+    .motor-panel.minimized { bottom: calc(-55vh + 44px); }
     .mp-swipe-handle { display: flex !important; align-items: center; justify-content: center;
         padding: 10px 0 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
     .mp-handle-bar { width: 50px; height: 5px; background: rgba(232,200,64,0.4); border-radius: 3px; }

@@ -57,9 +57,16 @@ const UI = {
 
     toggleMotorPanel() {
         const panel = document.getElementById("motor-panel");
-        panel.classList.toggle("minimized");
+        if (!panel) return;
+        const isMin = panel.classList.contains("minimized");
+        console.log("[MP] toggle:", isMin ? "opening" : "minimizing");
+        if (isMin) {
+            panel.classList.remove("minimized");
+        } else {
+            panel.classList.add("minimized");
+        }
         const btn = document.getElementById("mp-minimize-btn");
-        if (btn) btn.innerHTML = panel.classList.contains("minimized") ? "&#x25B2;" : "&#x25BC;";
+        if (btn) btn.innerHTML = panel.classList.contains("minimized") ? "&#9650;" : "&#9660;";
     },
 
     _addGroupHeader(label) {
