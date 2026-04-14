@@ -497,3 +497,25 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .coll-preview-overlay img{max-height:85vh;max-width:90vw;border-radius:6px;border:1px solid var(--gold-border);box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 30px var(--gold-glow);cursor:default;animation:collPrevIn 0.15s ease-out}
 .coll-preview-overlay img.locked{filter:grayscale(1) brightness(0.5)}
 @keyframes collPrevIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+
+/* Dust göstergesi */
+.coll-dust-display{font-size:0.95rem;color:var(--gold);letter-spacing:1px;margin-right:16px}
+
+/* Preview inner — kart + butonlar */
+.coll-preview-inner{display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default}
+.coll-preview-actions{display:flex;gap:8px}
+.coll-prev-btn{padding:10px 28px;border-radius:4px;font-family:inherit;font-size:0.9rem;letter-spacing:1px;cursor:pointer;transition:all 0.2s;border:1px solid}
+.coll-prev-btn.craft{background:linear-gradient(135deg,rgba(74,154,106,0.3),rgba(50,120,80,0.3));border-color:rgba(74,154,106,0.5);color:#80e0a0}
+.coll-prev-btn.craft:hover{box-shadow:0 0 15px rgba(74,154,106,0.3);color:#a0ffb8}
+.coll-prev-btn.craft:disabled{opacity:0.35;cursor:not-allowed;box-shadow:none}
+.coll-prev-btn.dis{background:linear-gradient(135deg,rgba(200,100,40,0.25),rgba(160,70,30,0.25));border-color:rgba(200,100,40,0.4);color:#e8a040}
+.coll-prev-btn.dis:hover{box-shadow:0 0 15px rgba(200,100,40,0.2);color:#ffb860}
+.coll-prev-btn.dis:disabled{opacity:0.35;cursor:not-allowed;box-shadow:none}
+
+/* Onay dialogu */
+.coll-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10001;align-items:center;justify-content:center}
+.coll-confirm-overlay.active{display:flex}
+.coll-confirm-box{background:var(--bg-hud);border:1px solid var(--gold-border);border-radius:8px;padding:28px 32px;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.coll-confirm-title{font-size:1.1rem;color:var(--gold);letter-spacing:2px;margin-bottom:16px}
+.coll-confirm-text{font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:20px}
+.coll-confirm-buttons{display:flex;gap:12px;justify-content:center}

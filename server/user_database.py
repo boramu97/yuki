@@ -39,6 +39,7 @@ class UserDatabase:
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 salt TEXT NOT NULL,
+                dust INTEGER NOT NULL DEFAULT 100,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -177,6 +178,108 @@ class UserDatabase:
     def logout(self, token: str):
         """Oturumu sonlandırır."""
         self._sessions.pop(token, None)
+
+    # --- Dust (Toz) Sistemi ---
+
+    # Tier: S (ATK>=2500), A (ATK>=1800), B (spell/trap/orta), C (ATK<1000)
+    DUST_TABLE = {
+        "S": {"disenchant": 25, "craft": 100},
+        "A": {"disenchant": 15, "craft": 60},
+        "B": {"disenchant": 8,  "craft": 30},
+        "C": {"disenchant": 3,  "craft": 10},
+    }
+
+    def card_tier(self, code: int) -> str:
+        """Kart kodundan tier hesaplar."""
+        card_db = sqlite3.connect(str(CARD_DB_PATH))
+        row = card_db.execute(
+            "SELECT type, atk FROM datas WHERE id = ?", (code,)
+        ).fetchone()
+        card_db.close()
+        if not row:
+            return "B"
+        ctype, atk = row
+        TYPE_SPELL, TYPE_TRAP = 0x2, 0x4
+        if ctype & (TYPE_SPELL | TYPE_TRAP):
+            return "B"
+        # Monster — ATK bazlı
+        if atk >= 2500:
+            return "S"
+        if atk >= 1800:
+            return "A"
+        if atk < 1000:
+            return "C"
+        return "B"
+
+    def get_dust(self, user_id: int) -> int:
+        """Kullanıcının toz miktarını döndürür."""
+        row = self._conn.execute(
+            "SELECT dust FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        return row["dust"] if row else 0
+
+    def craft_card(self, user_id: int, code: int) -> tuple[bool, str, int]:
+        """Kartı toz ile açar. (başarılı, mesaj, kalan_toz) döner."""
+        # Zaten koleksiyonda mı?
+        exists = self._conn.execute(
+            "SELECT 1 FROM collections WHERE user_id=? AND card_code=?",
+            (user_id, code),
+        ).fetchone()
+        if exists:
+            return False, "Bu kart zaten koleksiyonunda", self.get_dust(user_id)
+
+        tier = self.card_tier(code)
+        cost = self.DUST_TABLE[tier]["craft"]
+        dust = self.get_dust(user_id)
+
+        if dust < cost:
+            return False, f"Yetersiz toz ({dust}/{cost})", dust
+
+        # Tozu düş, kartı ekle
+        self._conn.execute(
+            "UPDATE users SET dust = dust - ? WHERE id = ?", (cost, user_id)
+        )
+        self._conn.execute(
+            "INSERT OR IGNORE INTO collections (user_id, card_code) VALUES (?, ?)",
+            (user_id, code),
+        )
+        self._conn.commit()
+        new_dust = self.get_dust(user_id)
+        return True, "Kart acildi", new_dust
+
+    def disenchant_card(self, user_id: int, code: int) -> tuple[bool, str, int]:
+        """Kartı bozdurur, toz kazanır. (başarılı, mesaj, kalan_toz) döner."""
+        # Koleksiyonda mı?
+        exists = self._conn.execute(
+            "SELECT 1 FROM collections WHERE user_id=? AND card_code=?",
+            (user_id, code),
+        ).fetchone()
+        if not exists:
+            return False, "Bu kart koleksiyonunda yok", self.get_dust(user_id)
+
+        # Herhangi bir destede mi?
+        decks = self._conn.execute(
+            "SELECT cards FROM user_decks WHERE user_id=?", (user_id,)
+        ).fetchall()
+        for row in decks:
+            deck_cards = json.loads(row["cards"])
+            if code in deck_cards:
+                return False, "Bu kart bir destede kullaniliyor, once desteden cikar", self.get_dust(user_id)
+
+        tier = self.card_tier(code)
+        gain = self.DUST_TABLE[tier]["disenchant"]
+
+        # Kartı sil, tozu ekle
+        self._conn.execute(
+            "DELETE FROM collections WHERE user_id=? AND card_code=?",
+            (user_id, code),
+        )
+        self._conn.execute(
+            "UPDATE users SET dust = dust + ? WHERE id = ?", (gain, user_id)
+        )
+        self._conn.commit()
+        new_dust = self.get_dust(user_id)
+        return True, f"+{gain} toz", new_dust
 
     # --- Kart Havuzu (tüm destelerden) ---
 

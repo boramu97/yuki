@@ -246,12 +246,35 @@ async def handle_connection(ws):
                 cards = user_db.get_collection(_user.user_id)
                 card_pool = user_db.get_card_pool()
                 preset_decks = user_db.get_preset_decks()
+                dust = user_db.get_dust(_user.user_id)
                 await ws.send(json.dumps({
                     "action": "collection",
                     "cards": cards,
                     "card_pool": card_pool,
                     "preset_decks": preset_decks,
+                    "dust": dust,
                 }))
+                continue
+
+            # --- Dust (Toz) ---
+            if action == "craft_card":
+                code = data.get("code", 0)
+                ok, msg, dust = user_db.craft_card(_user.user_id, code)
+                cards = user_db.get_collection(_user.user_id) if ok else None
+                resp = {"action": "craft_result", "success": ok, "message": msg, "dust": dust}
+                if cards is not None:
+                    resp["cards"] = cards
+                await ws.send(json.dumps(resp))
+                continue
+
+            if action == "disenchant_card":
+                code = data.get("code", 0)
+                ok, msg, dust = user_db.disenchant_card(_user.user_id, code)
+                cards = user_db.get_collection(_user.user_id) if ok else None
+                resp = {"action": "disenchant_result", "success": ok, "message": msg, "dust": dust}
+                if cards is not None:
+                    resp["cards"] = cards
+                await ws.send(json.dumps(resp))
                 continue
 
             # --- Desteler ---

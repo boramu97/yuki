@@ -14,8 +14,25 @@ const Collection = {
     search: "",
     deckFilter: "",
 
+    dust: 0,
+
     // Limited kartlar: max 1 kopya
     LIMITED_1: new Set([83764718, 55144522]), // Monster Reborn, Pot of Greed
+
+    // Tier sistemi
+    DUST_TABLE: {S:{dis:25,craft:100},A:{dis:15,craft:60},B:{dis:8,craft:30},C:{dis:3,craft:10}},
+
+    cardTier(card) {
+        if (!card) return "B";
+        if (card.t === "spell" || card.t === "trap") return "B";
+        if (card.a >= 2500) return "S";
+        if (card.a >= 1800) return "A";
+        if (card.a < 1000) return "C";
+        return "B";
+    },
+
+    craftCost(card) { return this.DUST_TABLE[this.cardTier(card)].craft; },
+    disCost(card) { return this.DUST_TABLE[this.cardTier(card)].dis; },
 
     IMG: (code) => `https://images.ygoprodeck.com/images/cards_small/${code}.jpg`,
     IMG_BIG: (code) => `https://images.ygoprodeck.com/images/cards/${code}.jpg`,
@@ -35,6 +52,7 @@ const Collection = {
         this.allCards = data.card_pool || [];
         this.myCards = new Set(data.cards || []);
         this.presetDecks = data.preset_decks || {};
+        this.dust = data.dust || 0;
 
         // Deste filtresi dropdown doldur
         const sel = document.getElementById("coll-deck-filter");
@@ -48,6 +66,7 @@ const Collection = {
 
         document.getElementById("coll-count").textContent =
             this.myCards.size + " / " + this.allCards.length + " kart";
+        this.updateDust();
 
         this.render();
         this.renderSlotTabs();
@@ -232,12 +251,62 @@ const Collection = {
         this.autoSave();
     },
 
+    updateDust() {
+        const el = document.getElementById("coll-dust");
+        if (el) el.textContent = this.dust;
+    },
+
     preview(code) {
+        const card = this.allCards.find(c => c.c === code);
         const owned = this.myCards.has(code);
         const overlay = document.getElementById("coll-preview-overlay");
         const img = document.getElementById("coll-preview-img");
+        const actions = document.getElementById("coll-preview-actions");
         img.src = this.IMG_BIG(code);
         img.className = owned ? "" : "locked";
+
+        if (card && !owned) {
+            // Kilitli kart — Aç butonu
+            const cost = this.craftCost(card);
+            const canAfford = this.dust >= cost;
+            actions.innerHTML = `<button class="coll-prev-btn craft" ${canAfford ? "" : "disabled"}
+                onclick="Collection.doCraft(${code})">Ac — ${cost} toz</button>`;
+        } else if (card && owned) {
+            // Sahip — Bozdur butonu
+            const gain = this.disCost(card);
+            const inDeck = this.isCardInAnyDeck(code);
+            if (inDeck) {
+                actions.innerHTML = `<button class="coll-prev-btn dis" disabled>Destede kullaniliyor</button>`;
+            } else {
+                actions.innerHTML = `<button class="coll-prev-btn dis"
+                    onclick="Collection.confirmDisenchant(${code}, '${card.n.replace(/'/g,"\\'")}', ${gain})">Bozdur — +${gain} toz</button>`;
+            }
+        } else {
+            actions.innerHTML = "";
+        }
+
+        overlay.classList.add("active");
+    },
+
+    isCardInAnyDeck(code) {
+        return this.deckSlots.some(slot => slot.cards.includes(code));
+    },
+
+    doCraft(code) {
+        WS.craftCard(code);
+        document.getElementById("coll-preview-overlay").classList.remove("active");
+    },
+
+    confirmDisenchant(code, name, gain) {
+        const overlay = document.getElementById("coll-confirm-overlay");
+        document.getElementById("coll-confirm-text").innerHTML =
+            `<strong>${name}</strong> kartini bozdurmak istedigine emin misin?<br>` +
+            `<span style="color:var(--gold)">+${gain} toz</span> kazanacaksin. Bu islem geri alinamaz.`;
+        document.getElementById("coll-confirm-yes").onclick = () => {
+            WS.disenchantCard(code);
+            overlay.classList.remove("active");
+            document.getElementById("coll-preview-overlay").classList.remove("active");
+        };
         overlay.classList.add("active");
     },
 
@@ -256,10 +325,17 @@ const Collection = {
 
 // Event listeners
 document.getElementById("coll-preview-overlay").addEventListener("click", (e) => {
-    e.currentTarget.classList.remove("active");
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove("active");
 });
 document.getElementById("coll-preview-img").addEventListener("click", (e) => {
     e.stopPropagation();
+});
+document.getElementById("coll-preview-actions").addEventListener("click", (e) => {
+    e.stopPropagation();
+});
+// Confirm dialog
+document.getElementById("coll-confirm-no").addEventListener("click", () => {
+    document.getElementById("coll-confirm-overlay").classList.remove("active");
 });
 
 document.querySelectorAll(".coll-filter").forEach(tab => {
@@ -305,3 +381,23 @@ document.getElementById("btn-duel-with-deck").addEventListener("click", () => {
 WS.on("collection", (d) => Collection.init(d));
 WS.on("decks", (d) => Collection.loadDecks(d.decks));
 WS.on("deck_saved", (d) => { /* sessiz */ });
+WS.on("craft_result", (d) => {
+    Collection.dust = d.dust;
+    Collection.updateDust();
+    if (d.success && d.cards) {
+        Collection.myCards = new Set(d.cards);
+        document.getElementById("coll-count").textContent =
+            Collection.myCards.size + " / " + Collection.allCards.length + " kart";
+        Collection.render();
+    }
+});
+WS.on("disenchant_result", (d) => {
+    Collection.dust = d.dust;
+    Collection.updateDust();
+    if (d.success && d.cards) {
+        Collection.myCards = new Set(d.cards);
+        document.getElementById("coll-count").textContent =
+            Collection.myCards.size + " / " + Collection.allCards.length + " kart";
+        Collection.render();
+    }
+});

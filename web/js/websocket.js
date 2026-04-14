@@ -96,4 +96,12 @@ const WS = {
     saveDeck(slot, name, cards) {
         this.send({ action: "save_deck", slot, name, cards });
     },
+
+    craftCard(code) {
+        this.send({ action: "craft_card", code });
+    },
+
+    disenchantCard(code) {
+        this.send({ action: "disenchant_card", code });
+    },
 };

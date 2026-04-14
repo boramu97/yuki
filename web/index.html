@@ -183,6 +183,7 @@
                 <button class="btn" id="btn-back-collection">&larr; Ana Sayfa</button>
                 <h1 class="coll-title">Koleksiyonum</h1>
             </div>
+            <span class="coll-dust-display">&#x2728; <span id="coll-dust">0</span> toz</span>
             <span class="coll-count" id="coll-count"></span>
         </div>
         <div class="coll-toolbar">
@@ -222,7 +223,22 @@
 
     <!-- Koleksiyon kart onizleme -->
     <div id="coll-preview-overlay" class="coll-preview-overlay">
-        <img id="coll-preview-img" src="">
+        <div class="coll-preview-inner">
+            <img id="coll-preview-img" src="">
+            <div id="coll-preview-actions" class="coll-preview-actions"></div>
+        </div>
+    </div>
+
+    <!-- Bozdurma onay dialogu -->
+    <div id="coll-confirm-overlay" class="coll-confirm-overlay">
+        <div class="coll-confirm-box">
+            <div class="coll-confirm-title">Emin misin?</div>
+            <div id="coll-confirm-text" class="coll-confirm-text"></div>
+            <div class="coll-confirm-buttons">
+                <button class="btn" id="coll-confirm-no">Vazgec</button>
+                <button class="btn primary" id="coll-confirm-yes">Bozdur</button>
+            </div>
+        </div>
     </div>
 
     <!-- SONUC -->
