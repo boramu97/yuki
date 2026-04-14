@@ -58,7 +58,7 @@ from server.response_builder import (
     build_rps_response,
     build_sort_response,
 )
-from server.decks import YUGI_DECK
+from server.decks import YUGI_DECK, BASTION_DECK
 from server.ocg_binding import (
     MSG_SELECT_IDLECMD, MSG_SELECT_BATTLECMD, MSG_SELECT_CHAIN,
     MSG_SELECT_EFFECTYN, MSG_SELECT_YESNO, MSG_SELECT_OPTION,
@@ -70,8 +70,8 @@ from server.ocg_binding import (
     MSG_ROCK_PAPER_SCISSORS,
 )
 
-# Varsayilan test destesi — Yugi Muto
-DEFAULT_DECK = YUGI_DECK
+# Varsayilan test destesi
+DEFAULT_DECK = BASTION_DECK
 
 # Global yöneticiler
 room_manager = RoomManager()
