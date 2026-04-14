@@ -288,6 +288,7 @@ document.addEventListener("click",(e)=>{
     e.stopPropagation();
 });
 
-// Motor panel swipe handle — tikla toggle
-document.getElementById("mp-swipe-handle")?.addEventListener("click",()=>UI.toggleMotorPanel());
+// Motor panel toggle — handle ve minimize butonu
+document.getElementById("mp-swipe-handle")?.addEventListener("click",(e)=>{e.stopPropagation();UI.toggleMotorPanel();});
+document.getElementById("mp-minimize-btn")?.addEventListener("click",(e)=>{e.stopPropagation();UI.toggleMotorPanel();});
 

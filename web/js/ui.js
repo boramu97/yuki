@@ -56,7 +56,10 @@ const UI = {
     },
 
     toggleMotorPanel() {
-        document.getElementById("motor-panel").classList.toggle("minimized");
+        const panel = document.getElementById("motor-panel");
+        panel.classList.toggle("minimized");
+        const btn = document.getElementById("mp-minimize-btn");
+        if (btn) btn.innerHTML = panel.classList.contains("minimized") ? "&#x25B2;" : "&#x25BC;";
     },
 
     _addGroupHeader(label) {
