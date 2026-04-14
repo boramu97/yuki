@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Shadow Realm v2 — Buyuk Ogeler</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
+  background: #0d0b0e;
+  color: #d4c8a0;
+}
+
+/* Mistik arka plan */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(154,106,186,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 50%, rgba(154,106,186,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(100,60,160,0.08) 0%, transparent 40%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(154,106,186,0.05) 0%, transparent 35%),
+    radial-gradient(ellipse at 80% 20%, rgba(154,106,186,0.04) 0%, transparent 30%);
+  pointer-events: none; z-index: 0;
+  animation: mist-drift 10s ease-in-out infinite alternate;
+}
+@keyframes mist-drift { 0% { opacity:.5; transform:translateX(-10px); } 100% { opacity:1; transform:translateX(10px); } }
+
+/* LAYOUT */
+.layout {
+  position: relative; width: 100%; height: 100%;
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  grid-template-columns: 1fr 38vw;
+  z-index: 1;
+}
+
+/* ===== HUD ===== */
+.hud {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: linear-gradient(180deg, rgba(13,11,14,0.97), rgba(13,11,14,0.8));
+  border-bottom: 2px solid rgba(232,200,64,0.12);
+  z-index: 10; position: relative;
+}
+.hud::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px;
+  background: repeating-linear-gradient(90deg,
+    rgba(232,200,64,0.4) 0px, rgba(232,200,64,0.4) 8px,
+    transparent 8px, transparent 16px,
+    rgba(232,200,64,0.2) 16px, rgba(232,200,64,0.2) 20px,
+    transparent 20px, transparent 28px);
+}
+.player-hud { display: flex; align-items: center; gap: 14px; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid rgba(232,200,64,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; background: rgba(232,200,64,0.05);
+}
+.opp .avatar { border-color: rgba(224,80,64,0.4); color: #e05040; }
+.self .avatar { border-color: rgba(88,196,240,0.4); color: #58c4f0; }
+.pname { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+.opp .pname { color: #e05040; }
+.self .pname { color: #58c4f0; }
+.lp-wrap { display: flex; align-items: center; gap: 8px; }
+.lp-num { font-size: 22px; font-weight: 700; color: #e8c840; font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+.lp-bar-outer { width: 150px; height: 10px; background: rgba(255,255,255,0.04); border-radius: 5px; overflow: hidden; border: 1px solid rgba(232,200,64,0.15); }
+.lp-bar-inner { height: 100%; border-radius: 5px; transition: width 0.6s; }
+.self .lp-bar-inner { background: linear-gradient(90deg, #3a8ac0, #58c4f0); width: 100%; }
+.opp .lp-bar-inner { background: linear-gradient(90deg, #b04030, #e05040); width: 62.5%; }
+.hud-center { font-size: 12px; text-transform: uppercase; letter-spacing: 3px; color: rgba(232,200,64,0.5); font-weight: 600; }
+
+/* ===== FIELD ===== */
+.field-area {
+  grid-column: 1; grid-row: 2;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 4px 12px; position: relative; overflow: hidden;
+}
+.zone-row { display: flex; gap: 0.6vw; justify-content: center; }
+.card-slot {
+  width: 7vw; height: 9.6vw; border-radius: 4px; position: relative;
+  background: rgba(20,14,30,0.5); border: 1px solid rgba(154,106,186,0.12);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.card-slot::before { content:''; position:absolute; inset:6px; border:1px solid rgba(154,106,186,0.08); border-radius:50%; pointer-events:none; }
+.card-slot::after { content:''; position:absolute; inset:14px; border:1px solid rgba(232,200,64,0.05); border-radius:50%; pointer-events:none; }
+.card-slot:hover { border-color: rgba(154,106,186,0.4); box-shadow: 0 0 16px rgba(154,106,186,0.15); }
+.card-slot.has-card { border-color: rgba(232,200,64,0.3); background: transparent; }
+.card-slot.has-card::before, .card-slot.has-card::after { display: none; }
+.card-slot.has-card img { width:100%; height:100%; object-fit:cover; border-radius:3px; display:block; }
+.card-slot .card-stats {
+  position: absolute; bottom: -1px; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 8px;
+  font-size: 11px; font-weight: 700; padding: 3px 0;
+  background: linear-gradient(180deg, rgba(13,11,14,0.7), rgba(13,11,14,0.95));
+  border-radius: 0 0 3px 3px;
+}
+.card-stats .atk { color: #c8a030; }
+.card-stats .def { color: #7090c0; }
+
+/* ===== CENTER DIVIDER — WDJAT GOZU ===== */
+.center-divider {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  padding: 10px 0; position: relative; margin: 4px 0;
+}
+.tendril { flex: 1; height: 3px; position: relative; }
+.tendril::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(154,106,186,0.5),rgba(232,200,64,0.7)); border-radius:2px; }
+.tendril.right::before { background:linear-gradient(90deg,rgba(232,200,64,0.7),rgba(154,106,186,0.5),transparent); }
+.tendril::after { content:''; position:absolute; top:-6px; left:0; right:0; height:15px; background:linear-gradient(90deg,transparent,rgba(154,106,186,0.1),rgba(232,200,64,0.08),transparent); filter:blur(6px); animation:tendril-flow 3s ease-in-out infinite; }
+@keyframes tendril-flow { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+.divider-core { display:flex; flex-direction:column; align-items:center; gap:4px; padding:0 20px; position:relative; }
+.eye-container { width:80px; height:80px; position:relative; display:flex; align-items:center; justify-content:center; }
+.eye-container::before { content:''; position:absolute; width:80px; height:80px; border:2px solid rgba(232,200,64,0.4); border-radius:50%; animation:eye-ring-pulse 3s ease-in-out infinite; }
+@keyframes eye-ring-pulse { 0%,100%{box-shadow:0 0 15px rgba(232,200,64,0.2),0 0 30px rgba(154,106,186,0.1);transform:scale(1)} 50%{box-shadow:0 0 25px rgba(232,200,64,0.4),0 0 50px rgba(154,106,186,0.2);transform:scale(1.05)} }
+.eye-container::after { content:''; position:absolute; width:62px; height:62px; border:1px solid rgba(154,106,186,0.3); border-radius:50%; animation:eye-ring-pulse 3s ease-in-out infinite reverse; }
+.eye-symbol { position:relative; z-index:2; }
+.eye-shape { width:42px; height:20px; border:3px solid #e8c840; border-radius:50%; position:relative; box-shadow:0 0 12px rgba(232,200,64,0.4); }
+.eye-pupil { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:12px; height:12px; background:radial-gradient(circle,#e8c840 30%,rgba(154,106,186,0.8) 70%,transparent); border-radius:50%; box-shadow:0 0 8px rgba(232,200,64,0.6); animation:pupil-glow 2s ease-in-out infinite; }
+@keyframes pupil-glow { 0%,100%{box-shadow:0 0 8px rgba(232,200,64,0.6)} 50%{box-shadow:0 0 16px rgba(232,200,64,0.9),0 0 32px rgba(232,200,64,0.3)} }
+.eye-tear { position:absolute; bottom:-14px; left:50%; transform:translateX(-50%); width:3px; height:14px; background:linear-gradient(180deg,#e8c840,rgba(154,106,186,0.5),transparent); border-radius:0 0 3px 3px; }
+.turn-numeral { font-size:24px; font-weight:900; color:#e8c840; text-shadow:0 0 12px rgba(232,200,64,0.5); position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:3; }
+.phase-name {
+  font-size:13px; font-weight:700; letter-spacing:4px; text-transform:uppercase;
+  background:linear-gradient(180deg,#d4c8a0,#a09070); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  text-shadow:none; margin-top:6px;
+}
+
+/* ===== EL KARTLARI — BUYUK ===== */
+.hand-area {
+  position: absolute; bottom: 0; left: 0; right: 38vw;
+  display: flex; justify-content: center; align-items: flex-end;
+  padding: 0 20px 10px; height: 13vw; z-index: 20;
+}
+.hand-cards { display: flex; position: relative; }
+.hand-card {
+  width: 8vw; height: 11vw;
+  border-radius: 5px; border: 1.5px solid rgba(232,200,64,0.25);
+  overflow: hidden; cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  margin-left: -1.5vw; box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+  position: relative;
+}
+.hand-card:first-child { margin-left: 0; }
+.hand-card:hover {
+  transform: translateY(-2.5vw) scale(1.15) rotate(0deg) !important;
+  box-shadow: 0 0 24px rgba(154,106,186,0.3), 0 0 48px rgba(154,106,186,0.1), 0 12px 32px rgba(0,0,0,0.6);
+  border-color: rgba(154,106,186,0.6); z-index: 30;
+}
+.hand-card img { width:100%; height:100%; object-fit:cover; display:block; }
+.hand-card:nth-child(1) { transform: rotate(-5deg); }
+.hand-card:nth-child(2) { transform: rotate(-2.5deg); }
+.hand-card:nth-child(3) { transform: rotate(0deg); }
+.hand-card:nth-child(4) { transform: rotate(2.5deg); }
+.hand-card:nth-child(5) { transform: rotate(5deg); }
+.hand-card:nth-child(6) { transform: rotate(7deg); }
+
+/* ===== AKSYON PANELI — BUYUK OGELER ===== */
+.action-panel {
+  grid-column: 2; grid-row: 2;
+  display: flex; flex-direction: column;
+  background: rgba(16,10,24,0.94);
+  border-left: 2px solid rgba(232,200,64,0.15);
+  overflow: hidden; position: relative;
+}
+.action-panel::before {
+  content:''; position:absolute; top:0; bottom:0; left:-2px; width:2px; z-index:2;
+  background:repeating-linear-gradient(180deg,
+    rgba(232,200,64,0.5) 0px,rgba(232,200,64,0.5) 6px,
+    transparent 6px,transparent 12px,
+    rgba(154,106,186,0.3) 12px,rgba(154,106,186,0.3) 14px,
+    transparent 14px,transparent 20px);
+}
+
+/* Panel Header */
+.panel-header {
+  padding: 16px 20px 14px; border-bottom: 1px solid rgba(232,200,64,0.1);
+  display: flex; flex-direction: column; gap: 8px;
+  background: linear-gradient(180deg, rgba(232,200,64,0.04), transparent);
+  flex-shrink: 0;
+}
+.panel-phase-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 14px; font-size: 13px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: #e8c840;
+  border: 1px solid rgba(232,200,64,0.25); border-radius: 3px;
+  background: rgba(232,200,64,0.05); width: fit-content;
+}
+.panel-phase-badge::before { content:'\25C6'; font-size:9px; color:#e8c840; animation:diamond-pulse 2s ease-in-out infinite; }
+@keyframes diamond-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.panel-question { font-size: 17px; font-weight: 600; color: #d4c8a0; line-height: 1.4; }
+
+/* Kart Listesi */
+.panel-cards { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
+.panel-cards::-webkit-scrollbar { width: 5px; }
+.panel-cards::-webkit-scrollbar-track { background: transparent; }
+.panel-cards::-webkit-scrollbar-thumb { background: rgba(232,200,64,0.2); border-radius: 3px; }
+
+.card-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 16px; transition: background 0.2s; position: relative;
+}
+.card-row + .card-row { border-top: 1px solid rgba(232,200,64,0.08); }
+.card-row:hover { background: rgba(154,106,186,0.06); }
+
+/* BUYUK THUMBNAIL */
+.card-row .thumb {
+  width: 72px; height: 100px;
+  border-radius: 4px; overflow: hidden;
+  border: 1.5px solid rgba(232,200,64,0.3);
+  flex-shrink: 0; box-shadow: 0 0 10px rgba(154,106,186,0.12);
+}
+.card-row .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+
+.card-row .info { flex: 1; min-width: 0; }
+/* BUYUK KART ADI */
+.card-row .info .card-name {
+  font-size: 16px; font-weight: 700; color: #d4c8a0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* BUYUK STAT */
+.card-row .info .card-stat {
+  font-size: 14px; margin-top: 4px; display: flex; gap: 12px;
+}
+.card-stat .atk { color: #c8a030; font-weight: 600; }
+.card-stat .def { color: #7090c0; font-weight: 600; }
+.card-row .info .card-loc {
+  font-size: 12px; color: rgba(212,200,160,0.4); margin-top: 2px;
+}
+
+.card-row .actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+
+/* BUYUK BUTONLAR */
+.btn { border: none; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: 700; transition: all 0.2s; }
+.btn-action {
+  padding: 10px 22px; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.btn-action.gold {
+  background: linear-gradient(180deg, rgba(232,200,64,0.18), rgba(232,200,64,0.08));
+  color: #e8c840; border: 1px solid rgba(232,200,64,0.35);
+}
+.btn-action.gold:hover {
+  background: linear-gradient(180deg, rgba(232,200,64,0.35), rgba(232,200,64,0.15));
+  box-shadow: 0 0 16px rgba(232,200,64,0.25);
+}
+.btn-action.purple {
+  background: linear-gradient(180deg, rgba(154,106,186,0.18), rgba(154,106,186,0.08));
+  color: #b88add; border: 1px solid rgba(154,106,186,0.35);
+}
+.btn-action.purple:hover {
+  background: linear-gradient(180deg, rgba(154,106,186,0.35), rgba(154,106,186,0.15));
+  box-shadow: 0 0 16px rgba(154,106,186,0.25);
+}
+.btn-action.dim {
+  background: rgba(255,255,255,0.03); color: rgba(212,200,160,0.45);
+  border: 1px solid rgba(212,200,160,0.1); padding: 8px 18px; font-size: 12px;
+}
+.btn-action.dim:hover { background: rgba(255,255,255,0.06); color: rgba(212,200,160,0.7); }
+
+/* Panel Footer */
+.panel-footer {
+  padding: 14px 16px; border-top: 2px solid rgba(232,200,64,0.1);
+  display: flex; flex-direction: column; gap: 10px;
+  background: linear-gradient(0deg, rgba(16,10,24,0.95), transparent);
+  flex-shrink: 0;
+}
+.panel-footer-row { display: flex; gap: 8px; }
+.btn-phase {
+  flex: 1; padding: 14px 10px; font-size: 14px;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.btn-phase.battle {
+  background: linear-gradient(180deg, rgba(232,200,64,0.14), rgba(232,200,64,0.05));
+  color: #e8c840; border: 1px solid rgba(232,200,64,0.3); border-radius: 4px;
+}
+.btn-phase.battle:hover { background: linear-gradient(180deg, rgba(232,200,64,0.28), rgba(232,200,64,0.1)); box-shadow: 0 0 20px rgba(232,200,64,0.15); }
+.btn-phase.end {
+  background: linear-gradient(180deg, rgba(224,80,64,0.14), rgba(224,80,64,0.05));
+  color: #e05040; border: 1px solid rgba(224,80,64,0.3); border-radius: 4px;
+}
+.btn-phase.end:hover { background: linear-gradient(180deg, rgba(224,80,64,0.28), rgba(224,80,64,0.1)); box-shadow: 0 0 20px rgba(224,80,64,0.15); }
+.auto-pass-row { display:flex; align-items:center; gap:8px; font-size:12px; color:rgba(212,200,160,0.4); }
+.toggle-track {
+  width:36px; height:20px; background:rgba(255,255,255,0.06); border-radius:10px;
+  position:relative; cursor:pointer; transition:background 0.3s; border:1px solid rgba(232,200,64,0.15);
+}
+.toggle-track.active { background:rgba(154,106,186,0.25); border-color:rgba(154,106,186,0.5); }
+.toggle-track::after { content:''; position:absolute; top:3px; left:3px; width:12px; height:12px; background:#d4c8a0; border-radius:50%; transition:transform 0.3s; }
+.toggle-track.active::after { transform:translateX(16px); background:#b88add; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- HUD -->
+  <div class="hud">
+    <div class="player-hud opp">
+      <div class="avatar">K</div>
+      <span class="pname">Seto Kaiba</span>
+      <div class="lp-wrap">
+        <div class="lp-bar-outer"><div class="lp-bar-inner"></div></div>
+        <span class="lp-num">5000</span>
+      </div>
+    </div>
+    <div class="hud-center">Turn III</div>
+    <div class="player-hud self">
+      <div class="lp-wrap">
+        <span class="lp-num">8000</span>
+        <div class="lp-bar-outer"><div class="lp-bar-inner"></div></div>
+      </div>
+      <span class="pname">Yugi Muto</span>
+      <div class="avatar">Y</div>
+    </div>
+  </div>
+
+  <!-- DUEL FIELD -->
+  <div class="field-area">
+    <div class="zone-row" style="margin-bottom:3px">
+      <div class="card-slot"></div>
+      <div class="card-slot has-card"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+    </div>
+    <div class="zone-row">
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg">
+        <div class="card-stats"><span class="atk">1900</span><span class="def">1000</span></div>
+      </div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+    </div>
+
+    <!-- CENTER DIVIDER -->
+    <div class="center-divider">
+      <div class="tendril"></div>
+      <div class="divider-core">
+        <div class="eye-container">
+          <div class="eye-symbol">
+            <div class="eye-shape"><div class="eye-pupil"></div></div>
+            <div class="eye-tear"></div>
+          </div>
+          <div class="turn-numeral">III</div>
+        </div>
+        <div class="phase-name">Main Phase</div>
+      </div>
+      <div class="tendril right"></div>
+    </div>
+
+    <div class="zone-row">
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg">
+        <div class="card-stats"><span class="atk">2500</span><span class="def">2100</span></div>
+      </div>
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg">
+        <div class="card-stats"><span class="atk">2300</span><span class="def">1700</span></div>
+      </div>
+      <div class="card-slot"></div>
+    </div>
+    <div class="zone-row" style="margin-top:3px">
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot has-card"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+    </div>
+  </div>
+
+  <!-- EL -->
+  <div class="hand-area">
+    <div class="hand-cards">
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/55144522.jpg"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/55144522.jpg"></div>
+    </div>
+  </div>
+
+  <!-- AKSYON PANELI -->
+  <div class="action-panel">
+    <div class="panel-header">
+      <div class="panel-phase-badge">Ana Faz</div>
+      <div class="panel-question">Bir hamle yap veya turu bitir</div>
+    </div>
+
+    <div class="panel-cards">
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg"></div>
+        <div class="info">
+          <div class="card-name">Dark Magician</div>
+          <div class="card-stat"><span class="atk">ATK 2500</span><span class="def">DEF 2100</span></div>
+          <div class="card-loc">El</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action gold">Cagir</button>
+          <button class="btn btn-action dim">Set</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg"></div>
+        <div class="info">
+          <div class="card-name">Dark Magician Girl</div>
+          <div class="card-stat"><span class="atk">ATK 2000</span><span class="def">DEF 1700</span></div>
+          <div class="card-loc">El</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action gold">Cagir</button>
+          <button class="btn btn-action dim">Set</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/55144522.jpg"></div>
+        <div class="info">
+          <div class="card-name">Pot of Greed</div>
+          <div class="card-stat"><span style="color:rgba(212,200,160,0.45)">Buyu Karti</span></div>
+          <div class="card-loc">El</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action purple">Aktifle</button>
+          <button class="btn btn-action dim">Set</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg"></div>
+        <div class="info">
+          <div class="card-name">Breaker the Magical Warrior</div>
+          <div class="card-stat"><span class="atk">ATK 1900</span><span class="def">DEF 1000</span></div>
+          <div class="card-loc">Canavar Bolgesi</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action purple">Aktifle</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg"></div>
+        <div class="info">
+          <div class="card-name">Mirror Force</div>
+          <div class="card-stat"><span style="color:rgba(212,200,160,0.45)">Tuzak Karti</span></div>
+          <div class="card-loc">El</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action dim">Set</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <div class="panel-footer-row">
+        <button class="btn btn-phase battle">Savas Fazina Gec</button>
+        <button class="btn btn-phase end">Turu Bitir</button>
+      </div>
+      <div class="auto-pass-row">
+        <div class="toggle-track active" onclick="this.classList.toggle('active')"></div>
+        <span>Otomatik Pas</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koleksiyonum — Grid Gallery</title>
+<style>
+:root {
+    --bg: #0d0b0e;
+    --bg-hud: #1a1520;
+    --gold: #e8c840;
+    --gold-border: rgba(180,140,60,0.12);
+    --gold-glow: rgba(200,160,40,0.2);
+    --purple: #9a6aba;
+    --text: #d4c8a0;
+    --text-dim: #776a50;
+    --text-muted: #5a5040;
+    --danger: #e05040;
+    --panel-bg: rgba(13,11,14,0.94);
+    --holo-cyan: rgba(88,196,240,0.12);
+    --monster: #e8a040;
+    --spell: #4a9a6a;
+    --trap: #c45a8a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 24px;
+    background: var(--bg-hud);
+    border-bottom: 1px solid var(--gold-border);
+    flex-shrink: 0;
+}
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.btn-back {
+    padding: 6px 16px;
+    border: 1px solid rgba(180,140,60,0.2);
+    border-radius: 4px;
+    background: rgba(180,140,60,0.04);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-back:hover {
+    border-color: rgba(200,170,60,0.5);
+    color: var(--text);
+}
+.header h1 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 3px;
+}
+.header-count {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+/* ===== TOOLBAR (Search + Filters + Deck selector) ===== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 24px;
+    background: var(--bg-hud);
+    border-bottom: 1px solid var(--gold-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+/* Search */
+.search-box {
+    position: relative;
+    flex: 0 0 260px;
+}
+.search-box input {
+    width: 100%;
+    padding: 7px 12px 7px 32px;
+    border: 1px solid var(--gold-border);
+    border-radius: 4px;
+    background: rgba(180,140,60,0.04);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.search-box input:focus {
+    border-color: var(--gold);
+}
+.search-box input::placeholder {
+    color: var(--text-muted);
+}
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+/* Filters */
+.filters {
+    display: flex;
+    gap: 2px;
+}
+.filter-tab {
+    padding: 7px 16px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+}
+.filter-tab:hover {
+    color: var(--text-dim);
+    background: rgba(180,140,60,0.04);
+}
+.filter-tab.active {
+    color: var(--gold);
+    border-color: var(--gold-border);
+    background: rgba(180,140,60,0.06);
+}
+.filter-tab .count {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-left: 4px;
+}
+
+/* Deck selector */
+.deck-selector {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.deck-selector label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+.deck-selector select {
+    padding: 7px 12px;
+    border: 1px solid var(--gold-border);
+    border-radius: 4px;
+    background: var(--bg-hud);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+    min-width: 180px;
+}
+.deck-selector select:focus {
+    border-color: var(--gold);
+}
+.deck-selector select option {
+    background: var(--bg-hud);
+    color: var(--text);
+}
+
+/* ===== MAIN LAYOUT ===== */
+.main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== CARD PREVIEW OVERLAY (right-click) ===== */
+.card-preview-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.card-preview-overlay.active {
+    display: flex;
+}
+.card-preview-overlay img {
+    max-height: 85vh;
+    max-width: 90vw;
+    border-radius: 6px;
+    border: 1px solid var(--gold-border);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 30px var(--gold-glow);
+    animation: previewIn 0.15s ease-out;
+    cursor: default;
+}
+.card-preview-overlay img.locked {
+    filter: grayscale(1) brightness(0.5);
+}
+@keyframes previewIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ===== COLLECTION GRID ===== */
+.collection {
+    flex: 1;
+    padding: 16px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
+}
+.collection::-webkit-scrollbar { width: 4px; }
+.collection::-webkit-scrollbar-track { background: transparent; }
+.collection::-webkit-scrollbar-thumb { background: var(--gold-border); border-radius: 2px; }
+
+/* Results info */
+.results-info {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+.results-info .highlight { color: var(--gold); }
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+    gap: 12px;
+}
+
+.card-item {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid var(--gold-border);
+    background: var(--bg-hud);
+}
+.card-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 12px var(--gold-glow);
+    border-color: rgba(180,140,60,0.3);
+}
+.card-item.in-deck {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+}
+.copy-badge {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    font-size: 0.65rem;
+    color: var(--gold);
+    background: rgba(13,11,14,0.85);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--gold);
+    z-index: 2;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+}
+
+/* Locked card (not owned) */
+.card-item.locked {
+    border-color: rgba(60,50,70,0.3);
+}
+.card-item.locked:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-color: rgba(100,80,120,0.3);
+    transform: translateY(-2px);
+}
+.card-item.locked .card-img {
+    filter: grayscale(1) brightness(0.45);
+}
+.card-item.locked:hover .card-img {
+    filter: grayscale(1) brightness(0.55);
+}
+.card-item.locked .card-name {
+    color: var(--text-muted);
+}
+.card-item.locked .lock-icon {
+    display: block;
+}
+
+.lock-icon {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    font-size: 22px;
+    color: rgba(120,100,140,0.7);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.card-img {
+    width: 100%;
+    aspect-ratio: 421/614;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.95) saturate(1.05);
+}
+.card-item:not(.locked):hover .card-img {
+    filter: brightness(1.05) saturate(1.1);
+}
+
+.card-info {
+    padding: 5px 7px 6px;
+}
+.card-name {
+    font-size: 0.68rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+.card-type-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+.card-type-dot.monster { background: var(--monster); }
+.card-type-dot.spell { background: var(--spell); }
+.card-type-dot.trap { background: var(--trap); }
+.card-type-dot.fusion { background: var(--purple); }
+
+.card-stats {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.card-stats .atk { color: var(--monster); }
+.card-stats .def { color: var(--def, #7090c0); }
+
+/* Deck badge for deck filter mode */
+.deck-badge {
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    font-size: 0.55rem;
+    padding: 1px 5px;
+    border-radius: 2px;
+    z-index: 2;
+    letter-spacing: 0.5px;
+    font-style: italic;
+}
+.deck-badge.owned {
+    background: rgba(74,154,106,0.8);
+    color: #c0f0d0;
+}
+.deck-badge.missing {
+    background: rgba(160,60,80,0.7);
+    color: #f0c0c8;
+}
+
+/* ===== DECK SIDEBAR ===== */
+.deck-sidebar {
+    width: 240px;
+    background: var(--bg-hud);
+    border-left: 1px solid var(--gold-border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* Deck slot tabs */
+.deck-slots {
+    display: flex;
+    border-bottom: 1px solid var(--gold-border);
+    flex-shrink: 0;
+}
+.deck-slot-tab {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-right: 1px solid var(--gold-border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    letter-spacing: 0.5px;
+    position: relative;
+}
+.deck-slot-tab:last-child { border-right: none; }
+.deck-slot-tab:hover {
+    background: rgba(180,140,60,0.04);
+    color: var(--text-dim);
+}
+.deck-slot-tab.active {
+    background: rgba(180,140,60,0.08);
+    color: var(--gold);
+}
+.deck-slot-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: var(--gold);
+    border-radius: 1px;
+}
+.deck-slot-tab .slot-count {
+    display: block;
+    font-size: 0.6rem;
+    margin-top: 2px;
+    opacity: 0.6;
+}
+.deck-slot-tab.ready .slot-count { color: var(--spell); opacity: 1; }
+
+.deck-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--gold-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.deck-name-input {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 2px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    font-family: inherit;
+    outline: none;
+    padding: 2px 0;
+    width: 140px;
+    transition: border-color 0.2s;
+}
+.deck-name-input:hover { border-bottom-color: var(--gold-border); }
+.deck-name-input:focus { border-bottom-color: var(--gold); }
+.deck-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.deck-count .current { color: var(--gold); }
+
+.deck-section {
+    padding: 10px 12px 6px;
+}
+.deck-section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.deck-section-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+.deck-section-title.monster::before { background: var(--monster); }
+.deck-section-title.spell::before { background: var(--spell); }
+.deck-section-title.trap::before { background: var(--trap); }
+
+.deck-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 4px;
+}
+.deck-list::-webkit-scrollbar { width: 3px; }
+.deck-list::-webkit-scrollbar-thumb { background: var(--gold-border); border-radius: 2px; }
+
+.deck-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.deck-card:hover {
+    background: rgba(180,140,60,0.06);
+}
+.deck-card img {
+    width: 28px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 2px;
+    border: 1px solid var(--gold-border);
+}
+.deck-card-name {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+.deck-card-remove {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.deck-card:hover .deck-card-remove {
+    opacity: 1;
+    color: var(--danger);
+}
+
+/* Deck footer */
+.deck-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--gold-border);
+}
+.btn-battle {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(200,100,40,0.4);
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(180,80,30,0.3), rgba(140,60,20,0.3));
+    color: #e8a040;
+    font-family: inherit;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-battle:hover {
+    box-shadow: 0 0 15px rgba(200,100,40,0.2);
+    color: #ffb860;
+}
+.btn-battle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* No results */
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* Scan-line overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(88,196,240,0.015) 3px,
+        rgba(88,196,240,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanScroll 12s linear infinite;
+}
+@keyframes scanScroll {
+    from { background-position: 0 0; }
+    to { background-position: 0 100vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <button class="btn-back">&larr; Ana Sayfa</button>
+        <h1>Koleksiyonum</h1>
+    </div>
+    <span class="header-count" id="header-count">60 kart</span>
+</div>
+
+<div class="toolbar">
+    <div class="search-box">
+        <span class="search-icon">&#x1F50D;</span>
+        <input type="text" id="search-input" placeholder="Kart ara...">
+    </div>
+
+    <div class="filters">
+        <button class="filter-tab active" data-filter="all">Tumu<span class="count" id="cnt-all"></span></button>
+        <button class="filter-tab" data-filter="monster">Canavarlar<span class="count" id="cnt-monster"></span></button>
+        <button class="filter-tab" data-filter="spell">Buyuler<span class="count" id="cnt-spell"></span></button>
+        <button class="filter-tab" data-filter="trap">Tuzaklar<span class="count" id="cnt-trap"></span></button>
+    </div>
+
+    <div class="deck-selector">
+        <label>Deste Filtresi:</label>
+        <select id="deck-filter">
+            <option value="">Tum Kartlar</option>
+        </select>
+    </div>
+</div>
+
+<div class="card-preview-overlay" id="card-preview-overlay">
+    <img id="preview-big-img" src="">
+</div>
+
+<div class="main">
+    <div class="collection">
+        <div class="results-info" id="results-info"></div>
+        <div class="card-grid" id="card-grid"></div>
+    </div>
+
+    <div class="deck-sidebar">
+        <div class="deck-slots" id="deck-slots"></div>
+        <div class="deck-header">
+            <input class="deck-name-input" id="deck-name-input" value="Deste 1" maxlength="20" spellcheck="false">
+            <span class="deck-count"><span class="current" id="deck-num">0</span>/40</span>
+        </div>
+        <div class="deck-list" id="deck-list"></div>
+        <div class="deck-footer">
+            <button class="btn-battle" id="btn-battle" disabled>Duelle Gir</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== ALL 314 CARDS IN THE SYSTEM =====
+const ALL_CARDS=[
+{c:313513,n:"Spell Gear",t:"spell",a:0,d:0,l:0},{c:984114,n:"Expressroid",t:"monster",a:400,d:1600,l:4},{c:1184620,n:"Kojikocy",t:"monster",a:1500,d:1200,l:4},{c:1784619,n:"Uraby",t:"monster",a:1500,d:800,l:4},
+{c:1953925,n:"Ancient Gear Engineer",t:"monster",a:1500,d:1500,l:5},{c:2111707,n:"XY-Dragon Cannon",t:"fusion",a:2200,d:1900,l:6},{c:2671330,n:"Hyper Hammerhead",t:"monster",a:1500,d:1200,l:4},{c:3134241,n:"Flying Kamakiri #2",t:"monster",a:1500,d:800,l:4},
+{c:3492538,n:"Insect Armor with Laser Cannon",t:"spell",a:0,d:0,l:0},{c:3897065,n:"Super Vehicroid - Stealth Union",t:"fusion",a:3600,d:3000,l:9},{c:4031928,n:"Change of Heart",t:"spell",a:0,d:0,l:0},{c:4206964,n:"Trap Hole",t:"trap",a:0,d:0,l:0},
+{c:4266839,n:"Kiseitai",t:"monster",a:300,d:800,l:2},{c:4446672,n:"Ancient Gear Explosive",t:"spell",a:0,d:0,l:0},{c:5053103,n:"Battle Ox",t:"monster",a:1700,d:1000,l:4},{c:5318639,n:"Mystical Space Typhoon",t:"spell",a:0,d:0,l:0},
+{c:5368615,n:"Steam Gyroid",t:"fusion",a:2200,d:1600,l:6},{c:5405694,n:"Black Luster Soldier",t:"monster",a:3000,d:2500,l:8},{c:6022371,n:"Water Dragon Cluster",t:"monster",a:2800,d:2600,l:10},{c:6849042,n:"Super-Ancient Dinobeast",t:"monster",a:2700,d:1400,l:8},
+{c:6890729,n:"Bonding - DHO",t:"trap",a:0,d:0,l:0},{c:6924874,n:"Harpie's Pet Baby Dragon",t:"monster",a:1200,d:600,l:4},{c:7602840,n:"UFOroid",t:"monster",a:1200,d:1200,l:6},{c:8955148,n:"Litmus Doom Ritual",t:"spell",a:0,d:0,l:0},
+{c:10035717,n:"Weapon Change",t:"spell",a:0,d:0,l:0},{c:10071456,n:"Protector of the Throne",t:"monster",a:800,d:1500,l:4},{c:10080320,n:"Jurassic World",t:"spell",a:0,d:0,l:0},{c:10202894,n:"Skull Red Bird",t:"monster",a:1550,d:1200,l:4},
+{c:10509340,n:"Ancient Gear Beast",t:"monster",a:2000,d:2000,l:6},{c:10538007,n:"Leogun",t:"monster",a:1750,d:1550,l:5},{c:11549357,n:"Gamma The Magnet Warrior",t:"monster",a:1500,d:1800,l:4},{c:11901678,n:"Black Skull Dragon",t:"fusion",a:3200,d:2500,l:9},
+{c:11925569,n:"Hunting Instinct",t:"trap",a:0,d:0,l:0},{c:12181376,n:"Triangle Ecstasy Spark",t:"spell",a:0,d:0,l:0},{c:12206212,n:"Harpie Lady Sisters",t:"monster",a:1950,d:2100,l:6},{c:12580477,n:"Raigeki",t:"spell",a:0,d:0,l:0},
+{c:12652643,n:"Ultimate Ancient Gear Golem",t:"fusion",a:4400,d:3400,l:10},{c:13069066,n:"Sword Arm of Dragon",t:"monster",a:1750,d:2030,l:6},{c:13235258,n:"Corrosive Scales",t:"trap",a:0,d:0,l:0},{c:13839120,n:"Yellow Gadget",t:"monster",a:1200,d:1200,l:4},
+{c:14141448,n:"Great Moth",t:"monster",a:2600,d:2500,l:8},{c:14315573,n:"Negate Attack",t:"trap",a:0,d:0,l:0},{c:14457896,n:"Parasite Paranoid",t:"monster",a:500,d:300,l:2},{c:14778250,n:"The Tricky",t:"monster",a:2000,d:1200,l:5},
+{c:14898066,n:"Vorse Raider",t:"monster",a:1900,d:1200,l:4},{c:14977074,n:"Garoozis",t:"monster",a:1800,d:1500,l:5},{c:15025844,n:"Mystical Elf",t:"monster",a:800,d:2000,l:4},{c:15480588,n:"Armored Lizard",t:"monster",a:1500,d:1200,l:4},
+{c:15894048,n:"Ultimate Tyranno",t:"monster",a:3000,d:2200,l:8},{c:15981690,n:"Carboneddon",t:"monster",a:800,d:600,l:3},{c:16114248,n:"Pair Cycroid",t:"fusion",a:1600,d:1200,l:5},{c:16507828,n:"Bracchio-raidus",t:"fusion",a:2200,d:2000,l:6},
+{c:17375316,n:"Confiscation",t:"spell",a:0,d:0,l:0},{c:17444133,n:"Kaiser Sea Horse",t:"monster",a:1700,d:1650,l:4},{c:17985575,n:"Lord of D.",t:"monster",a:1200,d:1100,l:4},{c:18144506,n:"Harpie's Feather Duster",t:"spell",a:0,d:0,l:0},
+{c:18246479,n:"Battle Steer",t:"monster",a:1800,d:1300,l:5},{c:18325492,n:"Gyroid",t:"monster",a:1000,d:1000,l:3},{c:18372968,n:"Razor Lizard",t:"monster",a:1500,d:300,l:3},{c:18807108,n:"Spellbinding Circle",t:"trap",a:0,d:0,l:0},
+{c:19337371,n:"Hysteric Sign",t:"spell",a:0,d:0,l:0},{c:19613556,n:"Heavy Storm",t:"spell",a:0,d:0,l:0},{c:20394040,n:"Lava Battleguard",t:"monster",a:1550,d:1800,l:5},{c:22359980,n:"Mirror Wall",t:"trap",a:0,d:0,l:0},
+{c:22431243,n:"Ultra Evolution Pill",t:"spell",a:0,d:0,l:0},{c:22587018,n:"Hydrogeddon",t:"monster",a:1600,d:1000,l:4},{c:22991179,n:"Insect Neglect",t:"spell",a:0,d:0,l:0},{c:23171610,n:"Limiter Removal",t:"spell",a:0,d:0,l:0},
+{c:23265313,n:"Cost Down",t:"spell",a:0,d:0,l:0},{c:23299957,n:"Vehicroid Connection Zone",t:"spell",a:0,d:0,l:0},{c:23424603,n:"Wasteland",t:"spell",a:0,d:0,l:0},{c:23615409,n:"Insect Barrier",t:"spell",a:0,d:0,l:0},
+{c:23869735,n:"Fossil Excavation",t:"trap",a:0,d:0,l:0},{c:23995346,n:"Blue-Eyes Ultimate Dragon",t:"fusion",a:4500,d:3800,l:12},{c:24094653,n:"Polymerization",t:"spell",a:0,d:0,l:0},{c:24096228,n:"Double Spell",t:"spell",a:0,d:0,l:0},
+{c:24311595,n:"Rescueroid",t:"monster",a:1600,d:1800,l:6},{c:24431911,n:"Tellusion the Magna Warrior",t:"monster",a:2500,d:2500,l:8},{c:24611934,n:"Ryu-Kishin Powered",t:"monster",a:1600,d:1200,l:4},{c:24874630,n:"Fiend's Sanctuary",t:"spell",a:0,d:0,l:0},
+{c:25652259,n:"Queen's Knight",t:"monster",a:1500,d:1600,l:4},{c:26185991,n:"Pinch Hopper",t:"monster",a:1000,d:1200,l:4},{c:26376390,n:"Copycat",t:"monster",a:0,d:0,l:1},{c:26378150,n:"Rude Kaiser",t:"monster",a:1800,d:1600,l:5},
+{c:26932788,n:"Javelin Beetle",t:"monster",a:2450,d:2550,l:8},{c:27911549,n:"Parasite Paracide",t:"monster",a:500,d:300,l:2},{c:28378427,n:"Damage Condenser",t:"trap",a:0,d:0,l:0},{c:28553439,n:"Magical Dimension",t:"spell",a:0,d:0,l:0},
+{c:28596933,n:"A Wingbeat of Giant Dragon",t:"spell",a:0,d:0,l:0},{c:29401950,n:"Bottomless Trap Hole",t:"trap",a:0,d:0,l:0},{c:30435145,n:"Ancient Gear Factory",t:"spell",a:0,d:0,l:0},{c:30532390,n:"Sky Scout",t:"monster",a:1800,d:600,l:4},
+{c:30683373,n:"Shield Crush",t:"spell",a:0,d:0,l:0},{c:31557782,n:"Ancient Gear",t:"monster",a:100,d:800,l:2},{c:31764353,n:"Familiar-Possessed - Wynn",t:"monster",a:1850,d:1500,l:4},{c:31786629,n:"Thunder Dragon",t:"monster",a:1600,d:1500,l:5},
+{c:32268901,n:"Salamandra",t:"spell",a:0,d:0,l:0},{c:32752319,n:"UFOroid Fighter",t:"fusion",a:0,d:0,l:10},{c:34100324,n:"Harpie Girl",t:"monster",a:500,d:500,l:2},{c:34460851,n:"Flame Manipulator",t:"monster",a:900,d:1000,l:3},
+{c:34710660,n:"Electromagnetic Turtle",t:"monster",a:0,d:1800,l:4},{c:34959756,n:"Living Fossil",t:"spell",a:0,d:0,l:0},{c:36042004,n:"Babycerasaurus",t:"monster",a:500,d:500,l:2},{c:36256625,n:"Super Vehicroid Jumbo Drill",t:"fusion",a:3000,d:2000,l:8},
+{c:36261276,n:"Interdimensional Matter Transporter",t:"trap",a:0,d:0,l:0},{c:36378213,n:"Ambulanceroid",t:"monster",a:300,d:1200,l:3},{c:37265642,n:"Sabersaurus",t:"monster",a:1900,d:500,l:4},{c:37390589,n:"Kunai with Chain",t:"trap",a:0,d:0,l:0},
+{c:37457534,n:"Ancient Gear Tank",t:"spell",a:0,d:0,l:0},{c:37630732,n:"Power Bond",t:"spell",a:0,d:0,l:0},{c:37957847,n:"Insect Princess",t:"monster",a:1900,d:1200,l:6},{c:38033121,n:"Dark Magician Girl",t:"monster",a:2000,d:1700,l:6},
+{c:38179121,n:"Double Evolution Pill",t:"spell",a:0,d:0,l:0},{c:38289717,n:"Crawling Dragon #2",t:"monster",a:1600,d:1200,l:4},{c:38479725,n:"The Trojan Horse",t:"monster",a:1600,d:1200,l:4},{c:38670435,n:"Black Tyranno",t:"monster",a:2600,d:1800,l:7},
+{c:39041729,n:"Spacetime Transcendence",t:"spell",a:0,d:0,l:0},{c:39238953,n:"Lullaby of Obedience",t:"spell",a:0,d:0,l:0},{c:39256679,n:"Beta The Magnet Warrior",t:"monster",a:1700,d:1600,l:4},{c:39303359,n:"Ancient Gear Knight",t:"monster",a:1800,d:500,l:4},
+{c:39396763,n:"Dyna Base",t:"monster",a:0,d:2100,l:4},{c:39507162,n:"Blade Knight",t:"monster",a:1600,d:1000,l:4},{c:39892082,n:"Balloon Lizard",t:"monster",a:500,d:1900,l:4},{c:40240595,n:"Cocoon of Evolution",t:"monster",a:0,d:2000,l:3},
+{c:40453765,n:"Swamp Battleguard",t:"monster",a:1800,d:1500,l:5},{c:40640057,n:"Kuriboh",t:"monster",a:300,d:200,l:1},{c:40830387,n:"Ancient Gear Fist",t:"spell",a:0,d:0,l:0},{c:41172955,n:"Green Gadget",t:"monster",a:1400,d:600,l:4},
+{c:41182875,n:"Javelin Beetle Pact",t:"spell",a:0,d:0,l:0},{c:41218256,n:"Claw Reacher",t:"monster",a:1000,d:800,l:3},{c:41386308,n:"Mathematician",t:"monster",a:1500,d:500,l:3},{c:41396436,n:"Blue-Winged Crown",t:"monster",a:1600,d:1200,l:4},
+{c:41456841,n:"Metamorphosed Insect Queen",t:"monster",a:2800,d:2400,l:7},{c:41462083,n:"Thousand Dragon",t:"fusion",a:2400,d:2000,l:7},{c:41753322,n:"Sauropod Brachion",t:"monster",a:1500,d:3000,l:8},{c:42175079,n:"Volcanic Eruption",t:"trap",a:0,d:0,l:0},
+{c:42534368,n:"Silent Doom",t:"spell",a:0,d:0,l:0},{c:42664989,n:"Card of Sanctity",t:"spell",a:0,d:0,l:0},{c:43017476,n:"Duoterion",t:"monster",a:2000,d:1400,l:5},{c:43697559,n:"Jetroid",t:"monster",a:1200,d:1800,l:4},
+{c:43973174,n:"The Flute of Summoning Dragon",t:"spell",a:0,d:0,l:0},{c:44095762,n:"Mirror Force",t:"trap",a:0,d:0,l:0},{c:44287299,n:"Masaki the Legendary Swordsman",t:"monster",a:1100,d:1100,l:4},{c:44729197,n:"Steamroid",t:"monster",a:1800,d:1800,l:4},
+{c:44839512,n:"Conduction Warrior Linear Magnum Plus Minus",t:"monster",a:2700,d:1300,l:7},{c:45141013,n:"Heat Wave",t:"spell",a:0,d:0,l:0},{c:45141844,n:"Old Vindictive Magician",t:"monster",a:450,d:600,l:2},{c:45231177,n:"Flame Swordsman",t:"fusion",a:1800,d:1600,l:5},
+{c:45547649,n:"Birdface",t:"monster",a:1600,d:1600,l:4},{c:45778932,n:"Rising Air Current",t:"spell",a:0,d:0,l:0},{c:45894482,n:"Gilasaurus",t:"monster",a:1400,d:400,l:3},{c:45898858,n:"Bonding - H2O",t:"spell",a:0,d:0,l:0},
+{c:46986414,n:"Dark Magician",t:"monster",a:2500,d:2100,l:7},{c:47247792,n:"Conduction Warrior Plasma Magnum",t:"fusion",a:2300,d:2800,l:7},{c:47325505,n:"Fossil Dig",t:"spell",a:0,d:0,l:0},{c:48305365,n:"Axe Raider",t:"monster",a:1700,d:1150,l:4},
+{c:48579379,n:"Perfectly Ultimate Great Moth",t:"monster",a:3500,d:3000,l:8},{c:48948935,n:"Masked Beast Des Gardius",t:"monster",a:3300,d:2500,l:8},{c:49003308,n:"Gagagigo",t:"monster",a:1850,d:1000,l:4},{c:49417509,n:"Wolf",t:"monster",a:1200,d:800,l:3},
+{c:49791927,n:"Tiger Axe",t:"monster",a:1300,d:1100,l:4},{c:50005633,n:"Swordstalker",t:"monster",a:2000,d:1600,l:6},{c:50834074,n:"Kaitoptera",t:"monster",a:1400,d:1000,l:4},{c:50896944,n:"Black Brachios",t:"monster",a:1800,d:1100,l:4},
+{c:50933533,n:"Ancient Gear Gadjiltron Dragon",t:"monster",a:3000,d:2000,l:8},{c:51826619,n:"Magnet Warrior Sigma Plus",t:"monster",a:1800,d:1500,l:4},{c:51828629,n:"Giltia the D. Knight",t:"fusion",a:1850,d:1500,l:5},{c:52040216,n:"Harpie's Pet Dragon",t:"monster",a:2000,d:2500,l:7},
+{c:52077741,n:"Obnoxious Celtic Guard",t:"monster",a:1400,d:1200,l:4},{c:52097679,n:"Shield & Sword",t:"spell",a:0,d:0,l:0},{c:52319752,n:"Black Veloci",t:"monster",a:1800,d:300,l:4},{c:52503575,n:"Final Attack Orders",t:"trap",a:0,d:0,l:0},
+{c:52684508,n:"Inferno Fire Blast",t:"spell",a:0,d:0,l:0},{c:52824910,n:"Kaiser Glider",t:"monster",a:2400,d:2200,l:6},{c:53046408,n:"Emergency Provisions",t:"spell",a:0,d:0,l:0},{c:53129443,n:"Dark Hole",t:"spell",a:0,d:0,l:0},
+{c:53239672,n:"Spirit Barrier",t:"trap",a:0,d:0,l:0},{c:54541900,n:"Karbonala Warrior",t:"fusion",a:1500,d:1200,l:4},{c:54591086,n:"Virus Cannon",t:"trap",a:0,d:0,l:0},{c:54752875,n:"Twin-Headed Thunder Dragon",t:"fusion",a:2800,d:2100,l:7},
+{c:55144522,n:"Pot of Greed",t:"spell",a:0,d:0,l:0},{c:55321970,n:"Gust Fan",t:"spell",a:0,d:0,l:0},{c:55349196,n:"Double-Headed Dino King Rex",t:"monster",a:1600,d:1200,l:6},{c:55550921,n:"Battle Warrior",t:"monster",a:700,d:1000,l:3},
+{c:55713623,n:"Shrink",t:"spell",a:0,d:0,l:0},{c:55761792,n:"Black Luster Ritual",t:"spell",a:0,d:0,l:0},{c:56051648,n:"Spider Egg",t:"trap",a:0,d:0,l:0},{c:56094445,n:"Ancient Gear Soldier",t:"monster",a:1300,d:1300,l:4},
+{c:56342351,n:"M-Warrior #1",t:"monster",a:1000,d:500,l:3},{c:56769674,n:"DNA Transplant",t:"trap",a:0,d:0,l:0},{c:57728570,n:"Crush Card Virus",t:"trap",a:0,d:0,l:0},{c:58071123,n:"Oxygeddon",t:"monster",a:1800,d:800,l:4},
+{c:58192742,n:"Petit Moth",t:"monster",a:300,d:200,l:1},{c:58272005,n:"Survival of the Fittest",t:"trap",a:0,d:0,l:0},{c:58419204,n:"Survival Instinct",t:"trap",a:0,d:0,l:0},{c:58641905,n:"Ring of Defense",t:"spell",a:0,d:0,l:0},
+{c:58851034,n:"Cursed Seal of the Forbidden Spell",t:"trap",a:0,d:0,l:0},{c:59750328,n:"Card of Demise",t:"spell",a:0,d:0,l:0},{c:59811955,n:"Ancient Gear Workshop",t:"spell",a:0,d:0,l:0},{c:60082869,n:"Dust Tornado",t:"trap",a:0,d:0,l:0},
+{c:60306104,n:"No Entry!!",t:"trap",a:0,d:0,l:0},{c:60953949,n:"Ancient Gear Box",t:"monster",a:500,d:2000,l:4},{c:61538782,n:"Truckroid",t:"monster",a:1000,d:2000,l:4},{c:61705417,n:"Graverobber",t:"trap",a:0,d:0,l:0},
+{c:62279055,n:"Magic Cylinder",t:"trap",a:0,d:0,l:0},{c:62397231,n:"Hyozanryu",t:"monster",a:2100,d:2800,l:7},{c:62651957,n:"X-Head Cannon",t:"monster",a:1800,d:1500,l:4},{c:63102017,n:"Stop Defense",t:"spell",a:0,d:0,l:0},
+{c:63224564,n:"Cyber Shield",t:"spell",a:0,d:0,l:0},{c:63259351,n:"Miracle Jurassic Egg",t:"monster",a:0,d:2000,l:4},{c:63391643,n:"Thousand Knives",t:"spell",a:0,d:0,l:0},{c:63432835,n:"Stone Armadiller",t:"monster",a:800,d:1200,l:3},
+{c:64500000,n:"Z-Metal Tank",t:"monster",a:1500,d:1300,l:4},{c:64788463,n:"King's Knight",t:"monster",a:1600,d:1400,l:4},{c:65240384,n:"Big Shield Gardna",t:"monster",a:100,d:2600,l:4},{c:65287621,n:"Dark Driceratops",t:"monster",a:2400,d:1500,l:6},
+{c:65430834,n:"Jurassic Impact",t:"trap",a:0,d:0,l:0},{c:65514302,n:"Magnet Bonding",t:"spell",a:0,d:0,l:0},{c:65622692,n:"Y-Dragon Head",t:"monster",a:1500,d:1600,l:4},{c:65810489,n:"Statue of the Wicked",t:"trap",a:0,d:0,l:0},
+{c:66602787,n:"Saggi the Dark Clown",t:"monster",a:600,d:1500,l:3},{c:67724379,n:"Koumori Dragon",t:"monster",a:1500,d:1200,l:4},{c:68005187,n:"Soul Exchange",t:"spell",a:0,d:0,l:0},{c:68540058,n:"Metalmorph",t:"trap",a:0,d:0,l:0},
+{c:68815132,n:"Harpie Dancer",t:"monster",a:1200,d:1000,l:4},{c:68846917,n:"Rock Ogre Grotto #1",t:"monster",a:800,d:1200,l:3},{c:70781052,n:"Summoned Skull",t:"monster",a:2500,d:1200,l:6},{c:70828912,n:"Premature Burial",t:"spell",a:0,d:0,l:0},
+{c:71218746,n:"Drillroid",t:"monster",a:1600,d:1600,l:4},{c:71413901,n:"Breaker the Magical Warrior",t:"monster",a:1600,d:1000,l:4},{c:71625222,n:"Time Wizard",t:"monster",a:500,d:400,l:2},{c:72302403,n:"Swords of Revealing Light",t:"spell",a:0,d:0,l:0},
+{c:72566043,n:"Litmus Doom Swordsman",t:"monster",a:0,d:0,l:8},{c:73481154,n:"Destroyer Golem",t:"monster",a:1500,d:1000,l:4},{c:73752131,n:"Skilled Dark Magician",t:"monster",a:1900,d:1700,l:4},{c:74677422,n:"Red-Eyes Black Dragon",t:"monster",a:2400,d:2000,l:7},
+{c:74701381,n:"DNA Surgery",t:"trap",a:0,d:0,l:0},{c:74848038,n:"Monster Reincarnation",t:"spell",a:0,d:0,l:0},{c:75064463,n:"Harpie Queen",t:"monster",a:1900,d:1200,l:4},{c:75347539,n:"Valkyrion the Magna Warrior",t:"monster",a:3500,d:3850,l:8},
+{c:75390004,n:"Megazowler",t:"monster",a:1800,d:2000,l:6},{c:75582395,n:"Faith Bird",t:"monster",a:1500,d:1100,l:4},{c:75780818,n:"Dyna Tank",t:"fusion",a:0,d:2100,l:7},{c:75782277,n:"Harpies' Hunting Ground",t:"spell",a:0,d:0,l:0},
+{c:75902998,n:"Trap Hole of Spikes",t:"trap",a:0,d:0,l:0},{c:76812113,n:"Harpie Lady",t:"monster",a:1300,d:1400,l:4},{c:77414722,n:"Magic Jammer",t:"trap",a:0,d:0,l:0},{c:77491079,n:"Gale Lizard",t:"monster",a:1400,d:700,l:4},
+{c:77778835,n:"Hysteric Party",t:"trap",a:0,d:0,l:0},{c:78193831,n:"Buster Blader",t:"monster",a:2600,d:2300,l:7},{c:79106360,n:"Morphing Jar #2",t:"monster",a:800,d:700,l:3},{c:79402185,n:"Bonding - D2O",t:"spell",a:0,d:0,l:0},
+{c:79409334,n:"Black Stego",t:"monster",a:1200,d:2000,l:4},{c:79569173,n:"Seismic Shockwave",t:"trap",a:0,d:0,l:0},{c:79571449,n:"Graceful Charity",t:"spell",a:0,d:0,l:0},{c:79870141,n:"Mad Sword Beast",t:"monster",a:1400,d:1200,l:4},
+{c:80045583,n:"Ancient Gear Cannon",t:"monster",a:500,d:500,l:2},{c:80186010,n:"Destroyersaurus",t:"monster",a:1800,d:1100,l:4},{c:80280944,n:"Giant Rex",t:"monster",a:2000,d:1200,l:4},{c:80316585,n:"Cyber Harpie Lady",t:"monster",a:1800,d:1300,l:4},
+{c:80402389,n:"Verdant Sanctuary",t:"spell",a:0,d:0,l:0},{c:81743801,n:"Mighty Dino King Rex",t:"monster",a:3200,d:1200,l:9},{c:82828051,n:"Earthquake",t:"spell",a:0,d:0,l:0},{c:82946847,n:"Petiteranodon",t:"monster",a:500,d:500,l:2},
+{c:83104731,n:"Ancient Gear Golem",t:"monster",a:3000,d:3000,l:8},{c:83133491,n:"Zero Gravity",t:"trap",a:0,d:0,l:0},{c:83235263,n:"Tyranno Infinity",t:"monster",a:0,d:0,l:4},{c:83555666,n:"Ring of Destruction",t:"trap",a:0,d:0,l:0},
+{c:83682725,n:"Tail Swipe",t:"spell",a:0,d:0,l:0},{c:83764718,n:"Monster Reborn",t:"spell",a:0,d:0,l:0},{c:84808313,n:"Big Evolution Pill",t:"spell",a:0,d:0,l:0},{c:84834865,n:"Flying Kamakiri #1",t:"monster",a:1400,d:900,l:4},
+{c:85066822,n:"Water Dragon",t:"monster",a:2800,d:2600,l:8},{c:85520851,n:"Super Conductor Tyranno",t:"monster",a:3300,d:1400,l:8},{c:86239173,n:"Horned Saurus",t:"fusion",a:2000,d:1800,l:6},{c:86281779,n:"Gadget Soldier",t:"monster",a:1800,d:2000,l:6},
+{c:86289475,n:"Magnet Warrior Omega Plus",t:"monster",a:800,d:1900,l:4},{c:86308219,n:"Harpie Lady Phoenix Formation",t:"spell",a:0,d:0,l:0},{c:86321248,n:"Ancient Gear Gadjiltron Chimera",t:"monster",a:2300,d:1300,l:6},{c:86445415,n:"Red Gadget",t:"monster",a:1300,d:1500,l:4},
+{c:86871614,n:"Cloning",t:"trap",a:0,d:0,l:0},{c:87796900,n:"Winged Dragon, Guardian of the Fortress #1",t:"monster",a:1400,d:1200,l:4},{c:87814728,n:"Magnet Warrior Sigma Minus",t:"monster",a:1500,d:1800,l:4},{c:88819587,n:"Baby Dragon",t:"monster",a:1200,d:700,l:3},
+{c:88979991,n:"Killer Needle",t:"monster",a:1200,d:1000,l:4},{c:89272878,n:"Guardian of the Labyrinth",t:"monster",a:1000,d:1200,l:4},{c:89631133,n:"Blue-Eyes White Dragon",t:"monster",a:3000,d:2500,l:8},{c:89904598,n:"Anthrosaurus",t:"monster",a:1000,d:850,l:3},
+{c:90219263,n:"Elegant Egotist",t:"spell",a:0,d:0,l:0},{c:90654356,n:"Black Ptera",t:"monster",a:1000,d:500,l:3},{c:90876561,n:"Jack's Knight",t:"monster",a:1900,d:1000,l:5},{c:91512835,n:"Insect Queen",t:"monster",a:2200,d:2400,l:7},
+{c:91932350,n:"Harpie Lady 1",t:"monster",a:1300,d:1400,l:4},{c:91998119,n:"XYZ-Dragon Cannon",t:"fusion",a:2800,d:2600,l:8},{c:92001300,n:"Ancient Gear Castle",t:"spell",a:0,d:0,l:0},{c:92731455,n:"M-Warrior #2",t:"monster",a:500,d:1000,l:3},
+{c:92755808,n:"Element Saurus",t:"monster",a:1500,d:1200,l:4},{c:93969023,n:"Black Metal Dragon",t:"monster",a:600,d:600,l:1},{c:94119974,n:"Two-Headed King Rex",t:"monster",a:1600,d:1200,l:4},{c:94568601,n:"Tyrant Dragon",t:"monster",a:2900,d:2500,l:8},
+{c:94716515,n:"Eradicating Aerosol",t:"spell",a:0,d:0,l:0},{c:95132338,n:"Aqua Chorus",t:"trap",a:0,d:0,l:0},{c:95286165,n:"De-Fusion",t:"spell",a:0,d:0,l:0},{c:97077563,n:"Call of the Haunted",t:"trap",a:0,d:0,l:0},
+{c:97590747,n:"La Jinn the Mystical Genie of the Lamp",t:"monster",a:1800,d:1000,l:4},{c:97705809,n:"Supercharge",t:"trap",a:0,d:0,l:0},{c:98045062,n:"Enemy Controller",t:"spell",a:0,d:0,l:0},{c:98049038,n:"Stealthroid",t:"monster",a:1200,d:0,l:4},
+{c:98252586,n:"Follow Wind",t:"spell",a:0,d:0,l:0},{c:98927491,n:"Ambulance Rescueroid",t:"fusion",a:2300,d:1800,l:6},{c:99531088,n:"Jurassic Power",t:"spell",a:0,d:0,l:0},{c:99785935,n:"Alpha The Magnet Warrior",t:"monster",a:1400,d:1700,l:4},
+{c:99789342,n:"Dark Magic Curtain",t:"spell",a:0,d:0,l:0},{c:99861526,n:"Submarineroid",t:"monster",a:800,d:1800,l:4}
+];
+
+// ===== PRESET DECKS =====
+const DECKS={
+  "Yugi Muto":[4031928,5318639,5405694,11549357,14778250,15025844,18807108,24094653,25652259,28553439,34710660,38033121,39256679,40640057,42664989,44095762,45141844,46986414,52077741,55144522,55761792,62279055,63391643,64788463,65240384,67724379,70781052,71413901,72302403,73752131,74848038,75347539,78193831,79571449,83764718,87796900,90876561,99785935,99789342],
+  "Bastion Misawa":[5318639,6022371,6890729,8955148,14315573,15981690,22587018,24096228,24431911,28596933,34959756,41386308,43017476,44839512,45898858,47247792,47325505,51826619,53239672,55144522,56769674,58071123,58851034,62279055,62397231,65514302,72566043,74701381,79402185,79571449,83555666,83764718,85066822,86289475,87814728],
+  "Seto Kaiba":[2111707,5053103,14898066,17444133,17985575,23265313,23995346,24094653,24611934,24874630,31786629,36261276,39238953,39507162,42534368,43973174,48948935,50005633,52503575,52824910,54591086,54752875,55144522,55713623,57728570,58641905,59750328,62397231,62651957,63102017,64500000,65622692,66602787,68005187,83555666,83764718,86281779,86871614,89631133,91998119,97590747,98045062],
+  "Ancient Gear":[313513,1953925,4446672,5318639,10509340,12652643,13839120,17375316,19613556,23171610,24094653,28378427,30435145,31557782,37457534,38479725,39303359,40830387,41172955,50933533,55144522,56094445,59811955,60953949,65810489,70828912,79571449,80045583,83104731,83133491,83764718,86321248,86445415,92001300],
+  "Joey Wheeler":[1184620,4206964,5318639,10071456,10538007,11901678,14977074,15480588,18246479,20394040,24094653,26376390,26378150,32268901,34460851,37390589,40453765,40640057,41218256,41462083,44287299,45231177,48305365,49003308,49417509,49791927,51828629,52097679,52684508,54541900,55550921,56342351,61705417,63432835,68540058,68846917,71625222,73481154,74677422,75902998,88819587,89272878,89904598,92731455,93969023],
+  "Mai Valentine":[6924874,10202894,12181376,12206212,12580477,14315573,18144506,19337371,22359980,30532390,31764353,34100324,41396436,44095762,45547649,45778932,52040216,53129443,55321970,63224564,68815132,70828912,72302403,75064463,75582395,75782277,76812113,77414722,77778835,79106360,80316585,83555666,83764718,86308219,90219263,91932350,95132338,98252586],
+  "Syrus Truesdale":[984114,3897065,4206964,5318639,5368615,7602840,10035717,16114248,18325492,23171610,23299957,24094653,24311595,30683373,32752319,36256625,36378213,37630732,43697559,44729197,53046408,55144522,60306104,61538782,62279055,71218746,95286165,97077563,97705809,98049038,98927491,99861526],
+  "Dino (Hassleberry)":[2671330,5318639,10080320,11925569,15894048,18372968,22431243,23869735,24094653,34959756,36042004,37265642,38179121,38670435,39041729,39396763,41753322,42175079,45894482,47325505,50896944,52319752,55144522,58272005,58419204,60082869,63259351,65287621,65430834,75780818,77491079,79409334,79569173,80186010,80280944,82828051,82946847,83235263,83682725,83764718,84808313,85520851,90654356,92755808],
+  "Weevil Underwood":[3134241,3492538,4266839,13235258,14141448,14457896,22991179,23615409,26185991,26932788,27911549,37957847,40240595,41182875,41456841,48579379,56051648,58192742,74701381,80402389,83764718,84834865,88979991,91512835,94716515],
+  "Rex Raptor":[1784619,4206964,6849042,11925569,13069066,16507828,22431243,23424603,24094653,29401950,38179121,38289717,38670435,39892082,45141013,45894482,50834074,55349196,58272005,75390004,77491079,79870141,80280944,81743801,83764718,86239173,94119974,94568601,99531088],
+};
+
+// ===== SIMULATED USER COLLECTION (60 cards: 25 monster, 20 spell, 15 trap) =====
+const MY_COLLECTION = new Set([
+    // 25 Monsters
+    46986414,38033121,70781052,40640057,71413901,73752131,39256679,99785935,11549357,
+    75347539,78193831,64788463,25652259,90876561,52077741,14778250,65240384,15025844,
+    67724379,87796900,45141844,34710660,74677422,88819587,71625222,
+    // 20 Spells
+    83764718,55144522,72302403,5318639,4031928,24094653,79571449,42664989,99789342,
+    74848038,63391643,28553439,55761792,52684508,32268901,23424603,82828051,47325505,
+    12580477,53129443,
+    // 15 Traps
+    44095762,62279055,18807108,4206964,29401950,74701381,68540058,37390589,60082869,
+    83555666,97077563,75902998,11925569,58272005,57728570,
+]);
+
+// 3 deck slots — cards is an array (same code can appear up to 3 times)
+const deckSlots = [
+    { name: 'Deste 1', cards: [] },
+    { name: 'Deste 2', cards: [] },
+    { name: 'Deste 3', cards: [] },
+];
+let activeSlot = 0;
+function deck() { return deckSlots[activeSlot].cards; }
+
+// Limited cards: max 1 copy per deck
+const LIMITED_1 = new Set([83764718, 55144522]); // Monster Reborn, Pot of Greed
+
+function countInDeck(code) {
+    return deck().filter(c => c === code).length;
+}
+function maxCopies(code) {
+    return LIMITED_1.has(code) ? 1 : 3;
+}
+
+const IMG = code => `https://images.ygoprodeck.com/images/cards_small/${code}.jpg`;
+
+let activeFilter = 'all';
+let searchQuery = '';
+let deckFilter = '';
+
+function isMonsterLike(t) { return t === 'monster' || t === 'fusion'; }
+
+function getFilteredCards() {
+    let cards = ALL_CARDS;
+
+    // Deck filter
+    if (deckFilter && DECKS[deckFilter]) {
+        const deckCodes = new Set(DECKS[deckFilter]);
+        cards = cards.filter(c => deckCodes.has(c.c));
+    }
+
+    // Type filter
+    if (activeFilter === 'monster') {
+        cards = cards.filter(c => isMonsterLike(c.t));
+    } else if (activeFilter !== 'all') {
+        cards = cards.filter(c => c.t === activeFilter);
+    }
+
+    // Search
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        cards = cards.filter(c => c.n.toLowerCase().includes(q));
+    }
+
+    // Sort: owned first, then alphabetical
+    cards.sort((a, b) => {
+        const aOwned = MY_COLLECTION.has(a.c) ? 0 : 1;
+        const bOwned = MY_COLLECTION.has(b.c) ? 0 : 1;
+        if (aOwned !== bOwned) return aOwned - bOwned;
+        return a.n.localeCompare(b.n);
+    });
+
+    return cards;
+}
+
+function updateCounts() {
+    const src = deckFilter && DECKS[deckFilter]
+        ? ALL_CARDS.filter(c => new Set(DECKS[deckFilter]).has(c.c))
+        : ALL_CARDS;
+
+    const all = src.length;
+    const monsters = src.filter(c => isMonsterLike(c.t)).length;
+    const spells = src.filter(c => c.t === 'spell').length;
+    const traps = src.filter(c => c.t === 'trap').length;
+
+    document.getElementById('cnt-all').textContent = all;
+    document.getElementById('cnt-monster').textContent = monsters;
+    document.getElementById('cnt-spell').textContent = spells;
+    document.getElementById('cnt-trap').textContent = traps;
+}
+
+function render() {
+    const filtered = getFilteredCards();
+    const grid = document.getElementById('card-grid');
+
+    const deckCodes = deckFilter && DECKS[deckFilter] ? new Set(DECKS[deckFilter]) : null;
+    const ownedInDeck = deckCodes ? [...deckCodes].filter(c => MY_COLLECTION.has(c)).length : 0;
+    const totalInDeck = deckCodes ? deckCodes.size : 0;
+
+    // Results info
+    const info = document.getElementById('results-info');
+    if (deckFilter) {
+        info.innerHTML = `<span class="highlight">${deckFilter}</span> destesi &mdash; ${filtered.length} kart gosteriliyor (elinde: <span class="highlight">${ownedInDeck}</span>/${totalInDeck})`;
+    } else if (searchQuery) {
+        info.innerHTML = `"${searchQuery}" icin <span class="highlight">${filtered.length}</span> sonuc`;
+    } else {
+        info.textContent = `${filtered.length} kart gosteriliyor`;
+    }
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div class="no-results">Kart bulunamadi</div>';
+        return;
+    }
+
+    grid.innerHTML = filtered.map(card => {
+        const owned = MY_COLLECTION.has(card.c);
+        const copies = countInDeck(card.c);
+        const inDeck = copies > 0;
+        const lockedClass = owned ? '' : 'locked';
+        const inDeckClass = inDeck ? 'in-deck' : '';
+
+        // Badge for deck filter mode
+        let badge = '';
+        if (deckCodes) {
+            badge = owned
+                ? '<span class="deck-badge owned">Var</span>'
+                : '<span class="deck-badge missing">Eksik</span>';
+        }
+
+        // Copy count badge on card
+        const copyBadge = copies > 0 ? `<span class="copy-badge">x${copies}</span>` : '';
+
+        return `<div class="card-item ${lockedClass} ${inDeckClass}" onclick="toggleDeck(${card.c})" oncontextmenu="event.preventDefault();showPreview(${card.c})">
+            <span class="lock-icon">&#x1F512;</span>
+            ${badge}
+            ${copyBadge}
+            <img class="card-img" src="${IMG(card.c)}" alt="${card.n}" loading="lazy">
+            <div class="card-info">
+                <div class="card-name"><span class="card-type-dot ${card.t}"></span>${card.n}</div>
+                ${isMonsterLike(card.t) && card.a >= 0 ? `<div class="card-stats"><span class="atk">ATK ${card.a}</span> / <span class="def">DEF ${card.d}</span></div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    renderDeck();
+    updateCounts();
+}
+
+function renderDeck() {
+    const list = document.getElementById('deck-list');
+    // Build unique list with counts for display
+    const deckCodeSet = new Set(deck());
+    const deckCards = ALL_CARDS.filter(c => deckCodeSet.has(c.c));
+    const monsters = deckCards.filter(c => isMonsterLike(c.t));
+    const spells = deckCards.filter(c => c.t === 'spell');
+    const traps = deckCards.filter(c => c.t === 'trap');
+
+    let html = '';
+    if (monsters.length) {
+        html += `<div class="deck-section"><div class="deck-section-title monster">Canavarlar (${monsters.length})</div></div>`;
+        html += monsters.map(c => deckCardHTML(c)).join('');
+    }
+    if (spells.length) {
+        html += `<div class="deck-section"><div class="deck-section-title spell">Buyuler (${spells.length})</div></div>`;
+        html += spells.map(c => deckCardHTML(c)).join('');
+    }
+    if (traps.length) {
+        html += `<div class="deck-section"><div class="deck-section-title trap">Tuzaklar (${traps.length})</div></div>`;
+        html += traps.map(c => deckCardHTML(c)).join('');
+    }
+
+    list.innerHTML = html;
+    document.getElementById('deck-num').textContent = deck().length;
+    document.getElementById('btn-battle').disabled = deck().length !== 40;
+    renderSlotTabs();
+}
+
+function deckCardHTML(c) {
+    const count = countInDeck(c.c);
+    const max = maxCopies(c.c);
+    const countLabel = max === 1 ? '<span style="color:var(--danger);font-size:0.6rem;margin-right:4px" title="Limit 1">L</span>' : '';
+    const qty = count > 1 ? `<span style="font-size:0.65rem;color:var(--gold);margin-right:4px">x${count}</span>` : '';
+    return `<div class="deck-card" onclick="toggleDeck(${c.c})">
+        <img src="${IMG(c.c)}" alt="${c.n}">
+        ${countLabel}${qty}<span class="deck-card-name">${c.n}</span>
+        <span class="deck-card-remove" onclick="event.stopPropagation();removeFromDeck(${c.c})">&#x2715;</span>
+    </div>`;
+}
+
+const IMG_BIG = code => `https://images.ygoprodeck.com/images/cards/${code}.jpg`;
+
+function showPreview(code) {
+    const owned = MY_COLLECTION.has(code);
+    const overlay = document.getElementById('card-preview-overlay');
+    const img = document.getElementById('preview-big-img');
+    img.src = IMG_BIG(code);
+    img.className = owned ? '' : 'locked';
+    overlay.classList.add('active');
+}
+
+document.getElementById('card-preview-overlay').addEventListener('click', (e) => {
+    e.currentTarget.classList.remove('active');
+});
+document.getElementById('preview-big-img').addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+function toggleDeck(code) {
+    if (!MY_COLLECTION.has(code)) return;
+    const count = countInDeck(code);
+    const max = maxCopies(code);
+    if (count > 0 && count >= max) {
+        // At max — remove one copy
+        const idx = deck().indexOf(code);
+        if (idx !== -1) deck().splice(idx, 1);
+    } else if (count > 0) {
+        // Has some but not at max — add another if deck not full
+        if (deck().length < 40) deck().push(code);
+        else {
+            // Deck full, remove one instead
+            const idx = deck().indexOf(code);
+            if (idx !== -1) deck().splice(idx, 1);
+        }
+    } else {
+        // Not in deck — add if room
+        if (deck().length < 40) deck().push(code);
+    }
+    render();
+}
+
+function removeFromDeck(code) {
+    const idx = deck().indexOf(code);
+    if (idx !== -1) deck().splice(idx, 1);
+    render();
+}
+
+// Deck slot tabs
+function renderSlotTabs() {
+    const container = document.getElementById('deck-slots');
+    container.innerHTML = deckSlots.map((slot, i) => {
+        const count = slot.cards.length;
+        const isActive = i === activeSlot;
+        const isReady = count === 40;
+        return `<button class="deck-slot-tab ${isActive ? 'active' : ''} ${isReady ? 'ready' : ''}" onclick="switchSlot(${i})">
+            ${slot.name}
+            <span class="slot-count">${count}/40</span>
+        </button>`;
+    }).join('');
+}
+
+function switchSlot(index) {
+    // Save current name
+    deckSlots[activeSlot].name = document.getElementById('deck-name-input').value || `Deste ${activeSlot + 1}`;
+    activeSlot = index;
+    document.getElementById('deck-name-input').value = deckSlots[activeSlot].name;
+    renderSlotTabs();
+    render();
+}
+
+// Deck name input
+document.getElementById('deck-name-input').addEventListener('input', (e) => {
+    deckSlots[activeSlot].name = e.target.value;
+    renderSlotTabs();
+});
+
+// Filter tabs
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeFilter = tab.dataset.filter;
+        render();
+    });
+});
+
+// Search
+let searchTimeout;
+document.getElementById('search-input').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchQuery = e.target.value.trim();
+        render();
+    }, 200);
+});
+
+// Deck filter dropdown
+const select = document.getElementById('deck-filter');
+Object.keys(DECKS).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name + ' (' + DECKS[name].length + ')';
+    select.appendChild(opt);
+});
+select.addEventListener('change', (e) => {
+    deckFilter = e.target.value;
+    render();
+});
+
+// Header count
+document.getElementById('header-count').textContent = MY_COLLECTION.size + ' / ' + ALL_CARDS.length + ' kart';
+
+renderSlotTabs();
+render();
+</script>
+</body>
+</html>

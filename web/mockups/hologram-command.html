@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Concept 1: Hologram Command</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
+  background: #0d0b0e;
+  color: #d4c8a0;
+}
+
+/* ===== HOLOGRAPHIC GRID BACKGROUND ===== */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    linear-gradient(rgba(154,106,186,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(154,106,186,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== LAYOUT ===== */
+.layout {
+  position: relative;
+  width: 100%; height: 100%;
+  display: grid;
+  grid-template-rows: 48px 1fr auto;
+  grid-template-columns: 1fr 35vw;
+  z-index: 1;
+}
+
+/* ===== HUD BAR ===== */
+.hud {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: linear-gradient(180deg, rgba(13,11,14,0.95) 0%, rgba(13,11,14,0.7) 100%);
+  border-bottom: 1px solid rgba(232,200,64,0.15);
+  z-index: 10;
+}
+.player-hud {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.player-hud .name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.player-hud.opp .name { color: #e05040; }
+.player-hud.self .name { color: #58c4f0; }
+.lp-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lp-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8c840;
+  font-variant-numeric: tabular-nums;
+  min-width: 50px;
+  text-align: right;
+}
+.lp-bar-outer {
+  width: 160px; height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(232,200,64,0.15);
+}
+.lp-bar-inner {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+.self .lp-bar-inner { background: linear-gradient(90deg, #58c4f0, #a0e0ff); width: 100%; }
+.opp .lp-bar-inner { background: linear-gradient(90deg, #e05040, #ff8070); width: 62.5%; }
+
+.hud-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(212,200,160,0.5);
+}
+.hud-turn-label { color: #e8c840; font-weight: 700; }
+
+/* ===== DUEL FIELD ===== */
+.field-area {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient glow behind field */
+.field-area::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 600px; height: 200px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, rgba(154,106,186,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.zone-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.card-slot {
+  width: 7.5vw;
+  height: 10.2vw;
+  border: 1px solid rgba(154,106,186,0.2);
+  border-radius: 4px;
+  background: rgba(154,106,186,0.03);
+  position: relative;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.card-slot:hover {
+  border-color: rgba(154,106,186,0.5);
+  box-shadow: 0 0 12px rgba(154,106,186,0.15);
+}
+/* Grid lines inside slot */
+.card-slot::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(rgba(154,106,186,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(154,106,186,0.04) 1px, transparent 1px);
+  background-size: 14px 14px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Cards placed on field */
+.card-slot.has-card {
+  border-color: rgba(232,200,64,0.35);
+  box-shadow: 0 0 10px rgba(232,200,64,0.08);
+}
+.card-slot.has-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 3px;
+  display: block;
+}
+.card-slot .card-stats {
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 0;
+  background: rgba(13,11,14,0.85);
+  border-radius: 0 0 3px 3px;
+}
+.card-stats .atk { color: #c8a030; }
+.card-stats .def { color: #7090c0; }
+
+/* ===== CENTER DIVIDER ===== */
+.center-divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  position: relative;
+  margin: 4px 0;
+}
+
+/* Laser line left & right */
+.laser-line {
+  flex: 1;
+  height: 2px;
+  position: relative;
+}
+.laser-line::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(88,196,240,0.6), rgba(232,200,64,0.8));
+}
+.laser-line.right::before {
+  background: linear-gradient(90deg, rgba(232,200,64,0.8), rgba(88,196,240,0.6), transparent);
+}
+/* Glow on the line */
+.laser-line::after {
+  content: '';
+  position: absolute;
+  top: -4px; left: 0; right: 0;
+  height: 10px;
+  background: linear-gradient(90deg, transparent, rgba(88,196,240,0.15), rgba(232,200,64,0.2));
+  filter: blur(4px);
+}
+.laser-line.right::after {
+  background: linear-gradient(90deg, rgba(232,200,64,0.2), rgba(88,196,240,0.15), transparent);
+}
+
+.divider-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 24px;
+  position: relative;
+}
+
+.turn-numeral {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #e8c840;
+  text-shadow:
+    0 0 20px rgba(232,200,64,0.6),
+    0 0 40px rgba(232,200,64,0.3),
+    0 0 80px rgba(232,200,64,0.15);
+  animation: pulse-glow 2.5s ease-in-out infinite;
+  line-height: 1;
+}
+@keyframes pulse-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(232,200,64,0.6),
+      0 0 40px rgba(232,200,64,0.3),
+      0 0 80px rgba(232,200,64,0.15);
+  }
+  50% {
+    text-shadow:
+      0 0 30px rgba(232,200,64,0.9),
+      0 0 60px rgba(232,200,64,0.5),
+      0 0 100px rgba(232,200,64,0.25),
+      0 0 140px rgba(232,200,64,0.1);
+  }
+}
+
+/* Outer ring around numeral */
+.divider-core::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  width: 90px; height: 90px;
+  border: 2px solid rgba(232,200,64,0.25);
+  border-radius: 50%;
+  animation: ring-rotate 8s linear infinite;
+}
+@keyframes ring-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* Dashed inner ring */
+.divider-core::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 78px; height: 78px;
+  border: 1px dashed rgba(88,196,240,0.2);
+  border-radius: 50%;
+  animation: ring-rotate 12s linear infinite reverse;
+}
+
+.phase-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #58c4f0;
+  text-shadow: 0 0 12px rgba(88,196,240,0.5);
+  margin-top: 2px;
+}
+
+/* ===== HAND AREA ===== */
+.hand-area {
+  grid-column: 1;
+  grid-row: 3;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 20px 12px;
+  height: 130px;
+}
+.hand-cards {
+  display: flex;
+  position: relative;
+}
+.hand-card {
+  width: 76px;
+  height: 110px;
+  border-radius: 4px;
+  border: 1px solid rgba(232,200,64,0.25);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, margin-top 0.25s ease;
+  margin-left: -18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  position: relative;
+}
+.hand-card:first-child { margin-left: 0; }
+.hand-card:hover {
+  transform: translateY(-18px) scale(1.08);
+  box-shadow: 0 0 18px rgba(232,200,64,0.25), 0 8px 24px rgba(0,0,0,0.6);
+  border-color: rgba(232,200,64,0.6);
+  z-index: 10;
+}
+.hand-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Fan tilt */
+.hand-card:nth-child(1) { transform: rotate(-6deg); }
+.hand-card:nth-child(2) { transform: rotate(-3deg); }
+.hand-card:nth-child(3) { transform: rotate(0deg); }
+.hand-card:nth-child(4) { transform: rotate(3deg); }
+.hand-card:nth-child(5) { transform: rotate(6deg); }
+.hand-card:nth-child(6) { transform: rotate(9deg); }
+.hand-card:hover { transform: translateY(-18px) scale(1.08) rotate(0deg) !important; }
+
+/* ===== ACTION PANEL (MOTOR PANEL) ===== */
+.action-panel {
+  grid-column: 2;
+  grid-row: 2 / 4;
+  display: flex;
+  flex-direction: column;
+  background: rgba(20,16,28,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid rgba(154,106,186,0.2);
+  border-top: 1px solid rgba(154,106,186,0.1);
+  overflow: hidden;
+}
+
+/* Panel Header */
+.panel-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(154,106,186,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(154,106,186,0.08) 0%, transparent 100%);
+}
+.panel-phase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #58c4f0;
+}
+.panel-phase-badge::before {
+  content: '';
+  width: 8px; height: 8px;
+  background: #58c4f0;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(88,196,240,0.6);
+  animation: badge-blink 1.5s ease-in-out infinite;
+}
+@keyframes badge-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.panel-question {
+  font-size: 15px;
+  font-weight: 600;
+  color: #d4c8a0;
+  line-height: 1.4;
+}
+
+/* Card List */
+.panel-cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.panel-cards::-webkit-scrollbar { width: 4px; }
+.panel-cards::-webkit-scrollbar-track { background: transparent; }
+.panel-cards::-webkit-scrollbar-thumb { background: rgba(154,106,186,0.3); border-radius: 2px; }
+
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(154,106,186,0.06);
+  transition: background 0.2s;
+  position: relative;
+}
+.card-row:hover {
+  background: rgba(154,106,186,0.06);
+}
+/* Holographic shimmer on hover */
+.card-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(88,196,240,0.04) 50%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.card-row:hover::after { opacity: 1; }
+
+.card-row .thumb {
+  width: 56px; height: 76px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(232,200,64,0.2);
+  flex-shrink: 0;
+}
+.card-row .thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.card-row .info {
+  flex: 1;
+  min-width: 0;
+}
+.card-row .info .card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d4c8a0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-row .info .card-stat {
+  font-size: 11px;
+  margin-top: 3px;
+  display: flex;
+  gap: 10px;
+}
+.card-row .info .card-stat .atk { color: #c8a030; }
+.card-row .info .card-stat .def { color: #7090c0; }
+
+.card-row .actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-action {
+  padding: 6px 14px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  background: rgba(88,196,240,0.1);
+  color: #58c4f0;
+  border: 1px solid rgba(88,196,240,0.25);
+}
+.btn-action:hover {
+  background: rgba(88,196,240,0.2);
+  box-shadow: 0 0 12px rgba(88,196,240,0.2);
+  border-color: rgba(88,196,240,0.5);
+}
+.btn-action.gold {
+  background: rgba(232,200,64,0.1);
+  color: #e8c840;
+  border: 1px solid rgba(232,200,64,0.25);
+}
+.btn-action.gold:hover {
+  background: rgba(232,200,64,0.2);
+  box-shadow: 0 0 12px rgba(232,200,64,0.2);
+  border-color: rgba(232,200,64,0.5);
+}
+.btn-action.danger {
+  background: rgba(224,80,64,0.1);
+  color: #e05040;
+  border: 1px solid rgba(224,80,64,0.25);
+}
+.btn-action.danger:hover {
+  background: rgba(224,80,64,0.2);
+  box-shadow: 0 0 12px rgba(224,80,64,0.2);
+  border-color: rgba(224,80,64,0.5);
+}
+
+/* Panel Footer */
+.panel-footer {
+  padding: 14px 18px;
+  border-top: 1px solid rgba(154,106,186,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(0deg, rgba(13,11,14,0.6) 0%, transparent 100%);
+}
+.panel-footer-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-phase {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, rgba(232,200,64,0.12) 0%, rgba(232,200,64,0.05) 100%);
+  color: #e8c840;
+  border: 1px solid rgba(232,200,64,0.3);
+  border-radius: 4px;
+}
+.btn-phase:hover {
+  background: linear-gradient(180deg, rgba(232,200,64,0.25) 0%, rgba(232,200,64,0.1) 100%);
+  box-shadow: 0 0 16px rgba(232,200,64,0.15);
+}
+.btn-phase.end {
+  background: linear-gradient(180deg, rgba(224,80,64,0.12) 0%, rgba(224,80,64,0.05) 100%);
+  color: #e05040;
+  border-color: rgba(224,80,64,0.3);
+}
+.btn-phase.end:hover {
+  background: linear-gradient(180deg, rgba(224,80,64,0.25) 0%, rgba(224,80,64,0.1) 100%);
+  box-shadow: 0 0 16px rgba(224,80,64,0.15);
+}
+
+.auto-pass-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(212,200,160,0.5);
+}
+.toggle-track {
+  width: 34px; height: 18px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 9px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  border: 1px solid rgba(154,106,186,0.2);
+}
+.toggle-track.active {
+  background: rgba(88,196,240,0.2);
+  border-color: rgba(88,196,240,0.4);
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+  background: #d4c8a0;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+.toggle-track.active::after {
+  transform: translateX(16px);
+  background: #58c4f0;
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- HUD -->
+  <div class="hud">
+    <div class="player-hud opp">
+      <span class="name">Seto Kaiba</span>
+      <div class="lp-wrap">
+        <div class="lp-bar-outer"><div class="lp-bar-inner"></div></div>
+        <span class="lp-num">5000</span>
+      </div>
+    </div>
+    <div class="hud-center">
+      <span class="hud-turn-label">Turn III</span>
+      <span>&bull;</span>
+      <span>Main Phase 1</span>
+    </div>
+    <div class="player-hud self">
+      <div class="lp-wrap">
+        <span class="lp-num">8000</span>
+        <div class="lp-bar-outer"><div class="lp-bar-inner"></div></div>
+      </div>
+      <span class="name">Yugi Muto</span>
+    </div>
+  </div>
+
+  <!-- DUEL FIELD -->
+  <div class="field-area">
+    <!-- Opp S/T Zone -->
+    <div class="zone-row" style="margin-bottom: 4px;">
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg" alt="Set card">
+      </div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+    </div>
+    <!-- Opp Monster Zone -->
+    <div class="zone-row" style="margin-bottom: 2px;">
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg" alt="Breaker">
+        <div class="card-stats"><span class="atk">1600</span><span class="def">1000</span></div>
+      </div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+    </div>
+
+    <!-- CENTER DIVIDER -->
+    <div class="center-divider">
+      <div class="laser-line"></div>
+      <div class="divider-core">
+        <div class="turn-numeral">III</div>
+        <div class="phase-name">Main Phase</div>
+      </div>
+      <div class="laser-line right"></div>
+    </div>
+
+    <!-- Self Monster Zone -->
+    <div class="zone-row" style="margin-top: 2px;">
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg" alt="Dark Magician">
+        <div class="card-stats"><span class="atk">2500</span><span class="def">2100</span></div>
+      </div>
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg" alt="Dark Magician Girl">
+        <div class="card-stats"><span class="atk">2000</span><span class="def">1700</span></div>
+      </div>
+      <div class="card-slot"></div>
+    </div>
+    <!-- Self S/T Zone -->
+    <div class="zone-row" style="margin-top: 4px;">
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+      <div class="card-slot has-card">
+        <img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg" alt="Mirror Force">
+      </div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
+    </div>
+  </div>
+
+  <!-- HAND -->
+  <div class="hand-area">
+    <div class="hand-cards">
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg" alt="Card"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg" alt="Card"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/55144522.jpg" alt="Card"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/71413901.jpg" alt="Card"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg" alt="Card"></div>
+      <div class="hand-card"><img src="https://images.ygoprodeck.com/images/cards_small/55144522.jpg" alt="Card"></div>
+    </div>
+  </div>
+
+  <!-- ACTION PANEL -->
+  <div class="action-panel">
+    <div class="panel-header">
+      <div class="panel-phase-badge">Main Phase 1</div>
+      <div class="panel-question">Normal Summon veya Kart Etkinlestir</div>
+    </div>
+
+    <div class="panel-cards">
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/46986414.jpg" alt="Dark Magician"></div>
+        <div class="info">
+          <div class="card-name">Dark Magician</div>
+          <div class="card-stat">
+            <span class="atk">ATK 2500</span>
+            <span class="def">DEF 2100</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action gold">Normal Summon</button>
+          <button class="btn btn-action">Set</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/38033121.jpg" alt="Dark Magician Girl"></div>
+        <div class="info">
+          <div class="card-name">Dark Magician Girl</div>
+          <div class="card-stat">
+            <span class="atk">ATK 2000</span>
+            <span class="def">DEF 1700</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action gold">Normal Summon</button>
+          <button class="btn btn-action">Set</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/55144522.jpg" alt="Pot of Greed"></div>
+        <div class="info">
+          <div class="card-name">Pot of Greed</div>
+          <div class="card-stat">
+            <span style="color: rgba(212,200,160,0.4);">Spell</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action">Activate</button>
+          <button class="btn btn-action">Set</button>
+        </div>
+      </div>
+
+      <div class="card-row">
+        <div class="thumb"><img src="https://images.ygoprodeck.com/images/cards_small/44095762.jpg" alt="Mirror Force"></div>
+        <div class="info">
+          <div class="card-name">Mirror Force</div>
+          <div class="card-stat">
+            <span style="color: rgba(212,200,160,0.4);">Trap</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-action">Set</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <div class="panel-footer-row">
+        <button class="btn btn-phase" onclick="this.style.boxShadow='0 0 20px rgba(232,200,64,0.3)'">Savas Fazina Gec</button>
+        <button class="btn btn-phase end" onclick="this.style.boxShadow='0 0 20px rgba(224,80,64,0.3)'">Turu Bitir</button>
+      </div>
+      <div class="auto-pass-row">
+        <div class="toggle-track" onclick="this.classList.toggle('active')"></div>
+        <span>Otomatik Pas</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

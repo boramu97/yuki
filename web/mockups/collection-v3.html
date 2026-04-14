@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koleksiyonum — Split Panel</title>
+<style>
+:root {
+    --bg: #0d0b0e;
+    --bg-hud: #1a1520;
+    --gold: #e8c840;
+    --gold-border: rgba(180,140,60,0.12);
+    --gold-glow: rgba(200,160,40,0.2);
+    --purple: #9a6aba;
+    --text: #d4c8a0;
+    --text-dim: #776a50;
+    --text-muted: #5a5040;
+    --danger: #e05040;
+    --panel-bg: rgba(13,11,14,0.94);
+    --monster: #e8a040;
+    --spell: #4a9a6a;
+    --trap: #c45a8a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 24px;
+    background: var(--bg-hud);
+    border-bottom: 1px solid var(--gold-border);
+    flex-shrink: 0;
+}
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.btn-back {
+    padding: 6px 16px;
+    border: 1px solid rgba(180,140,60,0.2);
+    border-radius: 4px;
+    background: rgba(180,140,60,0.04);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-back:hover {
+    border-color: rgba(200,170,60,0.5);
+    color: var(--text);
+}
+.header h1 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--gold);
+    letter-spacing: 3px;
+}
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.header-count {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+.btn-battle {
+    padding: 8px 24px;
+    border: 1px solid rgba(200,100,40,0.4);
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(180,80,30,0.3), rgba(140,60,20,0.3));
+    color: #e8a040;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-battle:hover {
+    box-shadow: 0 0 15px rgba(200,100,40,0.2);
+    color: #ffb860;
+}
+.btn-battle:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== SPLIT LAYOUT ===== */
+.split {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== LEFT PANEL — COLLECTION ===== */
+.panel-collection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--gold-border);
+    min-width: 0;
+}
+.panel-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--gold-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: rgba(26,21,32,0.5);
+}
+.panel-title {
+    font-size: 0.9rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+    font-weight: 400;
+}
+.panel-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Filters inside collection panel */
+.filters {
+    display: flex;
+    gap: 2px;
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--gold-border);
+    flex-shrink: 0;
+}
+.filter-tab {
+    padding: 6px 14px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+}
+.filter-tab:hover { color: var(--text-dim); background: rgba(180,140,60,0.04); }
+.filter-tab.active {
+    color: var(--gold);
+    border-color: var(--gold-border);
+    background: rgba(180,140,60,0.06);
+}
+.filter-tab .count { font-size: 0.7rem; opacity: 0.6; margin-left: 3px; }
+
+/* Card list */
+.card-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+}
+.card-list::-webkit-scrollbar { width: 4px; }
+.card-list::-webkit-scrollbar-track { background: transparent; }
+.card-list::-webkit-scrollbar-thumb { background: var(--gold-border); border-radius: 2px; }
+
+.card-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+}
+.card-row:hover {
+    background: rgba(180,140,60,0.04);
+    border-color: var(--gold-border);
+}
+.card-row.in-deck {
+    background: rgba(180,140,60,0.06);
+    border-color: rgba(180,140,60,0.15);
+}
+
+.card-row-img {
+    width: 42px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid var(--gold-border);
+    flex-shrink: 0;
+}
+.card-row-info {
+    flex: 1;
+    min-width: 0;
+}
+.card-row-name {
+    font-size: 0.82rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.card-row-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    display: flex;
+    gap: 8px;
+}
+.card-row-meta .type-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.type-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.type-dot.monster { background: var(--monster); }
+.type-dot.spell { background: var(--spell); }
+.type-dot.trap { background: var(--trap); }
+
+.card-row-meta .atk { color: var(--monster); }
+.card-row-meta .def { color: #7090c0; }
+
+.card-row-action {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--gold-border);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.card-row-action:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(180,140,60,0.08);
+}
+.card-row.in-deck .card-row-action {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+.card-row.in-deck .card-row-action:hover {
+    background: rgba(224,80,64,0.1);
+}
+
+/* ===== RIGHT PANEL — DECK BUILDER ===== */
+.panel-deck {
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    background: rgba(26,21,32,0.3);
+}
+
+.deck-sections {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+}
+.deck-sections::-webkit-scrollbar { width: 4px; }
+.deck-sections::-webkit-scrollbar-track { background: transparent; }
+.deck-sections::-webkit-scrollbar-thumb { background: var(--gold-border); border-radius: 2px; }
+
+.deck-section {
+    margin-bottom: 16px;
+}
+.deck-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+}
+.deck-section-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+.deck-section-icon.monster { background: var(--monster); }
+.deck-section-icon.spell { background: var(--spell); }
+.deck-section-icon.trap { background: var(--trap); }
+.deck-section-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.deck-section-count {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* Deck card grid (small thumbnails) */
+.deck-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 0 4px;
+}
+
+.deck-slot {
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--gold-border);
+    background: var(--bg-hud);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.deck-slot:hover {
+    border-color: rgba(180,140,60,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.deck-slot img {
+    width: 100%;
+    aspect-ratio: 421/614;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.95);
+}
+.deck-slot:hover img {
+    filter: brightness(1.08);
+}
+.deck-slot-remove {
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    font-size: 10px;
+    color: var(--danger);
+    opacity: 0;
+    transition: opacity 0.15s;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+.deck-slot:hover .deck-slot-remove {
+    opacity: 1;
+}
+
+.deck-slot-empty {
+    border: 1px dashed rgba(180,140,60,0.1);
+    border-radius: 3px;
+    aspect-ratio: 421/614;
+}
+
+/* Deck footer */
+.deck-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--gold-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.deck-footer-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.deck-footer-info .num { color: var(--gold); font-size: 1.1rem; }
+
+.btn-clear {
+    padding: 5px 14px;
+    border: 1px solid rgba(224,80,64,0.2);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-clear:hover {
+    border-color: rgba(224,80,64,0.4);
+    color: var(--danger);
+    background: rgba(224,80,64,0.06);
+}
+
+/* Scan-line overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(88,196,240,0.015) 3px,
+        rgba(88,196,240,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanScroll 12s linear infinite;
+}
+@keyframes scanScroll {
+    from { background-position: 0 0; }
+    to { background-position: 0 100vh; }
+}
+
+/* Divider glow */
+.split > .panel-deck {
+    border-left: 1px solid var(--gold-border);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <button class="btn-back">← Ana Sayfa</button>
+        <h1>Koleksiyonum</h1>
+    </div>
+    <div class="header-right">
+        <span class="header-count">60 kart</span>
+        <button class="btn-battle" id="btn-battle" disabled>Duelle Gir</button>
+    </div>
+</div>
+
+<div class="split">
+    <!-- LEFT: Collection -->
+    <div class="panel-collection">
+        <div class="panel-header">
+            <span class="panel-title">Kart Havuzu</span>
+            <span class="panel-subtitle">Tiklayarak desteye ekle</span>
+        </div>
+        <div class="filters">
+            <button class="filter-tab active" data-filter="all">Tumu<span class="count">60</span></button>
+            <button class="filter-tab" data-filter="monster">Canavarlar<span class="count">25</span></button>
+            <button class="filter-tab" data-filter="spell">Buyuler<span class="count">20</span></button>
+            <button class="filter-tab" data-filter="trap">Tuzaklar<span class="count">15</span></button>
+        </div>
+        <div class="card-list" id="card-list"></div>
+    </div>
+
+    <!-- RIGHT: Deck Builder -->
+    <div class="panel-deck">
+        <div class="panel-header">
+            <span class="panel-title">Deste</span>
+            <span class="panel-subtitle" id="deck-status">0 / 40</span>
+        </div>
+        <div class="deck-sections" id="deck-sections"></div>
+        <div class="deck-footer">
+            <div class="deck-footer-info"><span class="num" id="deck-num">0</span> / 40</div>
+            <button class="btn-clear" onclick="clearDeck()">Temizle</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const CARDS = [
+    { code:46986414, name:"Dark Magician", type:"monster", atk:2500, def:2100, level:7 },
+    { code:89631139, name:"Blue-Eyes White Dragon", type:"monster", atk:3000, def:2500, level:8 },
+    { code:38033121, name:"Dark Magician Girl", type:"monster", atk:2000, def:1700, level:6 },
+    { code:70781052, name:"Summoned Skull", type:"monster", atk:2500, def:1200, level:6 },
+    { code:40640057, name:"Kuriboh", type:"monster", atk:300, def:200, level:1 },
+    { code:71413901, name:"Breaker the Magical Warrior", type:"monster", atk:1600, def:1000, level:4 },
+    { code:75390004, name:"Megazowler", type:"monster", atk:1800, def:2000, level:6 },
+    { code:94568601, name:"Tyrant Dragon", type:"monster", atk:2900, def:2500, level:8 },
+    { code:75347539, name:"Valkyrion the Magna Warrior", type:"monster", atk:3500, def:3850, level:8 },
+    { code:78193831, name:"Buster Blader", type:"monster", atk:2600, def:2300, level:7 },
+    { code:14778250, name:"The Tricky", type:"monster", atk:2000, def:1200, level:5 },
+    { code:65240384, name:"Big Shield Gardna", type:"monster", atk:100, def:2600, level:4 },
+    { code:34710660, name:"Electromagnetic Turtle", type:"monster", atk:0, def:0, level:4 },
+    { code:64788463, name:"King's Knight", type:"monster", atk:1600, def:1400, level:4 },
+    { code:52077741, name:"Obnoxious Celtic Guard", type:"monster", atk:1400, def:1200, level:4 },
+    { code:73752131, name:"Skilled Dark Magician", type:"monster", atk:1900, def:1700, level:4 },
+    { code:45141844, name:"Old Vindictive Magician", type:"monster", atk:450, def:600, level:2 },
+    { code:99785935, name:"Alpha The Magnet Warrior", type:"monster", atk:1400, def:1700, level:4 },
+    { code:39256679, name:"Beta The Magnet Warrior", type:"monster", atk:1700, def:1600, level:4 },
+    { code:11549357, name:"Gamma The Magnet Warrior", type:"monster", atk:1500, def:1800, level:4 },
+    { code:67724379, name:"Koumori Dragon", type:"monster", atk:1500, def:1200, level:4 },
+    { code:15025844, name:"Mystical Elf", type:"monster", atk:800, def:2000, level:4 },
+    { code:25652259, name:"Queen's Knight", type:"monster", atk:1500, def:1600, level:4 },
+    { code:87796900, name:"Winged Dragon Guardian of the Fortress", type:"monster", atk:1400, def:1200, level:4 },
+    { code:90876561, name:"Jack's Knight", type:"monster", atk:1900, def:1000, level:5 },
+    { code:83764718, name:"Monster Reborn", type:"spell" },
+    { code:55144522, name:"Pot of Greed", type:"spell" },
+    { code:72302403, name:"Swords of Revealing Light", type:"spell" },
+    { code:5318639,  name:"Mystical Space Typhoon", type:"spell" },
+    { code:4031928,  name:"Change of Heart", type:"spell" },
+    { code:24094653, name:"Polymerization", type:"spell" },
+    { code:42664989, name:"Card of Sanctity", type:"spell" },
+    { code:99789342, name:"Dark Magic Curtain", type:"spell" },
+    { code:79571449, name:"Graceful Charity", type:"spell" },
+    { code:74848038, name:"Monster Reincarnation", type:"spell" },
+    { code:63391643, name:"Thousand Knives", type:"spell" },
+    { code:28553439, name:"Magical Dimension", type:"spell" },
+    { code:55761792, name:"Black Luster Ritual", type:"spell" },
+    { code:23424603, name:"Wasteland", type:"spell" },
+    { code:22431243, name:"Ultra Evolution Pill", type:"spell" },
+    { code:38179121, name:"Double Evolution Pill", type:"spell" },
+    { code:45141013, name:"Heat Wave", type:"spell" },
+    { code:80402389, name:"Verdant Sanctuary", type:"spell" },
+    { code:94716515, name:"Eradicating Aerosol", type:"spell" },
+    { code:10080320, name:"Jurassic World", type:"spell" },
+    { code:44095762, name:"Mirror Force", type:"trap" },
+    { code:62279055, name:"Magic Cylinder", type:"trap" },
+    { code:4206964,  name:"Trap Hole", type:"trap" },
+    { code:29401950, name:"Bottomless Trap Hole", type:"trap" },
+    { code:18807108, name:"Spellbinding Circle", type:"trap" },
+    { code:74701381, name:"DNA Surgery", type:"trap" },
+    { code:13235258, name:"Corrosive Scales", type:"trap" },
+    { code:56051648, name:"Spider Egg", type:"trap" },
+    { code:11925569, name:"Hunting Instinct", type:"trap" },
+    { code:58272005, name:"Survival of the Fittest", type:"trap" },
+    { code:23869735, name:"Fossil Excavation", type:"trap" },
+    { code:79569173, name:"Seismic Shockwave", type:"trap" },
+    { code:58419204, name:"Survival Instinct", type:"trap" },
+    { code:65430834, name:"Jurassic Impact", type:"trap" },
+    { code:60082869, name:"Dust Tornado", type:"trap" },
+];
+
+const deck = new Set();
+const IMG = code => `https://images.ygoprodeck.com/images/cards_small/${code}.jpg`;
+let activeFilter = 'all';
+
+const TYPE_LABELS = { monster: 'Canavar', spell: 'Buyu', trap: 'Tuzak' };
+
+function renderList() {
+    const list = document.getElementById('card-list');
+    const filtered = activeFilter === 'all' ? CARDS : CARDS.filter(c => c.type === activeFilter);
+
+    list.innerHTML = filtered.map(card => {
+        const inDeck = deck.has(card.code);
+        return `<div class="card-row ${inDeck ? 'in-deck' : ''}" onclick="toggleDeck(${card.code})">
+            <img class="card-row-img" src="${IMG(card.code)}" alt="${card.name}" loading="lazy">
+            <div class="card-row-info">
+                <div class="card-row-name">${card.name}</div>
+                <div class="card-row-meta">
+                    <span class="type-label"><span class="type-dot ${card.type}"></span>${TYPE_LABELS[card.type]}</span>
+                    ${card.atk !== undefined ? `<span class="atk">ATK ${card.atk}</span> <span class="def">DEF ${card.def}</span>` : ''}
+                    ${card.level ? `<span>★${card.level}</span>` : ''}
+                </div>
+            </div>
+            <button class="card-row-action">${inDeck ? '−' : '+'}</button>
+        </div>`;
+    }).join('');
+}
+
+function renderDeck() {
+    const sections = document.getElementById('deck-sections');
+    const deckCards = CARDS.filter(c => deck.has(c.code));
+    const monsters = deckCards.filter(c => c.type === 'monster');
+    const spells = deckCards.filter(c => c.type === 'spell');
+    const traps = deckCards.filter(c => c.type === 'trap');
+
+    let html = '';
+
+    // Monsters section
+    html += `<div class="deck-section">
+        <div class="deck-section-header">
+            <div class="deck-section-icon monster"></div>
+            <span class="deck-section-label">Canavarlar</span>
+            <span class="deck-section-count">${monsters.length}</span>
+        </div>
+        <div class="deck-grid">
+            ${monsters.map(c => `<div class="deck-slot" onclick="toggleDeck(${c.code})" title="${c.name}">
+                <img src="${IMG(c.code)}" alt="${c.name}" loading="lazy">
+                <span class="deck-slot-remove">✕</span>
+            </div>`).join('')}
+            ${Array(Math.max(0, 3 - monsters.length)).fill('<div class="deck-slot-empty"></div>').join('')}
+        </div>
+    </div>`;
+
+    // Spells section
+    html += `<div class="deck-section">
+        <div class="deck-section-header">
+            <div class="deck-section-icon spell"></div>
+            <span class="deck-section-label">Buyuler</span>
+            <span class="deck-section-count">${spells.length}</span>
+        </div>
+        <div class="deck-grid">
+            ${spells.map(c => `<div class="deck-slot" onclick="toggleDeck(${c.code})" title="${c.name}">
+                <img src="${IMG(c.code)}" alt="${c.name}" loading="lazy">
+                <span class="deck-slot-remove">✕</span>
+            </div>`).join('')}
+            ${Array(Math.max(0, 2 - spells.length)).fill('<div class="deck-slot-empty"></div>').join('')}
+        </div>
+    </div>`;
+
+    // Traps section
+    html += `<div class="deck-section">
+        <div class="deck-section-header">
+            <div class="deck-section-icon trap"></div>
+            <span class="deck-section-label">Tuzaklar</span>
+            <span class="deck-section-count">${traps.length}</span>
+        </div>
+        <div class="deck-grid">
+            ${traps.map(c => `<div class="deck-slot" onclick="toggleDeck(${c.code})" title="${c.name}">
+                <img src="${IMG(c.code)}" alt="${c.name}" loading="lazy">
+                <span class="deck-slot-remove">✕</span>
+            </div>`).join('')}
+            ${Array(Math.max(0, 2 - traps.length)).fill('<div class="deck-slot-empty"></div>').join('')}
+        </div>
+    </div>`;
+
+    sections.innerHTML = html;
+    document.getElementById('deck-num').textContent = deck.size;
+    document.getElementById('deck-status').textContent = `${deck.size} / 40`;
+    document.getElementById('btn-battle').disabled = deck.size !== 40;
+}
+
+function toggleDeck(code) {
+    if (deck.has(code)) deck.delete(code);
+    else if (deck.size < 40) deck.add(code);
+    renderList();
+    renderDeck();
+}
+
+function clearDeck() {
+    deck.clear();
+    renderList();
+    renderDeck();
+}
+
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeFilter = tab.dataset.filter;
+        renderList();
+    });
+});
+
+renderList();
+renderDeck();
+</script>
+</body>
+</html>
