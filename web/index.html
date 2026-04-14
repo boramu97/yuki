@@ -41,10 +41,10 @@
                 <div class="home-card-title">Duello</div>
                 <div class="home-card-desc">Rakiplerle canli duel yap</div>
             </button>
-            <button class="home-card" id="nav-collection" disabled>
+            <button class="home-card" id="nav-collection">
                 <div class="home-card-icon">🃏</div>
                 <div class="home-card-title">Koleksiyonum</div>
-                <div class="home-card-desc">Yakin zamanda...</div>
+                <div class="home-card-desc">Kartlarini ve destelerini yonet</div>
             </button>
             <button class="home-card" id="nav-adventures" disabled>
                 <div class="home-card-icon">🗺</div>
@@ -176,6 +176,55 @@
         </div>
     </div>
 
+    <!-- KOLEKSIYON -->
+    <div id="collection-screen" class="screen">
+        <div class="coll-header">
+            <div class="coll-header-left">
+                <button class="btn" id="btn-back-collection">&larr; Ana Sayfa</button>
+                <h1 class="coll-title">Koleksiyonum</h1>
+            </div>
+            <span class="coll-count" id="coll-count"></span>
+        </div>
+        <div class="coll-toolbar">
+            <div class="coll-search">
+                <input type="text" id="coll-search" placeholder="Kart ara...">
+            </div>
+            <div class="coll-filters">
+                <button class="coll-filter active" data-filter="all">Tumu <span class="coll-filter-count" id="cnt-all"></span></button>
+                <button class="coll-filter" data-filter="monster">Canavarlar <span class="coll-filter-count" id="cnt-monster"></span></button>
+                <button class="coll-filter" data-filter="spell">Buyuler <span class="coll-filter-count" id="cnt-spell"></span></button>
+                <button class="coll-filter" data-filter="trap">Tuzaklar <span class="coll-filter-count" id="cnt-trap"></span></button>
+            </div>
+            <div class="coll-deck-filter">
+                <select id="coll-deck-filter">
+                    <option value="">Tum Kartlar</option>
+                </select>
+            </div>
+        </div>
+        <div class="coll-main">
+            <div class="coll-grid-area">
+                <div class="coll-results" id="coll-results"></div>
+                <div class="coll-grid" id="coll-grid"></div>
+            </div>
+            <div class="coll-sidebar">
+                <div class="coll-slots" id="coll-slots"></div>
+                <div class="coll-deck-header">
+                    <input class="coll-deck-name" id="coll-deck-name" value="Deste 1" maxlength="20" spellcheck="false">
+                    <span class="coll-deck-count"><span id="coll-deck-num">0</span>/40</span>
+                </div>
+                <div class="coll-deck-list" id="coll-deck-list"></div>
+                <div class="coll-deck-footer">
+                    <button class="btn primary" id="btn-duel-with-deck" disabled>Duelle Gir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Koleksiyon kart onizleme -->
+    <div id="coll-preview-overlay" class="coll-preview-overlay">
+        <img id="coll-preview-img" src="">
+    </div>
+
     <!-- SONUC -->
     <div id="result" class="screen">
         <h2 id="result-text"></h2>
@@ -185,6 +234,7 @@
     <script src="js/websocket.js"></script>
     <script src="js/field.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/collection.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

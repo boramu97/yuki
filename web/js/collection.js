@@ -1,0 +1,307 @@
+// Yuki — Koleksiyon & Deste Yonetimi
+
+const Collection = {
+    allCards: [],       // Tum kart havuzu [{c,n,t,a,d,l}]
+    myCards: new Set(), // Kullanicinin koleksiyonu (kod seti)
+    presetDecks: {},    // {isim: [kodlar]}
+    deckSlots: [
+        { name: "Deste 1", cards: [] },
+        { name: "Deste 2", cards: [] },
+        { name: "Deste 3", cards: [] },
+    ],
+    activeSlot: 0,
+    filter: "all",
+    search: "",
+    deckFilter: "",
+
+    // Limited kartlar: max 1 kopya
+    LIMITED_1: new Set([83764718, 55144522]), // Monster Reborn, Pot of Greed
+
+    IMG: (code) => `https://images.ygoprodeck.com/images/cards_small/${code}.jpg`,
+    IMG_BIG: (code) => `https://images.ygoprodeck.com/images/cards/${code}.jpg`,
+
+    deck() { return this.deckSlots[this.activeSlot].cards; },
+    countInDeck(code) { return this.deck().filter(c => c === code).length; },
+    maxCopies(code) { return this.LIMITED_1.has(code) ? 1 : 3; },
+    isMonster(t) { return t === "monster" || t === "fusion"; },
+
+    open() {
+        UI.showScreen("collection-screen");
+        WS.getCollection();
+        WS.getDecks();
+    },
+
+    init(data) {
+        this.allCards = data.card_pool || [];
+        this.myCards = new Set(data.cards || []);
+        this.presetDecks = data.preset_decks || {};
+
+        // Deste filtresi dropdown doldur
+        const sel = document.getElementById("coll-deck-filter");
+        sel.innerHTML = '<option value="">Tum Kartlar</option>';
+        for (const name of Object.keys(this.presetDecks)) {
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name + " (" + this.presetDecks[name].length + ")";
+            sel.appendChild(opt);
+        }
+
+        document.getElementById("coll-count").textContent =
+            this.myCards.size + " / " + this.allCards.length + " kart";
+
+        this.render();
+        this.renderSlotTabs();
+    },
+
+    loadDecks(decks) {
+        for (const d of decks) {
+            if (d.slot >= 0 && d.slot <= 2) {
+                this.deckSlots[d.slot].name = d.name;
+                this.deckSlots[d.slot].cards = d.cards || [];
+            }
+        }
+        document.getElementById("coll-deck-name").value = this.deckSlots[this.activeSlot].name;
+        this.renderSlotTabs();
+        this.renderDeck();
+        this.render(); // Grid'deki in-deck badge'leri guncelle
+    },
+
+    getFiltered() {
+        let cards = this.allCards;
+
+        if (this.deckFilter && this.presetDecks[this.deckFilter]) {
+            const codes = new Set(this.presetDecks[this.deckFilter]);
+            cards = cards.filter(c => codes.has(c.c));
+        }
+        if (this.filter === "monster") {
+            cards = cards.filter(c => this.isMonster(c.t));
+        } else if (this.filter !== "all") {
+            cards = cards.filter(c => c.t === this.filter);
+        }
+        if (this.search) {
+            const q = this.search.toLowerCase();
+            cards = cards.filter(c => c.n.toLowerCase().includes(q));
+        }
+        cards.sort((a, b) => {
+            const ao = this.myCards.has(a.c) ? 0 : 1;
+            const bo = this.myCards.has(b.c) ? 0 : 1;
+            if (ao !== bo) return ao - bo;
+            return a.n.localeCompare(b.n);
+        });
+        return cards;
+    },
+
+    render() {
+        const filtered = this.getFiltered();
+        const grid = document.getElementById("coll-grid");
+        const info = document.getElementById("coll-results");
+
+        const dkCodes = this.deckFilter && this.presetDecks[this.deckFilter]
+            ? new Set(this.presetDecks[this.deckFilter]) : null;
+        const ownedInDk = dkCodes ? [...dkCodes].filter(c => this.myCards.has(c)).length : 0;
+
+        if (this.deckFilter) {
+            info.innerHTML = `<span class="hl">${this.deckFilter}</span> — ${filtered.length} kart (elinde: <span class="hl">${ownedInDk}</span>/${dkCodes.size})`;
+        } else if (this.search) {
+            info.innerHTML = `"${this.search}" icin <span class="hl">${filtered.length}</span> sonuc`;
+        } else {
+            info.textContent = filtered.length + " kart";
+        }
+
+        // Tip sayaclari
+        const src = dkCodes ? this.allCards.filter(c => dkCodes.has(c.c)) : this.allCards;
+        document.getElementById("cnt-all").textContent = src.length;
+        document.getElementById("cnt-monster").textContent = src.filter(c => this.isMonster(c.t)).length;
+        document.getElementById("cnt-spell").textContent = src.filter(c => c.t === "spell").length;
+        document.getElementById("cnt-trap").textContent = src.filter(c => c.t === "trap").length;
+
+        if (!filtered.length) {
+            grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-style:italic">Kart bulunamadi</div>';
+            return;
+        }
+
+        grid.innerHTML = filtered.map(card => {
+            const owned = this.myCards.has(card.c);
+            const copies = this.countInDeck(card.c);
+            const cls = [
+                "coll-card",
+                owned ? "" : "locked",
+                copies > 0 ? "in-deck" : "",
+            ].join(" ");
+
+            let badge = "";
+            if (dkCodes) {
+                badge = owned
+                    ? '<span class="coll-deck-badge owned">Var</span>'
+                    : '<span class="coll-deck-badge missing">Eksik</span>';
+            }
+            const copyBadge = copies > 0 ? `<span class="coll-copy-badge">x${copies}</span>` : "";
+
+            return `<div class="${cls}" onclick="Collection.toggleDeck(${card.c})" oncontextmenu="event.preventDefault();Collection.preview(${card.c})">
+                <span class="coll-lock">&#x1F512;</span>
+                ${badge}${copyBadge}
+                <img class="coll-card-img" src="${this.IMG(card.c)}" alt="${card.n}" loading="lazy">
+                <div class="coll-card-info">
+                    <div class="coll-card-name"><span class="coll-type-dot ${card.t}"></span>${card.n}</div>
+                    ${this.isMonster(card.t) && card.a >= 0 ? `<div class="coll-card-stats"><span class="atk">ATK ${card.a}</span> / <span class="def">DEF ${card.d}</span></div>` : ""}
+                </div>
+            </div>`;
+        }).join("");
+
+        this.renderDeck();
+    },
+
+    renderDeck() {
+        const dk = this.deck();
+        const codeSet = new Set(dk);
+        const deckCards = this.allCards.filter(c => codeSet.has(c.c));
+        const monsters = deckCards.filter(c => this.isMonster(c.t));
+        const spells = deckCards.filter(c => c.t === "spell");
+        const traps = deckCards.filter(c => c.t === "trap");
+        const list = document.getElementById("coll-deck-list");
+
+        let html = "";
+        const section = (title, cls, cards) => {
+            if (!cards.length) return "";
+            let s = `<div class="coll-dk-section"><div class="coll-dk-title ${cls}">${title} (${cards.reduce((n,c) => n + this.countInDeck(c.c), 0)})</div></div>`;
+            s += cards.map(c => this.deckCardHTML(c)).join("");
+            return s;
+        };
+        html += section("Canavarlar", "monster", monsters);
+        html += section("Buyuler", "spell", spells);
+        html += section("Tuzaklar", "trap", traps);
+
+        list.innerHTML = html;
+        document.getElementById("coll-deck-num").textContent = dk.length;
+        document.getElementById("btn-duel-with-deck").disabled = dk.length !== 40;
+        this.renderSlotTabs();
+    },
+
+    deckCardHTML(c) {
+        const count = this.countInDeck(c.c);
+        const max = this.maxCopies(c.c);
+        const lbl = max === 1 ? '<span style="color:var(--danger);font-size:0.6rem;margin-right:4px" title="Limit 1">L</span>' : "";
+        const qty = count > 1 ? `<span style="font-size:0.65rem;color:var(--gold);margin-right:4px">x${count}</span>` : "";
+        return `<div class="coll-dk-card" onclick="Collection.toggleDeck(${c.c})">
+            <img src="${this.IMG(c.c)}" alt="${c.n}">
+            ${lbl}${qty}<span class="coll-dk-card-name">${c.n}</span>
+            <span class="coll-dk-card-rm" onclick="event.stopPropagation();Collection.removeOne(${c.c})">&#x2715;</span>
+        </div>`;
+    },
+
+    renderSlotTabs() {
+        const el = document.getElementById("coll-slots");
+        el.innerHTML = this.deckSlots.map((slot, i) => {
+            const cnt = slot.cards.length;
+            const active = i === this.activeSlot ? "active" : "";
+            const ready = cnt === 40 ? "ready" : "";
+            return `<button class="coll-slot-tab ${active} ${ready}" onclick="Collection.switchSlot(${i})">
+                ${slot.name}<span class="slot-cnt">${cnt}/40</span>
+            </button>`;
+        }).join("");
+    },
+
+    switchSlot(i) {
+        this.saveCurrent();
+        this.activeSlot = i;
+        document.getElementById("coll-deck-name").value = this.deckSlots[i].name;
+        this.render();
+    },
+
+    toggleDeck(code) {
+        if (!this.myCards.has(code)) return;
+        const count = this.countInDeck(code);
+        const max = this.maxCopies(code);
+        if (count > 0 && count >= max) {
+            const idx = this.deck().indexOf(code);
+            if (idx !== -1) this.deck().splice(idx, 1);
+        } else if (count > 0) {
+            if (this.deck().length < 40) this.deck().push(code);
+            else { const idx = this.deck().indexOf(code); if (idx !== -1) this.deck().splice(idx, 1); }
+        } else {
+            if (this.deck().length < 40) this.deck().push(code);
+        }
+        this.render();
+        this.autoSave();
+    },
+
+    removeOne(code) {
+        const idx = this.deck().indexOf(code);
+        if (idx !== -1) this.deck().splice(idx, 1);
+        this.render();
+        this.autoSave();
+    },
+
+    preview(code) {
+        const owned = this.myCards.has(code);
+        const overlay = document.getElementById("coll-preview-overlay");
+        const img = document.getElementById("coll-preview-img");
+        img.src = this.IMG_BIG(code);
+        img.className = owned ? "" : "locked";
+        overlay.classList.add("active");
+    },
+
+    // Deste otomatik kaydet (debounced)
+    _saveTimer: null,
+    autoSave() {
+        clearTimeout(this._saveTimer);
+        this._saveTimer = setTimeout(() => this.saveCurrent(), 800);
+    },
+    saveCurrent() {
+        const slot = this.deckSlots[this.activeSlot];
+        slot.name = document.getElementById("coll-deck-name").value || `Deste ${this.activeSlot + 1}`;
+        WS.saveDeck(this.activeSlot, slot.name, slot.cards);
+    },
+};
+
+// Event listeners
+document.getElementById("coll-preview-overlay").addEventListener("click", (e) => {
+    e.currentTarget.classList.remove("active");
+});
+document.getElementById("coll-preview-img").addEventListener("click", (e) => {
+    e.stopPropagation();
+});
+
+document.querySelectorAll(".coll-filter").forEach(tab => {
+    tab.addEventListener("click", () => {
+        document.querySelectorAll(".coll-filter").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        Collection.filter = tab.dataset.filter;
+        Collection.render();
+    });
+});
+
+let _collSearchTimer;
+document.getElementById("coll-search").addEventListener("input", (e) => {
+    clearTimeout(_collSearchTimer);
+    _collSearchTimer = setTimeout(() => {
+        Collection.search = e.target.value.trim();
+        Collection.render();
+    }, 200);
+});
+
+document.getElementById("coll-deck-filter").addEventListener("change", (e) => {
+    Collection.deckFilter = e.target.value;
+    Collection.render();
+});
+
+document.getElementById("coll-deck-name").addEventListener("input", () => {
+    Collection.deckSlots[Collection.activeSlot].name =
+        document.getElementById("coll-deck-name").value;
+    Collection.renderSlotTabs();
+    Collection.autoSave();
+});
+
+// Duelle gir butonu — secili desteyle lobiye git
+document.getElementById("btn-duel-with-deck").addEventListener("click", () => {
+    const dk = Collection.deck();
+    if (dk.length !== 40) return;
+    // Desteyi localStorage'a kaydet, lobi ekranina gec
+    localStorage.setItem("yuki_active_deck", JSON.stringify(dk));
+    UI.showScreen("lobby");
+});
+
+// WS handlers
+WS.on("collection", (d) => Collection.init(d));
+WS.on("decks", (d) => Collection.loadDecks(d.decks));
+WS.on("deck_saved", (d) => { /* sessiz */ });

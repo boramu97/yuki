@@ -440,3 +440,106 @@ DINO_DECK = [
     # Extra Deck (1)
     75780818,   # Dyna Tank
 ]
+
+# Weevil Underwood'un bocek destesi (40 kart)
+INSECT_DECK = [
+    # Monster Cards (22)
+    48579379,   # Perfectly Ultimate Great Moth
+    14141448,   # Great Moth
+    91512835,   # Insect Queen
+    41456841,   # Metamorphosed Insect Queen
+    37957847,   # Insect Princess
+    26185991,   # Pinch Hopper
+    26185991,   # Pinch Hopper (x2)
+    84834865,   # Flying Kamakiri #1
+    84834865,   # Flying Kamakiri #1 (x2)
+    84834865,   # Flying Kamakiri #1 (x3)
+    40240595,   # Cocoon of Evolution
+    40240595,   # Cocoon of Evolution (x2)
+    27911549,   # Parasite Paracide
+    4266839,    # Kiseitai
+    14457896,   # Parasite Paranoid
+    14457896,   # Parasite Paranoid (x2)
+    14457896,   # Parasite Paranoid (x3)
+    58192742,   # Petit Moth
+    58192742,   # Petit Moth (x2)
+    88979991,   # Killer Needle
+    3134241,    # Flying Kamakiri #2
+    26932788,   # Javelin Beetle
+
+    # Spell Cards (11)
+    3492538,    # Insect Armor with Laser Cannon
+    3492538,    # Insect Armor with Laser Cannon (x2)
+    3492538,    # Insect Armor with Laser Cannon (x3)
+    23615409,   # Insect Barrier
+    23615409,   # Insect Barrier (x2)
+    23615409,   # Insect Barrier (x3)
+    22991179,   # Insect Neglect
+    83764718,   # Monster Reborn
+    41182875,   # Javelin Beetle Pact
+    80402389,   # Verdant Sanctuary
+    94716515,   # Eradicating Aerosol
+
+    # Trap Cards (7)
+    74701381,   # DNA Surgery
+    74701381,   # DNA Surgery (x2)
+    74701381,   # DNA Surgery (x3)
+    13235258,   # Corrosive Scales
+    13235258,   # Corrosive Scales (x2)
+    13235258,   # Corrosive Scales (x3)
+    56051648,   # Spider Egg
+]
+
+# Rex Raptor'un dinozor destesi (40 main + 3 extra)
+REX_RAPTOR_DECK = [
+    # Monster Cards (22)
+    81743801,   # Mighty Dino King Rex
+    94568601,   # Tyrant Dragon
+    6849042,    # Super-Ancient Dinobeast
+    38670435,   # Black Tyranno
+    55349196,   # Double-Headed Dino King Rex
+    79870141,   # Mad Sword Beast
+    50834074,   # Kaitoptera
+    50834074,   # Kaitoptera (x2)
+    50834074,   # Kaitoptera (x3)
+    77491079,   # Gale Lizard
+    39892082,   # Balloon Lizard
+    39892082,   # Balloon Lizard (x2)
+    80280944,   # Giant Rex
+    80280944,   # Giant Rex (x2)
+    45894482,   # Gilasaurus
+    45894482,   # Gilasaurus (x2)
+    1784619,    # Uraby
+    1784619,    # Uraby (x2)
+    94119974,   # Two-Headed King Rex
+    38289717,   # Crawling Dragon #2
+    13069066,   # Sword Arm of Dragon
+    75390004,   # Megazowler
+
+    # Spell Cards (10)
+    23424603,   # Wasteland
+    83764718,   # Monster Reborn
+    45141013,   # Heat Wave
+    22431243,   # Ultra Evolution Pill
+    38179121,   # Double Evolution Pill
+    24094653,   # Polymerization
+    24094653,   # Polymerization (x2)
+    99531088,   # Jurassic Power
+    99531088,   # Jurassic Power (x2)
+    99531088,   # Jurassic Power (x3)
+
+    # Trap Cards (8)
+    4206964,    # Trap Hole
+    4206964,    # Trap Hole (x2)
+    4206964,    # Trap Hole (x3)
+    29401950,   # Bottomless Trap Hole
+    29401950,   # Bottomless Trap Hole (x2)
+    29401950,   # Bottomless Trap Hole (x3)
+    11925569,   # Hunting Instinct
+    58272005,   # Survival of the Fittest
+
+    # Extra Deck (3)
+    86239173,   # Horned Saurus
+    86239173,   # Horned Saurus (x2)
+    16507828,   # Bracchio-raidus
+]

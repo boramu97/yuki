@@ -241,6 +241,40 @@ async def handle_connection(ws):
             _user = user_db.get_user(_auth_tokens[ws])
             _username = _user.username if _user else "Player"
 
+            # --- Koleksiyon ---
+            if action == "get_collection":
+                cards = user_db.get_collection(_user.user_id)
+                card_pool = user_db.get_card_pool()
+                preset_decks = user_db.get_preset_decks()
+                await ws.send(json.dumps({
+                    "action": "collection",
+                    "cards": cards,
+                    "card_pool": card_pool,
+                    "preset_decks": preset_decks,
+                }))
+                continue
+
+            # --- Desteler ---
+            if action == "get_decks":
+                decks = user_db.get_decks(_user.user_id)
+                await ws.send(json.dumps({
+                    "action": "decks",
+                    "decks": decks,
+                }))
+                continue
+
+            if action == "save_deck":
+                slot = data.get("slot", 0)
+                name = data.get("name", f"Deste {slot + 1}")
+                cards = data.get("cards", [])
+                ok = user_db.save_deck(_user.user_id, slot, name, cards)
+                await ws.send(json.dumps({
+                    "action": "deck_saved",
+                    "success": ok,
+                    "slot": slot,
+                }))
+                continue
+
             # --- Oda Oluştur ---
             if action == "create_room":
                 name = _username

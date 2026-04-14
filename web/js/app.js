@@ -85,7 +85,15 @@
         UI.showScreen("lobby");
     };
 
+    document.getElementById("nav-collection").onclick = () => {
+        Collection.open();
+    };
+
     document.getElementById("btn-back-home").onclick = () => {
+        UI.showScreen("home-screen");
+    };
+
+    document.getElementById("btn-back-collection").onclick = () => {
         UI.showScreen("home-screen");
     };
 
@@ -101,19 +109,27 @@
     };
 
     // ===== LOBİ =====
+    function getActiveDeck() {
+        try {
+            const raw = localStorage.getItem("yuki_active_deck");
+            if (raw) { const d = JSON.parse(raw); if (d.length === 40) return d; }
+        } catch(e) {}
+        return undefined; // Sunucu varsayilan desteyi kullanir
+    }
+
     document.getElementById("btn-quick-match").onclick = async () => {
         UI.setStatus("Eslestiriliyor...");
-        try { await ensureConnected(); WS.quickMatch(); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        try { await ensureConnected(); WS.quickMatch(getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("btn-create-room").onclick = async () => {
         UI.setStatus("Oda olusturuluyor...");
-        try { await ensureConnected(); WS.createRoom(); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        try { await ensureConnected(); WS.createRoom(getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("btn-join-room").onclick = async () => {
         const rid = document.getElementById("room-code").value.trim();
         if (!rid) { UI.setStatus("Oda kodu gir!"); return; }
         UI.setStatus("Katiliniyor...");
-        try { await ensureConnected(); WS.joinRoom(rid); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
+        try { await ensureConnected(); WS.joinRoom(rid, getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }
     };
     document.getElementById("mp-auto-pass")?.addEventListener("change",(e)=>{UI.autoPassChain=e.target.checked});
 

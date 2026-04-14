@@ -83,4 +83,17 @@ const WS = {
     sendResponse(msgType, data) {
         this.send({ action: "response", msg_type: msgType, data });
     },
+
+    // Koleksiyon metodlari
+    getCollection() {
+        this.send({ action: "get_collection" });
+    },
+
+    getDecks() {
+        this.send({ action: "get_decks" });
+    },
+
+    saveDeck(slot, name, cards) {
+        this.send({ action: "save_deck", slot, name, cards });
+    },
 };
