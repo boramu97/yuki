@@ -61,7 +61,7 @@ from server.response_builder import (
 from server.decks import (
     YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
     JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-    INSECT_DECK, REX_RAPTOR_DECK,
+    INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
 )
 import random as _random
 from server.ocg_binding import (
@@ -88,6 +88,7 @@ BOT_DECKS = {
     "Dino": DINO_DECK,
     "Weevil": INSECT_DECK,
     "Rex": REX_RAPTOR_DECK,
+    "Pegasus": PEGASUS_DECK,
 }
 
 # --- Macera Tanımları ---
@@ -99,7 +100,7 @@ ADVENTURES = {
             {"stage": 1, "bot": "Weevil", "bot_name": "Weevil Underwood", "dust": 75,  "cards": 2},
             {"stage": 2, "bot": "Mai",    "bot_name": "Mai Valentine", "dust": 100, "cards": 3},
             {"stage": 3, "bot": "Joey",   "bot_name": "Joey Wheeler", "dust": 125, "cards": 3},
-            {"stage": 4, "bot": "Kaiba",  "bot_name": "Seto Kaiba",  "dust": 200, "cards": 5},
+            {"stage": 4, "bot": "Pegasus", "bot_name": "Maximillion Pegasus", "dust": 200, "cards": 5},
         ],
     },
 }
@@ -395,6 +396,10 @@ async def handle_connection(ws):
                     "stage": stage_num,
                     "user_id": _user.user_id,
                 }
+                # Pegasus: Toon World garantili ilk kart + ozel arkaplan
+                if bot_key == "Pegasus":
+                    dm.guaranteed_draws = {1: [15259703]}  # Toon World
+                    dm.duel_theme = "toon"
                 room.duel_manager = dm
                 asyncio.create_task(dm.start())
                 continue

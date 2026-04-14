@@ -85,6 +85,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 
 /* FIELD WRAP — full width */
 .field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
+#duel.theme-toon .field-wrap{background:url('../img/toon-world-bg.png') center/cover no-repeat}
 
 /* SAHA — Holographic Projection Surface */
 .field{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8vw;gap:3px;
@@ -447,7 +448,7 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
     box-shadow:0 0 16px rgba(80,200,80,0.15)}
 .stage.done:hover{border-color:rgba(80,200,80,0.8);
     box-shadow:0 0 28px rgba(80,200,80,0.3);transform:translate(-50%,-50%) scale(1.08)}
-.stage.locked{opacity:0.35;cursor:not-allowed;border-color:rgba(100,100,100,0.3)}
+.stage.locked{opacity:0.7;cursor:not-allowed;border-color:rgba(100,100,100,0.4);filter:grayscale(1)}
 .stage-icon{font-size:1.4rem}
 .stage-label{font-size:0.55rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase}
 .stage-name{font-size:0.75rem;color:var(--text);font-weight:600;text-align:center;white-space:nowrap}

@@ -164,10 +164,24 @@ class DuelManager:
         deck1 = list(p1.deck)
         random.shuffle(deck0)
         random.shuffle(deck1)
+
+        # Garantili baslangic kartlari — varsa desteden cikar, en sona ekle (ilk cekilecek)
+        guaranteed = getattr(self, "guaranteed_draws", {})
+        for team, codes in guaranteed.items():
+            deck = deck1 if team == 1 else deck0
+            for code in codes:
+                if code in deck:
+                    deck.remove(code)
+
         for code in deck0:
             self._core.add_card(self._duel, team=0, code=code, loc=LOCATION_DECK)
         for code in deck1:
             self._core.add_card(self._duel, team=1, code=code, loc=LOCATION_DECK)
+
+        # Garantili kartlari en son ekle (destenin en ustu = ilk cekilis)
+        for team, codes in guaranteed.items():
+            for code in codes:
+                self._core.add_card(self._duel, team=team, code=code, loc=LOCATION_DECK)
 
         self._core.start_duel(self._duel)
 
@@ -180,7 +194,11 @@ class DuelManager:
         self._create_duel()
 
         # Oyunculara düello başladı bildir
-        await self.room.broadcast({"action": "duel_start"})
+        theme = getattr(self, "duel_theme", None)
+        msg = {"action": "duel_start"}
+        if theme:
+            msg["theme"] = theme
+        await self.room.broadcast(msg)
 
         # Ana düello döngüsü
         try:

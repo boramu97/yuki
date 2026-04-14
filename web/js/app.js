@@ -175,7 +175,7 @@
     WS.on("player_joined",(d)=>{oppName=d.name;UI.log(d.name+" katildi!","important")});
     WS.on("player_left",(d)=>{UI.log(d.name+" ayrildi")});
 
-    WS.on("duel_start",()=>{
+    WS.on("duel_start",(d)=>{
         UI.showScreen("duel"); Field.init(myTeam);
         document.getElementById("self-name").textContent=myName;
         document.getElementById("self-initial").textContent=myName.charAt(0).toUpperCase();
@@ -183,6 +183,10 @@
         document.getElementById("opp-initial").textContent=oppName.charAt(0).toUpperCase();
         document.getElementById("self-lp").textContent="8000";
         document.getElementById("opp-lp").textContent="8000";
+        // Tema arkaplan
+        const duelEl=document.getElementById("duel");
+        duelEl.classList.remove("theme-toon");
+        if(d&&d.theme==="toon") duelEl.classList.add("theme-toon");
         UI.setGameStatus("Duello basladi!");
         UI.log("Duello basladi!","important");
     });
@@ -221,7 +225,7 @@
         // Eski butonlari temizle (img haric)
         map.querySelectorAll(".stage").forEach(el=>el.remove());
         const completed=adv.completed||[];
-        const icons=["&#x1F996;","&#x1FAB2;","&#x1F985;","&#x1F3B2;","&#x1F409;"];
+        const icons=["&#x1F996;","&#x1FAB2;","&#x1F985;","&#x1F3B2;","&#x1F441;"];
         const labels=["1. Tur","2. Tur","3. Tur","4. Tur","Final"];
         // Harita uzerinde konumlar (% cinsinden — sahilden kaleye yol)
         const positions=[
