@@ -7,7 +7,11 @@ const WS = {
 
     connect(url) {
         return new Promise((resolve, reject) => {
-            this.socket = new WebSocket(url || `ws://${location.hostname}:8765`);
+            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = proto === 'wss:'
+                ? `${proto}//${location.host}/ws`
+                : `${proto}//${location.hostname}:8765`;
+            this.socket = new WebSocket(url || wsUrl);
 
             this.socket.onopen = () => {
                 this.connected = true;
