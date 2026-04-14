@@ -401,6 +401,21 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .home-card-title{font-size:1.1rem;color:var(--text);letter-spacing:1px;font-weight:700}
 .home-card-desc{font-size:0.8rem;color:var(--text-muted);text-align:center;padding:0 16px}
 
+/* ===== MACERALAR EKRANI ===== */
+#adventures-screen{align-items:center;flex-direction:column}
+.adv-header{width:100%;display:flex;align-items:center;gap:20px;padding:20px 24px;border-bottom:1px solid var(--gold-border);background:var(--bg-hud)}
+.adv-title{font-size:1.4rem;font-weight:400;color:var(--gold);letter-spacing:3px}
+.adv-subtitle{color:var(--text-dim);font-style:italic;margin-top:24px;font-size:0.95rem;letter-spacing:1px}
+.adv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:28px 40px;max-width:900px;width:100%}
+.adv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    padding:24px 16px;border:1px solid var(--gold-border);border-radius:8px;
+    background:rgba(180,140,60,0.03);cursor:pointer;transition:all 0.25s;font-family:inherit}
+.adv-card:hover{border-color:rgba(200,170,60,0.4);background:rgba(180,140,60,0.08);
+    box-shadow:0 0 30px rgba(200,160,40,0.08);transform:translateY(-4px)}
+.adv-icon{font-size:2.4rem}
+.adv-name{font-size:0.95rem;color:var(--text);letter-spacing:1px;font-weight:700}
+.adv-desc{font-size:0.72rem;color:var(--text-muted);text-align:center}
+
 /* ===== KOLEKSIYON EKRANI ===== */
 #collection-screen{flex-direction:column}
 .coll-header{display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 24px;background:var(--bg-hud);border-bottom:1px solid var(--gold-border);flex-shrink:0}

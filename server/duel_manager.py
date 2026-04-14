@@ -30,6 +30,7 @@ from server.card_database import CardDatabase
 from server.message_parser import split_messages, parse_message, INTERACTIVE_MESSAGES
 from server.config import SCRIPT_DIR, CARD_DB_PATH
 from server.room import Room, RoomState, Player
+from server.ai_player import ai_respond
 
 
 # Sistem scriptleri — düello oluşturulduktan sonra yüklenmeli
@@ -99,8 +100,9 @@ class DuelManager:
     mesajları oyunculara iletir, yanıtları motora aktarır.
     """
 
-    def __init__(self, room: Room):
+    def __init__(self, room: Room, bot_team: int = -1):
         self.room = room
+        self.bot_team = bot_team  # -1 = bot yok, 0 veya 1 = o taraf bot
         self._core = get_core()
         self._db = get_db()
         self._duel = None
@@ -109,6 +111,7 @@ class DuelManager:
         self._pending_response: bytes | None = None
         self._pending_player: int = -1  # Yanıt bekleyen oyuncu
         self._last_select_msg: dict | None = None  # RETRY icin son SELECT
+        self._last_select_type: int = 0  # Son SELECT mesaj tipi (bot için)
 
     def _script_reader(self, payload, duel, name):
         """OCGCore callback: Lua scriptini dosyadan yükle."""
@@ -257,27 +260,43 @@ class DuelManager:
                 # Secim mesaji — sadece ilgili oyuncuya gonder
                 target_player = msg.get("player", 0)
                 self._pending_player = target_player
+                self._last_select_type = msg_type
 
                 # Rakibin kapali kartlarinin bilgisini gizle
                 self._hide_opponent_facedowns(msg, target_player)
                 self._last_select_msg = msg
 
-                player = self.room.get_player(target_player)
-                if player:
-                    await player.send({
-                        "action": "select",
-                        "msg": msg,
-                    })
-                    # Diger oyuncuya "bekle" bildir
-                    opponent = self.room.get_opponent(player)
-                    if opponent:
-                        await opponent.send({
+                # Bot takımıysa AI yanıt üretir
+                if target_player == self.bot_team:
+                    response = ai_respond(msg_type, msg)
+                    self._pending_response = response
+                    self._response_event.set()
+                    # İnsan oyuncuya "bekle" bildir
+                    human_player = self.room.get_player(1 - self.bot_team)
+                    if human_player:
+                        await human_player.send({
                             "action": "info",
                             "msg": {"name": "MSG_WAITING", "type": 3},
                         })
+                else:
+                    player = self.room.get_player(target_player)
+                    if player:
+                        await player.send({
+                            "action": "select",
+                            "msg": msg,
+                        })
+                        # Diger oyuncuya "bekle" bildir
+                        opponent = self.room.get_opponent(player)
+                        if opponent:
+                            await opponent.send({
+                                "action": "info",
+                                "msg": {"name": "MSG_WAITING", "type": 3},
+                            })
             else:
-                # Bilgi mesaji — her iki oyuncuya gonder
+                # Bilgi mesaji — her iki oyuncuya gonder (bot hariç)
                 for p in self.room.players:
+                    if p.team == self.bot_team:
+                        continue  # Bot'a mesaj gönderme
                     filtered = self._filter_message(msg, p.team)
                     await p.send({
                         "action": "info",

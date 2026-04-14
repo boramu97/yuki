@@ -104,4 +104,8 @@ const WS = {
     disenchantCard(code) {
         this.send({ action: "disenchant_card", code });
     },
+
+    playVsBot(bot, deck) {
+        this.send({ action: "play_vs_bot", bot, deck });
+    },
 };

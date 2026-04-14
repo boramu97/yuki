@@ -76,6 +76,14 @@
     });
 
     // ===== ANA SAYFA =====
+    function getActiveDeck() {
+        try {
+            const raw = localStorage.getItem("yuki_active_deck");
+            if (raw) { const d = JSON.parse(raw); if (d.length === 40) return d; }
+        } catch(e) {}
+        return undefined;
+    }
+
     function goHome() {
         document.getElementById("home-username").textContent = myName;
         UI.showScreen("home-screen");
@@ -89,13 +97,34 @@
         Collection.open();
     };
 
+    document.getElementById("nav-adventures").onclick = () => {
+        UI.showScreen("adventures-screen");
+    };
+
     document.getElementById("btn-back-home").onclick = () => {
+        UI.showScreen("home-screen");
+    };
+
+    document.getElementById("btn-back-adventures").onclick = () => {
         UI.showScreen("home-screen");
     };
 
     document.getElementById("btn-back-collection").onclick = () => {
         UI.showScreen("home-screen");
     };
+
+    // Maceralar — bot seçimi
+    document.querySelectorAll(".adv-card").forEach(card => {
+        card.addEventListener("click", async () => {
+            const bot = card.dataset.bot;
+            try {
+                await ensureConnected();
+                WS.playVsBot(bot, getActiveDeck());
+            } catch(e) {
+                // bağlantı hatası
+            }
+        });
+    });
 
     document.getElementById("btn-logout").onclick = () => {
         localStorage.removeItem("yuki_token");
@@ -109,14 +138,6 @@
     };
 
     // ===== LOBİ =====
-    function getActiveDeck() {
-        try {
-            const raw = localStorage.getItem("yuki_active_deck");
-            if (raw) { const d = JSON.parse(raw); if (d.length === 40) return d; }
-        } catch(e) {}
-        return undefined; // Sunucu varsayilan desteyi kullanir
-    }
-
     document.getElementById("btn-quick-match").onclick = async () => {
         UI.setStatus("Eslestiriliyor...");
         try { await ensureConnected(); WS.quickMatch(getActiveDeck()); } catch(e) { UI.setStatus("Sunucu baglanamadi!"); }

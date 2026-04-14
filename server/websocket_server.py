@@ -58,7 +58,12 @@ from server.response_builder import (
     build_rps_response,
     build_sort_response,
 )
-from server.decks import YUGI_DECK, BASTION_DECK
+from server.decks import (
+    YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
+    JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
+    INSECT_DECK, REX_RAPTOR_DECK,
+)
+import random as _random
 from server.ocg_binding import (
     MSG_SELECT_IDLECMD, MSG_SELECT_BATTLECMD, MSG_SELECT_CHAIN,
     MSG_SELECT_EFFECTYN, MSG_SELECT_YESNO, MSG_SELECT_OPTION,
@@ -72,6 +77,18 @@ from server.ocg_binding import (
 
 # Varsayilan test destesi
 DEFAULT_DECK = BASTION_DECK
+
+# Bot desteleri (sadece main deck kartlari — extra deck haric)
+BOT_DECKS = {
+    "Yugi": YUGI_DECK,
+    "Kaiba": KAIBA_DECK,
+    "Joey": JOEY_DECK,
+    "Mai": MAI_DECK,
+    "Bastion": BASTION_DECK,
+    "Dino": DINO_DECK,
+    "Weevil": INSECT_DECK,
+    "Rex": REX_RAPTOR_DECK,
+}
 
 # Global yöneticiler
 room_manager = RoomManager()
@@ -296,6 +313,49 @@ async def handle_connection(ws):
                     "success": ok,
                     "slot": slot,
                 }))
+                continue
+
+            # --- Bot ile Oyna (PvE) ---
+            if action == "play_vs_bot":
+                name = _username
+                deck = data.get("deck", DEFAULT_DECK)
+                bot_name_key = data.get("bot", None)
+
+                # Bot destesi seç
+                if bot_name_key and bot_name_key in BOT_DECKS:
+                    bot_deck = BOT_DECKS[bot_name_key]
+                    bot_display = bot_name_key
+                else:
+                    bot_display = _random.choice(list(BOT_DECKS.keys()))
+                    bot_deck = BOT_DECKS[bot_display]
+
+                room = room_manager.create_room()
+
+                # İnsan oyuncu (team 0)
+                player = Player(ws=ws, name=name, deck=deck)
+                room.add_player(player)
+                _connections[ws] = player
+                _player_rooms[ws] = room.room_id
+                room_id = room.room_id
+
+                # Bot oyuncu (team 1) — ws=None
+                bot_player = Player(ws=None, name=bot_display, deck=bot_deck)
+                room.add_player(bot_player)
+
+                await ws.send(json.dumps({
+                    "action": "room_joined",
+                    "room_id": room.room_id,
+                    "team": 0,
+                }))
+                await ws.send(json.dumps({
+                    "action": "player_joined",
+                    "name": bot_display,
+                }))
+
+                # Düelloyu başlat (bot_team=1)
+                dm = DuelManager(room, bot_team=1)
+                room.duel_manager = dm
+                asyncio.create_task(dm.start())
                 continue
 
             # --- Oda Oluştur ---

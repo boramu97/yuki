@@ -31,6 +31,8 @@ class Player:
 
     async def send(self, data: dict):
         """Oyuncuya JSON mesaj gönderir."""
+        if self.ws is None:
+            return  # Bot oyuncu — mesaj gönderme
         import json
         try:
             await self.ws.send(json.dumps(data))
