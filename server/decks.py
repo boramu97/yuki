@@ -543,3 +543,60 @@ REX_RAPTOR_DECK = [
     86239173,   # Horned Saurus (x2)
     16507828,   # Bracchio-raidus
 ]
+
+# Pegasus — Toon destesi (40 main + 6 extra)
+PEGASUS_DECK = [
+    # Monster Cards (17)
+    53183600,   # Blue-Eyes Toon Dragon
+    21296502,   # Toon Dark Magician
+    99261403,   # Dark Rabbit
+    99261403,   # Dark Rabbit (x2)
+    99261403,   # Dark Rabbit (x3)
+    64116319,   # Toon Harpie Lady
+    64116319,   # Toon Harpie Lady (x2)
+    14558127,   # Ash Blossom & Joyous Spring
+    14558127,   # Ash Blossom & Joyous Spring (x2)
+    14558127,   # Ash Blossom & Joyous Spring (x3)
+    90960358,   # Toon Dark Magician Girl
+    97268402,   # Effect Veiler
+    97268402,   # Effect Veiler (x2)
+    97268402,   # Effect Veiler (x3)
+    91842653,   # Toon Summoned Skull
+    31733941,   # Red-Eyes Toon Dragon
+    28711704,   # Toon Black Luster Soldier
+
+    # Spell Cards (18)
+    88032456,   # Mimicat
+    88032456,   # Mimicat (x2)
+    88032456,   # Mimicat (x3)
+    15259703,   # Toon World
+    15259703,   # Toon World (x2)
+    15259703,   # Toon World (x3)
+    73628505,   # Terraforming
+    91500017,   # Toon Bookmark
+    91500017,   # Toon Bookmark (x2)
+    91500017,   # Toon Bookmark (x3)
+    89997728,   # Toon Table of Contents
+    89997728,   # Toon Table of Contents (x2)
+    89997728,   # Toon Table of Contents (x3)
+    27699122,   # Toon Page-Flip
+    27699122,   # Toon Page-Flip (x2)
+    27699122,   # Toon Page-Flip (x3)
+    70560957,   # Toon Rollback
+    24224830,   # Called by the Grave
+
+    # Trap Cards (5)
+    53094821,   # Toon Terror
+    5832914,    # Toon Briefcase
+    10045474,   # Infinite Impermanence
+    10045474,   # Infinite Impermanence (x2)
+    10045474,   # Infinite Impermanence (x3)
+
+    # Extra Deck (6)
+    23995346,   # Blue-Eyes Ultimate Dragon
+    23995346,   # Blue-Eyes Ultimate Dragon (x2)
+    25655502,   # Bickuribox
+    25655502,   # Bickuribox (x2)
+    11901678,   # Black Skull Dragon
+    11901678,   # Black Skull Dragon (x2)
+]
