@@ -93,6 +93,19 @@ const Field = {
         this._renderZone("self-szone",this.selfTeam(),"szone");
         this._renderZone("opp-szone",this.oppTeam(),"szone");
         this._renderHand();
+        this._renderOppHand();
+    },
+
+    _renderOppHand() {
+        const el=document.getElementById("opp-hand"); if(!el) return;
+        const hand=this.cards[this.oppTeam()]?.hand||[];
+        el.innerHTML="";
+        hand.forEach(()=>{
+            const div=document.createElement("div");
+            div.className="opp-hand-card";
+            div.innerHTML=cardBackHTML();
+            el.appendChild(div);
+        });
     },
 
     _renderZone(elId, team, zone) {
@@ -274,4 +287,7 @@ document.addEventListener("click",(e)=>{
     card.appendChild(popup);
     e.stopPropagation();
 });
+
+// Motor panel swipe handle — tikla toggle
+document.getElementById("mp-swipe-handle")?.addEventListener("click",()=>UI.toggleMotorPanel());
 

@@ -43,12 +43,20 @@ const UI = {
         document.getElementById("mp-footer-actions").innerHTML = "";
         document.getElementById("mp-footer").style.display = "none";
         panel.classList.add("open");
+        // Mobilde minimized basla — kullanici yukari cekerek acar
+        if (window.innerWidth <= 768) panel.classList.add("minimized");
     },
 
     hideMotorPanel() {
-        document.getElementById("motor-panel").classList.remove("open");
+        const panel = document.getElementById("motor-panel");
+        panel.classList.remove("open");
+        panel.classList.remove("minimized");
         document.getElementById("mp-actions").innerHTML = "";
         this._clearHighlights();
+    },
+
+    toggleMotorPanel() {
+        document.getElementById("motor-panel").classList.toggle("minimized");
     },
 
     _addGroupHeader(label) {
