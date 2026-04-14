@@ -112,4 +112,12 @@ const WS = {
     surrender() {
         this.send({ action: "surrender" });
     },
+
+    getAdventures() {
+        this.send({ action: "get_adventures" });
+    },
+
+    playAdventure(adventure, stage, deck) {
+        this.send({ action: "play_adventure", adventure, stage, deck });
+    },
 };

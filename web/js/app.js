@@ -97,8 +97,9 @@
         Collection.open();
     };
 
-    document.getElementById("nav-adventures").onclick = () => {
+    document.getElementById("nav-adventures").onclick = async () => {
         UI.showScreen("adventures-screen");
+        try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
     };
 
     document.getElementById("btn-back-home").onclick = () => {
@@ -183,8 +184,53 @@
         const w=d.winner===myTeam;
         document.getElementById("result-text").textContent=w?"ZAFER":"MAGLUP";
         document.getElementById("result-text").style.color=w?"#e8c840":"#9a6aba";
+        // Odul gosterimi
+        const rbox=document.getElementById("reward-box");
+        const rdet=document.getElementById("reward-details");
+        if(d.reward && d.reward.dust){
+            rbox.style.display="";
+            let html=`<div class="reward-dust">+${d.reward.dust} Toz</div>`;
+            if(d.reward.cards && d.reward.cards.length)
+                html+=`<div class="reward-cards">${d.reward.cards.length} yeni kart koleksiyonuna eklendi!</div>`;
+            rdet.innerHTML=html;
+        } else {
+            rbox.style.display="none";
+        }
         UI.showScreen("result");
     });
+
+    // Turnuva ilerlemesi
+    WS.on("adventures",(d)=>{
+        const track=document.getElementById("tournament-track");
+        const adv=d.adventures?.duel_island;
+        if(!adv){track.innerHTML="";return;}
+        const completed=adv.completed||[];
+        const icons=["&#x1F996;","&#x1FAB2;","&#x1F985;","&#x1F3B2;","&#x1F409;"];
+        const labels=["1. Tur","2. Tur","3. Tur","4. Tur","Final"];
+        let html="";
+        adv.stages.forEach((st,i)=>{
+            const done=completed.includes(i);
+            const unlocked=i===0||completed.includes(i-1);
+            const cls=done?"stage done":unlocked?"stage unlocked":"stage locked";
+            html+=`<div class="${cls}" data-stage="${i}" data-adv="duel_island">`;
+            html+=`<div class="stage-icon">${icons[i]||""}</div>`;
+            html+=`<div class="stage-label">${labels[i]}</div>`;
+            html+=`<div class="stage-name">${st.bot_name}</div>`;
+            html+=`<div class="stage-reward">${st.dust} toz + ${st.cards} kart</div>`;
+            if(done) html+=`<div class="stage-check">&#x2713;</div>`;
+            html+=`</div>`;
+            if(i<adv.stages.length-1) html+=`<div class="stage-connector ${done?"done":""}"></div>`;
+        });
+        track.innerHTML=html;
+        // Click handler
+        track.querySelectorAll(".stage.unlocked, .stage.done").forEach(el=>{
+            el.addEventListener("click",async()=>{
+                const stg=parseInt(el.dataset.stage);
+                try{await ensureConnected();WS.playAdventure("duel_island",stg,getActiveDeck());}catch(e){}
+            });
+        });
+    });
+
     WS.on("error",(d)=>{UI.setStatus(d.message)});
     WS.on("disconnect",()=>{UI.setStatus("Baglanti koptu")});
 

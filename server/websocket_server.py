@@ -90,6 +90,20 @@ BOT_DECKS = {
     "Rex": REX_RAPTOR_DECK,
 }
 
+# --- Macera Tanımları ---
+ADVENTURES = {
+    "duel_island": {
+        "name": "Duello Adasi",
+        "stages": [
+            {"stage": 0, "bot": "Rex",    "bot_name": "Rex Raptor",  "dust": 50,  "cards": 2},
+            {"stage": 1, "bot": "Weevil", "bot_name": "Weevil Underwood", "dust": 75,  "cards": 2},
+            {"stage": 2, "bot": "Mai",    "bot_name": "Mai Valentine", "dust": 100, "cards": 3},
+            {"stage": 3, "bot": "Joey",   "bot_name": "Joey Wheeler", "dust": 125, "cards": 3},
+            {"stage": 4, "bot": "Kaiba",  "bot_name": "Seto Kaiba",  "dust": 200, "cards": 5},
+        ],
+    },
+}
+
 # Global yöneticiler
 room_manager = RoomManager()
 user_db = UserDatabase()
@@ -313,6 +327,76 @@ async def handle_connection(ws):
                     "success": ok,
                     "slot": slot,
                 }))
+                continue
+
+            # --- Macera İlerlemesi ---
+            if action == "get_adventures":
+                result = {}
+                for adv_id, adv in ADVENTURES.items():
+                    progress = user_db.get_adventure_progress(_user.user_id, adv_id)
+                    result[adv_id] = {
+                        "name": adv["name"],
+                        "stages": adv["stages"],
+                        "completed": progress,
+                    }
+                await ws.send(json.dumps({
+                    "action": "adventures",
+                    "adventures": result,
+                }))
+                continue
+
+            # --- Macera Düellosu ---
+            if action == "play_adventure":
+                adv_id = data.get("adventure", "")
+                stage_num = data.get("stage", 0)
+                deck = data.get("deck", DEFAULT_DECK)
+
+                adv = ADVENTURES.get(adv_id)
+                if not adv or stage_num < 0 or stage_num >= len(adv["stages"]):
+                    await _send_error(ws, "Gecersiz macera")
+                    continue
+
+                # Önceki aşama tamamlandı mı? (0. aşama her zaman açık)
+                if stage_num > 0:
+                    progress = user_db.get_adventure_progress(_user.user_id, adv_id)
+                    if (stage_num - 1) not in progress:
+                        await _send_error(ws, "Onceki asamayi tamamla")
+                        continue
+
+                stage = adv["stages"][stage_num]
+                bot_key = stage["bot"]
+                bot_deck = BOT_DECKS.get(bot_key, DEFAULT_DECK)
+                bot_display = stage["bot_name"]
+
+                room = room_manager.create_room()
+                player = Player(ws=ws, name=_username, deck=deck)
+                room.add_player(player)
+                _connections[ws] = player
+                _player_rooms[ws] = room.room_id
+                room_id = room.room_id
+
+                bot_player = Player(ws=None, name=bot_display, deck=bot_deck)
+                room.add_player(bot_player)
+
+                await ws.send(json.dumps({
+                    "action": "room_joined",
+                    "room_id": room.room_id,
+                    "team": 0,
+                }))
+                await ws.send(json.dumps({
+                    "action": "player_joined",
+                    "name": bot_display,
+                }))
+
+                dm = DuelManager(room, bot_team=1)
+                # Macera bilgisini kaydet — galibiyet sonrası ödül için
+                dm.adventure_info = {
+                    "adventure": adv_id,
+                    "stage": stage_num,
+                    "user_id": _user.user_id,
+                }
+                room.duel_manager = dm
+                asyncio.create_task(dm.start())
                 continue
 
             # --- Bot ile Oyna (PvE) ---

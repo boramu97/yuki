@@ -61,6 +61,16 @@ class UserDatabase:
                 UNIQUE(user_id, slot)
             )
         """)
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS adventure_progress (
+                user_id INTEGER NOT NULL,
+                adventure TEXT NOT NULL,
+                stage INTEGER NOT NULL,
+                completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                UNIQUE(user_id, adventure, stage)
+            )
+        """)
         self._conn.commit()
 
     def _load_card_pool(self):
@@ -378,3 +388,53 @@ class UserDatabase:
         )
         self._conn.commit()
         return True
+
+    # --- Macera İlerlemesi ---
+
+    def get_adventure_progress(self, user_id: int, adventure: str) -> list[int]:
+        """Tamamlanan aşama numaralarını döndürür."""
+        rows = self._conn.execute(
+            "SELECT stage FROM adventure_progress WHERE user_id=? AND adventure=?",
+            (user_id, adventure),
+        ).fetchall()
+        return [row["stage"] for row in rows]
+
+    def complete_adventure_stage(self, user_id: int, adventure: str, stage: int,
+                                  dust_reward: int, card_codes: list[int]) -> dict:
+        """Aşamayı tamamla, ödül ver. Zaten tamamlandıysa ödül vermez."""
+        # Zaten tamamlandı mı?
+        exists = self._conn.execute(
+            "SELECT 1 FROM adventure_progress WHERE user_id=? AND adventure=? AND stage=?",
+            (user_id, adventure, stage),
+        ).fetchone()
+        if exists:
+            return {"already_done": True, "dust": 0, "cards": []}
+
+        # Aşamayı kaydet
+        self._conn.execute(
+            "INSERT INTO adventure_progress (user_id, adventure, stage) VALUES (?, ?, ?)",
+            (user_id, adventure, stage),
+        )
+        # Toz ödülü
+        if dust_reward > 0:
+            self._conn.execute(
+                "UPDATE users SET dust = dust + ? WHERE id = ?",
+                (dust_reward, user_id),
+            )
+        # Kart ödülleri (koleksiyonda olmayanlar)
+        granted = []
+        for code in card_codes:
+            try:
+                self._conn.execute(
+                    "INSERT INTO collections (user_id, card_code) VALUES (?, ?)",
+                    (user_id, code),
+                )
+                granted.append(code)
+            except Exception:
+                pass  # Zaten koleksiyonda
+        self._conn.commit()
+        return {
+            "already_done": False,
+            "dust": dust_reward,
+            "cards": granted,
+        }

@@ -418,6 +418,35 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .adv-name{font-size:0.95rem;color:var(--text);letter-spacing:1px;font-weight:700}
 .adv-desc{font-size:0.72rem;color:var(--text-muted);text-align:center}
 
+/* --- Turnuva Yolu --- */
+.tournament-section{width:100%;max-width:960px;padding:28px 40px}
+.tournament-title{font-size:1.2rem;color:var(--gold);font-weight:700;letter-spacing:2px;text-align:center}
+.tournament-desc{font-size:0.8rem;color:var(--text-dim);text-align:center;margin:6px 0 20px;font-style:italic}
+.tournament-track{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap}
+.stage{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 14px;
+    border:1px solid var(--gold-border);border-radius:10px;background:rgba(180,140,60,0.03);
+    min-width:110px;position:relative;transition:all 0.25s;cursor:default}
+.stage.unlocked{cursor:pointer;border-color:rgba(200,170,60,0.35)}
+.stage.unlocked:hover{border-color:var(--gold);background:rgba(180,140,60,0.1);
+    box-shadow:0 0 24px rgba(200,160,40,0.12);transform:translateY(-3px)}
+.stage.done{border-color:rgba(80,180,80,0.4);background:rgba(80,180,80,0.06)}
+.stage.done:hover{border-color:rgba(80,180,80,0.6);background:rgba(80,180,80,0.1);transform:translateY(-3px)}
+.stage.locked{opacity:0.4;cursor:not-allowed}
+.stage-icon{font-size:1.8rem}
+.stage-label{font-size:0.65rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase}
+.stage-name{font-size:0.82rem;color:var(--text);font-weight:600;text-align:center}
+.stage-reward{font-size:0.65rem;color:var(--gold);opacity:0.7}
+.stage-check{position:absolute;top:6px;right:8px;color:#5cb85c;font-size:0.9rem;font-weight:bold}
+.stage-connector{width:24px;height:2px;background:var(--gold-border);flex-shrink:0}
+.stage-connector.done{background:rgba(80,180,80,0.5)}
+
+/* --- Odul Kutusu --- */
+.reward-box{margin:16px 0;padding:16px 28px;border:1px solid rgba(200,170,60,0.3);
+    border-radius:8px;background:rgba(180,140,60,0.06);text-align:center}
+.reward-title{color:var(--gold);font-size:1rem;font-weight:700;letter-spacing:2px;margin-bottom:8px}
+.reward-dust{color:#e8c840;font-size:1.1rem;font-weight:600}
+.reward-cards{color:var(--text);font-size:0.85rem;margin-top:4px}
+
 /* ===== KOLEKSIYON EKRANI ===== */
 #collection-screen{flex-direction:column}
 .coll-header{display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 24px;background:var(--bg-hud);border-bottom:1px solid var(--gold-border);flex-shrink:0}

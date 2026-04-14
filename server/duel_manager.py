@@ -24,6 +24,8 @@ from server.ocg_binding import (
     DUEL_MODE_MR2,
     DUEL_STATUS_END, DUEL_STATUS_AWAITING, DUEL_STATUS_CONTINUE,
     MSG_WIN, MSG_RETRY, MSG_ADD_COUNTER, MSG_REMOVE_COUNTER,
+    MSG_SUMMONING, MSG_SUMMONED, MSG_SPSUMMONING, MSG_SPSUMMONED,
+    MSG_FLIPSUMMONING, MSG_FLIPSUMMONED,
     QUERY_CODE, QUERY_ATTACK, QUERY_DEFENSE, QUERY_POSITION,
 )
 from server.card_database import CardDatabase
@@ -112,6 +114,7 @@ class DuelManager:
         self._pending_player: int = -1  # Yanıt bekleyen oyuncu
         self._last_select_msg: dict | None = None  # RETRY icin son SELECT
         self._last_select_type: int = 0  # Son SELECT mesaj tipi (bot için)
+        self._pending_summon: dict | None = None  # Çağrı tamamlanınca stat sorgusu için
 
     def _script_reader(self, payload, duel, name):
         """OCGCore callback: Lua scriptini dosyadan yükle."""
@@ -257,10 +260,12 @@ class DuelManager:
 
             if msg_type == MSG_WIN:
                 winner = msg.get("player", -1)
+                reward = await self._check_adventure_reward(winner)
                 await self.room.broadcast({
                     "action": "duel_end",
                     "winner": winner,
                     "reason": msg.get("reason", 0),
+                    "reward": reward,
                 })
                 self.room.state = RoomState.FINISHED
                 self._running = False
@@ -316,6 +321,25 @@ class DuelManager:
                         "action": "info",
                         "msg": filtered,
                     })
+
+                # Çağrı başladığında konum kaydet
+                if msg_type in (MSG_SUMMONING, MSG_SPSUMMONING, MSG_FLIPSUMMONING):
+                    self._pending_summon = {
+                        "controller": msg.get("controller", 0),
+                        "location": msg.get("location", 0),
+                        "sequence": msg.get("sequence", 0),
+                    }
+
+                # Çağrı tamamlandığında motordan gerçek ATK/DEF sorgula
+                # (Clone Token gibi "?" stat'lı kartlar için)
+                if msg_type in (MSG_SUMMONED, MSG_SPSUMMONED, MSG_FLIPSUMMONED):
+                    if self._pending_summon:
+                        await self._send_card_stat_update(
+                            self._pending_summon["controller"],
+                            self._pending_summon["location"],
+                            self._pending_summon["sequence"],
+                        )
+                        self._pending_summon = None
 
                 # Counter degistiginde kartın guncel ATK/DEF'ini sorgula ve gonder
                 if msg_type in (MSG_ADD_COUNTER, MSG_REMOVE_COUNTER):
@@ -521,6 +545,46 @@ class DuelManager:
         self.room.state = RoomState.FINISHED
         # Yanıt bekliyorsa kilidi aç (döngü dursun)
         self._response_event.set()
+
+    async def _check_adventure_reward(self, winner: int) -> dict | None:
+        """Macera düellosuysa ve insan kazandıysa ödül ver."""
+        info = getattr(self, "adventure_info", None)
+        if not info:
+            return None
+        # İnsan oyuncu team 0, bot team 1 — insan kazanmalı
+        if winner != 0:
+            return None
+
+        from server.websocket_server import ADVENTURES, BOT_DECKS, user_db
+
+        adv_id = info["adventure"]
+        stage_num = info["stage"]
+        user_id = info["user_id"]
+        adv = ADVENTURES.get(adv_id)
+        if not adv:
+            return None
+
+        stage = adv["stages"][stage_num]
+        dust_reward = stage["dust"]
+        card_count = stage["cards"]
+
+        # Rakibin destesinden koleksiyonda olmayan kartları bul
+        bot_deck = BOT_DECKS.get(stage["bot"], [])
+        owned = set(user_db.get_collection(user_id))
+        available = [c for c in set(bot_deck) if c not in owned]
+        random.shuffle(available)
+        card_reward = available[:card_count]
+
+        result = user_db.complete_adventure_stage(
+            user_id, adv_id, stage_num, dust_reward, card_reward,
+        )
+        if result["already_done"]:
+            return None
+
+        return {
+            "dust": result["dust"],
+            "cards": result["cards"],
+        }
 
     def receive_response(self, player_team: int, response: bytes):
         """Oyuncudan gelen yanıtı motora aktarmak için kaydet."""

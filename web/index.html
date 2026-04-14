@@ -183,45 +183,56 @@
             <button class="btn" id="btn-back-adventures">&larr; Ana Sayfa</button>
             <h1 class="adv-title">Maceralar</h1>
         </div>
-        <div class="adv-subtitle">Bir rakip sec ve savas!</div>
+
+        <!-- DUELLO ADASI TURNUVASI -->
+        <div class="tournament-section">
+            <div class="tournament-title">Duello Adasi</div>
+            <div class="tournament-desc">Finale uzanan yolu tamamla! Her zafer odul kazandirir.</div>
+            <div class="tournament-track" id="tournament-track">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+
+        <!-- SERBEST OYNAMA -->
+        <div class="adv-subtitle">Serbest Oynama</div>
         <div class="adv-grid" id="adv-grid">
             <button class="adv-card" data-bot="Yugi">
-                <div class="adv-icon">🌟</div>
+                <div class="adv-icon">&#x1F31F;</div>
                 <div class="adv-name">Yugi Muto</div>
                 <div class="adv-desc">Karanlik Buyucu'nun gucu</div>
             </button>
             <button class="adv-card" data-bot="Kaiba">
-                <div class="adv-icon">🐉</div>
+                <div class="adv-icon">&#x1F409;</div>
                 <div class="adv-name">Seto Kaiba</div>
                 <div class="adv-desc">Mavi Gozlu Beyaz Ejderha</div>
             </button>
             <button class="adv-card" data-bot="Joey">
-                <div class="adv-icon">🎲</div>
+                <div class="adv-icon">&#x1F3B2;</div>
                 <div class="adv-name">Joey Wheeler</div>
                 <div class="adv-desc">Sansli savasci</div>
             </button>
             <button class="adv-card" data-bot="Mai">
-                <div class="adv-icon">🦅</div>
+                <div class="adv-icon">&#x1F985;</div>
                 <div class="adv-name">Mai Valentine</div>
                 <div class="adv-desc">Harpie Lady ordusu</div>
             </button>
             <button class="adv-card" data-bot="Bastion">
-                <div class="adv-icon">🔬</div>
+                <div class="adv-icon">&#x1F52C;</div>
                 <div class="adv-name">Bastion Misawa</div>
                 <div class="adv-desc">Kimya ve su ejderhalari</div>
             </button>
             <button class="adv-card" data-bot="Dino">
-                <div class="adv-icon">🦕</div>
+                <div class="adv-icon">&#x1F995;</div>
                 <div class="adv-name">Hassleberry</div>
                 <div class="adv-desc">Dinozor gucu</div>
             </button>
             <button class="adv-card" data-bot="Weevil">
-                <div class="adv-icon">🪲</div>
+                <div class="adv-icon">&#x1FAB2;</div>
                 <div class="adv-name">Weevil Underwood</div>
                 <div class="adv-desc">Bocek suruleri</div>
             </button>
             <button class="adv-card" data-bot="Rex">
-                <div class="adv-icon">🦖</div>
+                <div class="adv-icon">&#x1F996;</div>
                 <div class="adv-name">Rex Raptor</div>
                 <div class="adv-desc">Tarih oncesi yirticilar</div>
             </button>
@@ -296,6 +307,10 @@
     <!-- SONUC -->
     <div id="result" class="screen">
         <h2 id="result-text"></h2>
+        <div id="reward-box" class="reward-box" style="display:none">
+            <div class="reward-title">Odul Kazandin!</div>
+            <div id="reward-details"></div>
+        </div>
         <button class="btn primary" style="font-size:1.1rem;padding:12px 32px" onclick="location.reload()">Ana Sayfaya Don</button>
     </div>
 
