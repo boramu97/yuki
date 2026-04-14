@@ -232,14 +232,24 @@ class DuelManager:
 
     async def _process_single_message(self, msg_type, msg_data):
             if msg_type == MSG_RETRY:
-                if self._pending_player >= 0 and self._last_select_msg:
-                    player = self.room.get_player(self._pending_player)
-                    if player:
-                        await player.send({"action": "retry"})
-                        await player.send({
-                            "action": "select",
-                            "msg": self._last_select_msg,
-                        })
+                if self._last_select_msg:
+                    target = self._last_select_msg.get("player", 0)
+                    self._pending_player = target
+
+                    if target == self.bot_team:
+                        # Bot'un yanıtı geçersizdi — AI'ı yeniden tetikle
+                        print(f"[BOT RETRY] msg={self._last_select_type:#x}")
+                        response = ai_respond(self._last_select_type, self._last_select_msg)
+                        self._pending_response = response
+                        self._response_event.set()
+                    else:
+                        player = self.room.get_player(target)
+                        if player:
+                            await player.send({"action": "retry"})
+                            await player.send({
+                                "action": "select",
+                                "msg": self._last_select_msg,
+                            })
                 return
 
             msg = parse_message(msg_type, msg_data)
@@ -268,7 +278,11 @@ class DuelManager:
 
                 # Bot takımıysa AI yanıt üretir
                 if target_player == self.bot_team:
+                    from server.ocg_binding import MSG_NAMES
+                    mname = MSG_NAMES.get(msg_type, f"{msg_type:#x}")
+                    print(f"[BOT] {mname} → ai_respond")
                     response = ai_respond(msg_type, msg)
+                    print(f"[BOT] response={response.hex()}")
                     self._pending_response = response
                     self._response_event.set()
                     # İnsan oyuncuya "bekle" bildir

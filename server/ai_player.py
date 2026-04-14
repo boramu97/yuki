@@ -225,14 +225,33 @@ def _select_card(msg: dict) -> bytes:
 
 
 def _select_place(msg: dict) -> bytes:
-    """Bölge seçimi — ilk uygun boş slot."""
-    selectable = msg.get("selectable", 0)
+    """Bölge seçimi — bitmask'ten ilk uygun boş slotu bul.
+
+    Bitmask formatı (ters mantık — bit 0 = boş, bit 1 = dolu):
+      Bit  0-6:  Kendi MZONE (7 slot)
+      Bit  8-15: Kendi SZONE (8 slot)
+      Bit 16-22: Rakip MZONE
+      Bit 24-31: Rakip SZONE
+    """
+    flag = msg.get("selectable", 0)
     player = msg.get("player", 0)
 
-    # Bitmask parse — MZONE önce, sonra SZONE
-    for loc, zone_id in [(LOCATION_MZONE, 0x04), (LOCATION_SZONE, 0x08)]:
-        for seq in range(5):
-            return build_place_response(player, zone_id, seq)
+    # Kendi MZONE
+    for s in range(7):
+        if not (flag & (1 << s)):
+            return build_place_response(player, 0x04, s)
+    # Kendi SZONE
+    for s in range(8):
+        if not (flag & (1 << (s + 8))):
+            return build_place_response(player, 0x08, s)
+    # Rakip MZONE
+    for s in range(7):
+        if not (flag & (1 << (s + 16))):
+            return build_place_response(1 - player, 0x04, s)
+    # Rakip SZONE
+    for s in range(8):
+        if not (flag & (1 << (s + 24))):
+            return build_place_response(1 - player, 0x08, s)
 
     return build_place_response(player, 0x04, 0)
 
