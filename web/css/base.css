@@ -1,0 +1,47 @@
+/* Yuki — Base: variables, reset, shared */
+
+:root {
+    --bg: #0d0b0e;
+    --bg-hud: #1a1520;
+    --gold: #e8c840;
+    --gold-border: rgba(180,140,60,0.12);
+    --gold-glow: rgba(200,160,40,0.2);
+    --purple: #9a6aba;
+    --atk: #c8a030;
+    --def: #7090c0;
+    --text: #d4c8a0;
+    --text-dim: #776a50;
+    --text-muted: #5a5040;
+    --danger: #e05040;
+    --panel-bg: rgba(13,11,14,0.94);
+    /* Hologram palette */
+    --holo-cyan: rgba(88,196,240,0.12);
+    --holo-cyan-bright: rgba(88,196,240,0.3);
+    --holo-purple: rgba(154,106,186,0.1);
+    --holo-grid: rgba(88,196,240,0.04);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea{-webkit-user-select:text;user-select:text}
+
+/* ===== EKRANLAR ===== */
+.screen{display:none;width:100vw;height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ===== BUTONLAR ===== */
+.btn{padding:clamp(0.7rem,1vw,1rem) clamp(1.2rem,1.8vw,2rem);border:1px solid rgba(180,140,60,0.2);border-radius:4px;background:rgba(180,140,60,0.04);color:var(--text-dim);font-family:inherit;font-size:clamp(0.9rem,1.1vw,1.1rem);cursor:pointer;transition:all 0.2s}
+.btn:hover{border-color:rgba(200,170,60,0.5);color:var(--text);background:rgba(180,140,60,0.08)}
+.btn.primary{background:linear-gradient(135deg,rgba(180,80,30,0.3),rgba(140,60,20,0.3));border-color:rgba(200,100,40,0.4);color:#e8a040;flex:1}
+.btn.primary:hover{box-shadow:0 0 15px rgba(200,100,40,0.2);color:#ffb860}
+.btn-small{padding:6px 14px;font-size:0.8rem}
+.status{margin-top:1.5rem;color:var(--text-muted);min-height:1.5rem;font-style:italic;font-size:clamp(0.9rem,1vw,1.1rem)}
+
+/* ===== FOOTER ===== */
+.lobby-footer{position:fixed;bottom:16px;display:flex;gap:20px;font-size:0.8rem;color:var(--text-muted)}
+.lobby-footer a{color:var(--text-dim);text-decoration:none;border-bottom:1px solid rgba(180,140,60,0.15)}
+.lobby-footer a:hover{color:var(--gold)}
+
+/* Eski paneller gizle */
+.panel-left,.panel-right,.duel-body,.action-panel{display:none!important}

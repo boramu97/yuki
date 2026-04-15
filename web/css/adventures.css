@@ -1,0 +1,58 @@
+/* Yuki — Adventures, training, duel island screens */
+
+#adventures-screen,#training-screen,#duel-island-screen{align-items:center;flex-direction:column;overflow-y:auto}
+.adv-header{width:100%;display:flex;align-items:center;gap:20px;padding:20px 24px;border-bottom:1px solid var(--gold-border);background:var(--bg-hud)}
+.adv-title{font-size:1.4rem;font-weight:400;color:var(--gold);letter-spacing:3px}
+.adv-subtitle{color:var(--text-dim);font-style:italic;margin-top:24px;font-size:0.95rem;letter-spacing:1px}
+.adv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:28px 40px;max-width:900px;width:100%}
+.adv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    padding:24px 16px;border:1px solid var(--gold-border);border-radius:8px;
+    background:rgba(180,140,60,0.03);cursor:pointer;transition:all 0.25s;font-family:inherit}
+.adv-card:hover{border-color:rgba(200,170,60,0.4);background:rgba(180,140,60,0.08);
+    box-shadow:0 0 30px rgba(200,160,40,0.08);transform:translateY(-4px)}
+.adv-icon{font-size:2.4rem}
+.adv-name{font-size:0.95rem;color:var(--text);letter-spacing:1px;font-weight:700}
+.adv-desc{font-size:0.72rem;color:var(--text-muted);text-align:center}
+
+/* --- Macera Menu Banner --- */
+.adv-menu{display:flex;flex-direction:column;gap:18px;padding:32px 40px;max-width:700px;width:100%}
+.adv-banner{display:flex;align-items:center;gap:20px;padding:20px 28px;
+    border:1px solid var(--gold-border);border-radius:12px;background:rgba(180,140,60,0.03);
+    cursor:pointer;transition:all 0.25s;font-family:inherit;text-align:left;width:100%}
+.adv-banner:hover{border-color:rgba(200,170,60,0.5);background:rgba(180,140,60,0.08);
+    box-shadow:0 0 30px rgba(200,160,40,0.1);transform:translateY(-2px)}
+.banner-icon{font-size:2.4rem;flex-shrink:0;width:60px;text-align:center}
+.banner-thumb{width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid var(--gold-border);flex-shrink:0}
+.banner-name{font-size:1.1rem;color:var(--text);font-weight:700;letter-spacing:1px}
+.banner-desc{font-size:0.78rem;color:var(--text-muted);margin-top:2px}
+
+/* --- Duello Adasi Harita --- */
+.island-map-wrap{width:100%;flex:1;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.island-map{position:relative;height:100%;max-height:100%}
+.island-bg{height:100%;width:auto;display:block;border:none}
+#duel-island-screen .adv-header{flex-shrink:0}
+.stage{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:8px 12px;border:2px solid rgba(200,170,60,0.5);border-radius:10px;
+    background:rgba(10,8,14,0.85);backdrop-filter:blur(4px);
+    min-width:90px;transition:all 0.25s;cursor:default;transform:translate(-50%,-50%)}
+.stage.unlocked{cursor:pointer;border-color:rgba(232,200,64,0.6);
+    box-shadow:0 0 16px rgba(232,200,64,0.2)}
+.stage.unlocked:hover{border-color:#e8c840;background:rgba(10,8,14,0.92);
+    box-shadow:0 0 28px rgba(232,200,64,0.35);transform:translate(-50%,-50%) scale(1.08)}
+.stage.done{border-color:rgba(80,200,80,0.6);background:rgba(10,14,10,0.85);
+    box-shadow:0 0 16px rgba(80,200,80,0.15)}
+.stage.done:hover{border-color:rgba(80,200,80,0.8);
+    box-shadow:0 0 28px rgba(80,200,80,0.3);transform:translate(-50%,-50%) scale(1.08)}
+.stage.locked{opacity:0.7;cursor:not-allowed;border-color:rgba(100,100,100,0.4);filter:grayscale(1)}
+.stage-icon{font-size:1.4rem}
+.stage-label{font-size:0.55rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase}
+.stage-name{font-size:0.75rem;color:var(--text);font-weight:600;text-align:center;white-space:nowrap}
+.stage-reward{font-size:0.58rem;color:var(--gold);opacity:0.8}
+.stage-check{position:absolute;top:4px;right:6px;color:#5cb85c;font-size:0.8rem;font-weight:bold}
+
+/* --- Odul Kutusu --- */
+.reward-box{margin:16px 0;padding:16px 28px;border:1px solid rgba(200,170,60,0.3);
+    border-radius:8px;background:rgba(180,140,60,0.06);text-align:center}
+.reward-title{color:var(--gold);font-size:1rem;font-weight:700;letter-spacing:2px;margin-bottom:8px}
+.reward-dust{color:#e8c840;font-size:1.1rem;font-weight:600}
+.reward-cards{color:var(--text);font-size:0.85rem;margin-top:4px}

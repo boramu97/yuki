@@ -1,0 +1,4 @@
+/* Yuki — Result screen */
+
+#result{align-items:center;justify-content:center}
+#result h2{font-size:clamp(2.5rem,5vw,4rem);font-weight:400;letter-spacing:4px;margin-bottom:2rem}

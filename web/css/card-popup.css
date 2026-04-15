@@ -1,0 +1,17 @@
+/* Yuki — Card popup menu (on field/hand) */
+
+.card-popup{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    display:none;flex-direction:column;gap:4px;padding:6px;
+    background:rgba(16,10,24,0.95);border:1px solid rgba(232,200,64,0.25);border-radius:6px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 20px rgba(154,106,186,0.1);
+    z-index:100;min-width:120px;backdrop-filter:blur(8px);animation:popup-in 0.15s ease-out}
+.card-popup.open{display:flex}
+@keyframes popup-in{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(0.95)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.card-popup::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(232,200,64,0.25)}
+.popup-btn{padding:10px 16px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;transition:all 0.15s;text-align:center}
+.popup-btn.gold{background:linear-gradient(180deg,rgba(232,200,64,0.15),rgba(232,200,64,0.05));color:#e8c840}
+.popup-btn.gold:hover{background:linear-gradient(180deg,rgba(232,200,64,0.3),rgba(232,200,64,0.1));box-shadow:0 0 12px rgba(232,200,64,0.2)}
+.popup-btn.purple{background:linear-gradient(180deg,rgba(154,106,186,0.15),rgba(154,106,186,0.05));color:#c49aee}
+.popup-btn.purple:hover{background:linear-gradient(180deg,rgba(154,106,186,0.3),rgba(154,106,186,0.1));box-shadow:0 0 12px rgba(154,106,186,0.2)}
+.popup-btn.dim{background:rgba(255,255,255,0.03);color:rgba(212,200,160,0.4);font-size:13px}
+.popup-btn.dim:hover{background:rgba(255,255,255,0.06);color:rgba(212,200,160,0.65)}

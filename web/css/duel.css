@@ -1,0 +1,181 @@
+/* Yuki — Duel screen: HUD, field, cards, hand */
+
+#duel{height:100vh}
+
+/* HUD */
+.duel-hud{display:flex;justify-content:space-between;align-items:center;height:54px;background:var(--bg-hud);border-bottom:1px solid var(--gold-border);padding:0 20px;flex-shrink:0}
+.player-info{display:flex;align-items:center;gap:14px;flex:1}
+.player-info.self{justify-content:flex-end}
+.p-emblem{width:38px;height:38px;border:2px solid;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;transform:rotate(45deg);flex-shrink:0}
+.p-emblem>span{transform:rotate(-45deg)}
+.player-info.self .p-emblem{border-color:#b8960a;color:var(--gold);box-shadow:0 0 10px var(--gold-glow)}
+.player-info.opponent .p-emblem{border-color:#6a3a8a;color:var(--purple);box-shadow:0 0 10px rgba(120,60,160,0.2)}
+.p-details{display:flex;flex-direction:column}
+.player-name{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--text-dim)}
+.player-lp{font-size:26px;font-weight:400;line-height:1;letter-spacing:2px}
+.player-info.self .player-lp{color:var(--gold)}
+.player-info.opponent .player-lp{color:var(--purple)}
+.lp-bar{width:100%;height:2px;background:var(--bg-hud);margin-top:3px;border-radius:1px}
+.lp-bar-fill{height:100%;border-radius:1px;transition:width 0.8s ease;width:100%}
+.player-info.self .lp-bar-fill{background:linear-gradient(90deg,#8a6a10,var(--gold))}
+.player-info.opponent .lp-bar-fill{background:linear-gradient(90deg,#4a2a6a,var(--purple))}
+.turn-info{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;border-left:1px solid var(--gold-border);border-right:1px solid var(--gold-border)}
+.btn-surrender{background:none;border:1px solid rgba(180,60,60,0.3);color:#c47070;font-size:0.75rem;padding:2px 8px;border-radius:4px;cursor:pointer;margin-top:2px;transition:all 0.15s}
+.btn-surrender:hover{border-color:#e06060;color:#e06060;background:rgba(180,60,60,0.1)}
+#turn-counter{font-size:20px;color:var(--gold);letter-spacing:4px}
+#phase-name{font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.lp-hit{animation:lp-flash 0.6s ease-out}
+@keyframes lp-flash{0%{filter:brightness(2);transform:scale(1.15)}100%{filter:brightness(1);transform:scale(1)}}
+
+/* FIELD WRAP — full width */
+.field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
+.opp-hand-area{display:flex;justify-content:center;padding:0 8vw;height:3.4vw;overflow:hidden;flex-shrink:0}
+.opp-hand-card{width:4vw;height:5.6vw;border-radius:2px;margin-left:-0.8vw;flex-shrink:0;overflow:hidden;background:#b8860b;border:1px solid #d4a820}
+.opp-hand-card:first-child{margin-left:0}
+.opp-hand-card .card-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.opp-hand-card .card-back-oval{width:50%;height:55%;background:#2a2a2a;border-radius:50%;border:1px solid #1a1a1a}
+.mp-swipe-handle{display:none}
+.mp-minimize-btn{display:none}
+#duel.theme-toon .field-wrap{background:url('../img/toon-world-bg.png') center/cover no-repeat}
+
+/* SAHA — Holographic Projection Surface */
+.field{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8vw;gap:3px;
+    background:
+        radial-gradient(ellipse at 50% 30%,rgba(88,196,240,0.03),transparent 50%),
+        radial-gradient(ellipse at 50% 70%,rgba(154,106,186,0.04),transparent 50%),
+        radial-gradient(ellipse at 50% 50%,rgba(88,196,240,0.02),transparent 70%);
+    position:relative;
+    perspective:1200px;
+}
+/* Holographic scan-line overlay */
+.field::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:repeating-linear-gradient(0deg,
+        transparent 0px,transparent 3px,
+        rgba(88,196,240,0.015) 3px,rgba(88,196,240,0.015) 4px);
+    animation:holo-scan 8s linear infinite;
+}
+@keyframes holo-scan{
+    0%{background-position:0 0}
+    100%{background-position:0 200px}
+}
+/* Faint grid underlay */
+.field::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:
+        repeating-linear-gradient(90deg,rgba(88,196,240,0.02) 0px,rgba(88,196,240,0.02) 1px,transparent 1px,transparent 7.5vw),
+        repeating-linear-gradient(0deg,rgba(154,106,186,0.015) 0px,rgba(154,106,186,0.015) 1px,transparent 1px,transparent 10.2vw);
+    opacity:0.6;
+}
+.field-row{display:flex;gap:0.8vw;justify-content:center;position:relative;z-index:2}
+
+/* Durum cubugu — Energy divider */
+.status-strip{display:flex;align-items:center;justify-content:center;padding:8px 6vw;gap:16px;position:relative;z-index:2}
+.status-strip .line{
+    flex:1;height:2px;position:relative;overflow:visible;
+    background:linear-gradient(90deg,transparent,rgba(88,196,240,0.2),rgba(154,106,186,0.3),rgba(232,200,64,0.4));
+    border-radius:1px;
+}
+.status-strip .line:last-child{
+    background:linear-gradient(90deg,rgba(232,200,64,0.4),rgba(154,106,186,0.3),rgba(88,196,240,0.2),transparent);
+}
+/* Energy flow glow above the line */
+.status-strip .line::after{
+    content:'';position:absolute;top:-5px;left:0;right:0;height:12px;
+    background:linear-gradient(90deg,transparent,rgba(88,196,240,0.06),rgba(232,200,64,0.04),transparent);
+    filter:blur(6px);animation:energy-pulse 3s ease-in-out infinite;
+}
+@keyframes energy-pulse{0%,100%{opacity:0.4}50%{opacity:1}}
+#status-text{
+    font-size:1rem;color:var(--gold);font-style:italic;padding:4px 20px;
+    background:rgba(13,11,14,0.85);
+    border:1px solid rgba(88,196,240,0.1);border-radius:20px;white-space:nowrap;
+    box-shadow:0 0 12px rgba(88,196,240,0.05);
+    text-shadow:0 0 8px rgba(232,200,64,0.15);
+}
+
+/* KART SLOTU — Holographic projection zone */
+.card-slot{
+    width:7.5vw;height:10.2vw;border-radius:4px;position:relative;
+    background:rgba(16,12,24,0.4);
+    border:1px solid rgba(88,196,240,0.08);
+    transition:border-color 0.3s,box-shadow 0.3s;
+}
+/* Rotating rune circle — outer */
+.card-slot::before{
+    content:'';position:absolute;inset:8%;
+    border:1px solid rgba(88,196,240,0.06);border-radius:50%;
+    pointer-events:none;
+    animation:rune-spin 20s linear infinite;
+}
+/* Inner rune circle */
+.card-slot::after{
+    content:'';position:absolute;inset:22%;
+    border:1px solid rgba(154,106,186,0.05);border-radius:50%;
+    pointer-events:none;
+    animation:rune-spin 15s linear infinite reverse;
+}
+@keyframes rune-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+/* Hover neon glow */
+.card-slot:hover{
+    border-color:rgba(88,196,240,0.2);
+    box-shadow:0 0 14px rgba(88,196,240,0.08),inset 0 0 10px rgba(88,196,240,0.03);
+}
+/* Card present — hide runes, show gold border */
+.card-slot:has(.card-face){
+    border-color:rgba(232,200,64,0.15);background:transparent;
+}
+.card-slot:has(.card-face)::before,.card-slot:has(.card-face)::after{display:none}
+.card-slot:has(.card-face):hover{
+    border-color:rgba(232,200,64,0.3);
+    box-shadow:0 0 18px rgba(232,200,64,0.1),0 0 36px rgba(154,106,186,0.05);
+}
+
+/* KART — Holographic card projection */
+.card-face{width:100%;height:100%;border-radius:3px;overflow:visible;position:relative;cursor:pointer}
+.card-face img{width:100%;height:100%;object-fit:fill;display:block;border-radius:3px;
+    filter:brightness(1.02) saturate(1.05)}
+.card-face.facedown{background:#b8860b;border:none;display:flex;align-items:center;justify-content:center;border-radius:3px;padding:4%}
+.card-face.facedown .card-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.card-face.facedown .card-back-oval{width:50%;height:55%;background:#2a2a2a;border-radius:50%;border:2px solid #1a1a1a}
+.card-face.defense-monster{transform:rotate(90deg) scale(0.82)}
+.card-name-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);font-size:0.6vw;text-align:center;padding:2px 3px;color:#d4c8a0;border-radius:0 0 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-stats-bar{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;font-weight:900;font-family:'Segoe UI',sans-serif;z-index:3}
+.card-stats-bar .atk,.card-stats-bar .def{
+    padding:1px 4px;font-size:0.65vw;line-height:1.2;
+    text-shadow:0 0 3px rgba(0,0,0,0.9),0 1px 2px rgba(0,0,0,0.8);
+}
+.card-stats-bar .atk{color:#ffd740;text-align:left;border-radius:0 3px 0 3px;background:rgba(0,0,0,0.6)}
+.card-stats-bar .def{color:#64b5f6;text-align:right;border-radius:3px 0 3px 0;background:rgba(0,0,0,0.6)}
+.counter-badge{position:absolute;top:3px;right:3px;width:1.5vw;height:1.5vw;min-width:20px;min-height:20px;background:radial-gradient(circle,#4fc3f7,#0288d1);border:2px solid #b3e5fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7vw;font-weight:900;color:#fff;font-family:sans-serif;z-index:5}
+
+/* KART ICI AKSYON MENUSU */
+.card-menu{position:absolute;inset:0;background:rgba(5,3,8,0.92);border-radius:3px;padding:6px;display:none;flex-direction:column;justify-content:center;gap:4px;z-index:100}
+.card-menu.open{display:flex}
+.card-menu .menu-title{font-size:0.7vw;color:var(--gold);padding:0 2px 4px;border-bottom:1px solid rgba(180,140,60,0.15);font-style:italic;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-menu button{padding:0.45vw 0.5vw;border:1px solid rgba(180,140,60,0.2);border-radius:3px;background:rgba(180,140,60,0.06);color:#d4c8a0;font-size:0.72vw;cursor:pointer;font-family:inherit;text-align:center;transition:all 0.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-menu button:hover{background:rgba(180,80,30,0.3);border-color:var(--gold);color:var(--gold)}
+.card-menu button.primary{background:rgba(180,80,30,0.25);border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
+
+/* EL KARTLARI */
+.hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none}
+.hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto}
+.hand-card:first-child{margin-left:0}
+.hand-card:hover{transform:translateY(-1.8vw) scale(1.18) rotate(0deg)!important;border-color:rgba(154,106,186,0.55);box-shadow:0 0 20px rgba(154,106,186,0.35),0 10px 28px rgba(0,0,0,0.6);z-index:30}
+.hand-card img{width:100%;height:100%;object-fit:cover;display:block;border-radius:3px}
+.hand-card .card-menu{border-radius:4px}
+.hand-card .card-name-bar{font-size:0.55vw;border-radius:0 0 4px 4px}
+.hand-card .card-stats-bar{font-size:0.55vw}
+.hand-card .card-stats-bar .atk{border-radius:0 2px 0 4px}
+.hand-card .card-stats-bar .def{border-radius:2px 0 4px 0}
+
+/* Kart highlight sahada */
+.card-face.mp-highlight{box-shadow:0 0 16px rgba(232,200,64,0.2);border:2px solid rgba(232,200,64,0.4)!important;cursor:pointer}
+.hand-card.mp-highlight{box-shadow:0 0 20px rgba(232,200,64,0.2);border-color:rgba(232,200,64,0.4)!important}
+
+/* SAG TIK ONIZLEME */
+#card-preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:center;justify-content:center;cursor:pointer}
+#card-preview-overlay.active{display:flex}
+.preview-content{display:flex;flex-direction:column;align-items:center;gap:12px}
+#preview-img{max-height:80vh;max-width:90vw;border-radius:8px;box-shadow:0 0 40px var(--gold-glow)}
+#preview-name{color:var(--gold);font-size:1.3rem;letter-spacing:2px}

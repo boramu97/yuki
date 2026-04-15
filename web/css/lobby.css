@@ -1,0 +1,18 @@
+/* Yuki — Lobby & waiting screens */
+
+#lobby{align-items:center;justify-content:center}
+#lobby h1{font-size:clamp(3rem,6vw,5rem);color:var(--gold);font-weight:400;letter-spacing:0.4em;text-shadow:0 0 30px var(--gold-glow)}
+.subtitle{color:var(--text-dim);font-style:italic;margin:1rem 0 3rem;letter-spacing:2px;font-size:clamp(0.9rem,1.2vw,1.2rem)}
+.lobby-form{display:flex;flex-direction:column;gap:1.2rem;width:clamp(340px,30vw,500px)}
+.lobby-form input{padding:clamp(0.8rem,1.2vw,1.2rem) clamp(1rem,1.5vw,1.5rem);border:1px solid var(--gold-border);border-radius:4px;background:rgba(180,140,60,0.04);color:var(--text);font-family:inherit;font-size:clamp(1rem,1.2vw,1.3rem);outline:none}
+.lobby-form input:focus{border-color:var(--gold)}
+.lobby-form input::placeholder{color:var(--text-muted)}
+.lobby-buttons{display:flex;gap:0.8rem}
+.join-section{display:flex;gap:0.8rem}
+.join-section input{flex:1}
+
+/* ===== BEKLEME ===== */
+#waiting{align-items:center;justify-content:center;gap:1.5rem}
+#waiting h2{color:var(--gold);font-weight:400;letter-spacing:3px;font-size:clamp(1.5rem,2.5vw,2rem)}
+.loader{width:48px;height:48px;border:2px solid var(--gold-border);border-top-color:var(--gold);border-radius:50%;animation:spin 1.5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}

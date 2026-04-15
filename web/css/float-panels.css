@@ -1,0 +1,31 @@
+/* Yuki — Floating panels (log, effects) */
+
+.float-panel{position:absolute;top:8px;width:auto;max-width:16vw;max-height:50vh;background:var(--panel-bg);border:1px solid var(--gold-border);border-radius:8px;overflow:hidden;z-index:40;backdrop-filter:blur(4px)}
+.float-panel.left{left:8px}
+.float-panel.right{right:8px}
+#log-panel{left:8px;top:8px}
+#effects-panel{left:8px;top:auto;bottom:9vw}
+.float-panel .fp-title{font-size:1.1rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);padding:10px 14px;border-bottom:1px solid rgba(180,140,60,0.08)}
+.float-panel .fp-list{overflow-y:auto;max-height:48vh;padding:4px}
+
+/* Efekt banner */
+.effect-banner{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,0.04);overflow:hidden}
+.effect-banner:hover{background:rgba(180,140,60,0.04)}
+.effect-banner img{width:100px;min-height:120px;flex-shrink:0;object-fit:cover}
+.effect-banner .eb-text{flex:1;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.effect-banner .eb-name{font-weight:600;font-size:1.65rem;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.effect-banner .eb-name.spell{color:#4fc3f7}
+.effect-banner .eb-name.counter{color:var(--gold)}
+.effect-banner .eb-name.trap{color:#ce93d8}
+.effect-banner .eb-desc{font-size:1.25rem;color:var(--text-muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* Log banner */
+.log-banner{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,0.03);overflow:hidden}
+.log-banner:hover{background:rgba(180,140,60,0.03)}
+.log-banner img{width:42px;min-height:52px;flex-shrink:0;object-fit:cover}
+.log-banner .lb-text{flex:1;padding:6px 10px;display:flex;align-items:center;font-size:0.85rem;color:var(--text-dim);line-height:1.35;min-width:0}
+.log-banner.important .lb-text{color:var(--gold);font-weight:600}
+.log-banner.damage .lb-text{color:var(--danger);font-weight:600}
+.log-banner.summon .lb-text{color:#8bc34a}
+.log-banner.spell .lb-text{color:#4fc3f7}
+.log-banner.trap .lb-text{color:#ce93d8}
