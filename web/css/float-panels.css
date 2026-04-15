@@ -29,3 +29,6 @@
 .log-banner.summon .lb-text{color:#8bc34a}
 .log-banner.spell .lb-text{color:#4fc3f7}
 .log-banner.trap .lb-text{color:#ce93d8}
+
+/* Mobile drawer — desktop'ta gizli */
+.mobile-drawer{display:none}

@@ -29,6 +29,13 @@ const UI = {
         span.textContent = text; entry.appendChild(span);
         log.insertBefore(entry, log.firstChild);
         while (log.children.length > 100) log.removeChild(log.lastChild);
+        // Mobil drawer senkronizasyonu
+        const drawerLog = document.getElementById("drawer-log");
+        if (drawerLog) {
+            const clone = entry.cloneNode(true);
+            drawerLog.insertBefore(clone, drawerLog.firstChild);
+            while (drawerLog.children.length > 60) drawerLog.removeChild(drawerLog.lastChild);
+        }
     },
 
     // =====================================================================

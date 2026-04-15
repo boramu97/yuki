@@ -300,3 +300,14 @@ document.addEventListener("click",(e)=>{
 document.getElementById("mp-swipe-handle")?.addEventListener("click",(e)=>{e.stopPropagation();UI.toggleMotorPanel();});
 document.getElementById("mp-minimize-btn")?.addEventListener("click",(e)=>{e.stopPropagation();UI.toggleMotorPanel();});
 
+// Mobil drawer tab degistirme
+document.querySelectorAll(".drawer-tab").forEach(tab=>{
+    tab.addEventListener("click",()=>{
+        document.querySelectorAll(".drawer-tab").forEach(t=>t.classList.remove("active"));
+        document.querySelectorAll(".drawer-pane").forEach(p=>p.classList.remove("active"));
+        tab.classList.add("active");
+        const pane=document.getElementById("drawer-"+tab.dataset.drawer);
+        if(pane) pane.classList.add("active");
+    });
+});
+
