@@ -83,7 +83,11 @@ const Field = {
     summonCard(msg) {
         const z=(msg.location||0x04)===0x04?"mzone":"szone";
         this.cards[msg.controller][z][msg.sequence]={code:msg.code,position:msg.position||1,card_name:msg.card_name||"",card_atk:msg.card_atk,card_def:msg.card_def,card_type:msg.card_type||0};
-        const h=this.cards[msg.controller].hand; const i=h.findIndex(c=>c.code===msg.code); if(i>=0)h.splice(i,1);
+        // Elden kaldir — code eslesen veya gizli kart (code=0) varsa onu sil
+        const h=this.cards[msg.controller].hand;
+        const i=h.findIndex(c=>c.code===msg.code);
+        if(i>=0) h.splice(i,1);
+        else if(h.length>0) { const j=h.findIndex(c=>!c.code||c.code===0); if(j>=0)h.splice(j,1); else h.pop(); }
         this.render();
     },
 
