@@ -357,21 +357,6 @@ class DuelManager:
                                 "msg": {"name": "MSG_WAITING", "type": 3},
                             })
             else:
-                # Debug: El etkileyen mesajları logla
-                if name in ("MSG_DRAW", "MSG_SHUFFLE_HAND", "MSG_MOVE", "MSG_CHAINING", "MSG_SET"):
-                    cards_info = ""
-                    if name == "MSG_SHUFFLE_HAND":
-                        codes = [c.get("code",0) if isinstance(c,dict) else c for c in msg.get("cards",[])]
-                        cards_info = f" hand_codes={codes}"
-                    elif name == "MSG_DRAW":
-                        codes = [c.get("code",0) if isinstance(c,dict) else c for c in msg.get("cards",[])]
-                        cards_info = f" drawn={codes}"
-                    elif name == "MSG_MOVE":
-                        cards_info = f" code={msg.get('code',0)} from={msg.get('from',{}).get('location',0):#x}→to={msg.get('to',{}).get('location',0):#x}"
-                    elif name == "MSG_CHAINING":
-                        cards_info = f" code={msg.get('code',0)} loc={msg.get('location',0):#x} trig_loc={msg.get('triggering_location',0):#x}"
-                    print(f"[DEBUG] {name} player={msg.get('player', msg.get('controller','?'))}{cards_info}")
-
                 # Bilgi mesaji — her iki oyuncuya gonder (bot hariç)
                 for p in self.room.players:
                     if p.team == self.bot_team:

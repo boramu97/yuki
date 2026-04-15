@@ -166,10 +166,10 @@ const Field = {
         this.cards[this.myTeam].hand.forEach((card,i) => {
             const div=document.createElement("div");
             div.className="hand-card"; div.dataset.index=i; div.dataset.code=card.code;
-            if(card.code&&card.card_name){
+            if(card.code){
                 const img=document.createElement("img");
                 img.src=cardImageUrl(card.code); img.loading="lazy";
-                img.onerror=function(){this.style.display="none";const f=document.createElement("div");f.style.cssText="flex:1;display:flex;align-items:center;justify-content:center;font-size:0.5vw;color:#a09070;text-align:center;padding:4px";f.textContent=card.card_name;div.insertBefore(f,div.firstChild);};
+                img.onerror=function(){this.style.display="none";const f=document.createElement("div");f.style.cssText="flex:1;display:flex;align-items:center;justify-content:center;font-size:0.5vw;color:#a09070;text-align:center;padding:4px";f.textContent=card.card_name||"#"+card.code;div.insertBefore(f,div.firstChild);};
                 div.appendChild(img);
                 if((card.card_type&0x1)&&card.card_atk!==undefined){
                     const st=document.createElement("div");st.className="card-stats-bar";
