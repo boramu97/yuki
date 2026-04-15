@@ -50,8 +50,10 @@ const UI = {
         document.getElementById("mp-footer-actions").innerHTML = "";
         document.getElementById("mp-footer").style.display = "none";
         panel.classList.add("open");
-        // Mobilde minimized basla — kullanici yukari cekerek acar
-        if (window.innerWidth <= 768) panel.classList.add("minimized");
+        panel.classList.remove("minimized");
+        // Mobilde motor panel acikken drawer'i gizle
+        const drawer = document.getElementById("mobile-drawer");
+        if (drawer) drawer.style.display = "none";
     },
 
     hideMotorPanel() {
@@ -60,6 +62,9 @@ const UI = {
         panel.classList.remove("minimized");
         document.getElementById("mp-actions").innerHTML = "";
         this._clearHighlights();
+        // Mobilde drawer'i geri goster
+        const drawer = document.getElementById("mobile-drawer");
+        if (drawer) drawer.style.display = "";
     },
 
     toggleMotorPanel() {

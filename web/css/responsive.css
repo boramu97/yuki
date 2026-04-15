@@ -137,24 +137,31 @@
     /* --- EL KARTLARI — trap zone ile overlap, yukari tasi --- */
     .hand-area { margin-top: -5vw; position: relative; z-index: 20; }
 
-    /* --- MOTOR PANEL — toggle bottom sheet --- */
-    .motor-panel { width: 100%; min-width: unset; height: 55vh; right: 0;
+    /* --- MOTOR PANEL — akilli yukseklik bottom sheet --- */
+    .motor-panel { width: 100%; min-width: unset; max-height: 50vh; height: auto; right: 0; bottom: 0;
         border-radius: 12px 12px 0 0; border-left: none; border-top: 2px solid rgba(232,200,64,0.15);
-        transition: bottom 0.3s ease; bottom: 0; overflow: visible; }
-    .motor-panel.minimized { bottom: calc(-55vh + 44px); }
+        transition: transform 0.3s ease; overflow: visible; }
+    .motor-panel.minimized { transform: translateY(calc(100% - 44px)); }
+    .mp-actions { max-height: calc(50vh - 120px); }
     .mp-swipe-handle { display: flex !important; align-items: center; justify-content: center;
         padding: 10px 0 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
     .mp-handle-bar { width: 50px; height: 5px; background: rgba(232,200,64,0.4); border-radius: 3px; }
     .motor-panel.minimized .mp-handle-bar { background: rgba(232,200,64,0.7); }
-    /* Motor panel acikken minimize etme ikonu */
     .motor-panel .mp-minimize-btn { display: block !important; position: absolute; top: 6px; right: 10px;
         background: none; border: none; color: var(--gold); font-size: 1.4rem; cursor: pointer; z-index: 5;
         padding: 4px 8px; opacity: 0.7; }
     .motor-panel .mp-minimize-btn:active { opacity: 1; }
-    .mp-card-img { width: 44px; }
-    .mp-card-name { font-size: 11px; }
-    .mp-btn { min-height: 38px; font-size: 11px; }
-    .mp-footer-actions .mp-btn { min-height: 40px; font-size: 12px; }
+    /* Kompakt kart tile'lari */
+    .mp-action-card { min-height: unset; }
+    .mp-card-img { width: 40px; }
+    .mp-card-info-text { padding: 4px 8px 2px; }
+    .mp-card-name { font-size: 10px; }
+    .mp-card-stats { font-size: 9px; }
+    .mp-card-location { font-size: 8px; }
+    .mp-card-buttons { gap: 0; }
+    .mp-btn { min-height: 36px; font-size: 10px; }
+    .mp-group-header { font-size: 8px; padding: 4px 8px 2px; }
+    .mp-footer-actions .mp-btn { min-height: 40px; font-size: 11px; }
 
     /* --- POPUP MENU (kart uzerindeki) --- */
     .card-popup { min-width: 100px; }
