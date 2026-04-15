@@ -85,12 +85,12 @@ class UserDatabase:
         from server.decks import (
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
         )
         all_decks = [
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
         ]
         all_codes = set()
         for d in all_decks:
