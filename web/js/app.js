@@ -273,6 +273,12 @@
     function handleInfo(msg) {
         const name=msg.name, cname=msg.card_name||"", code=msg.code||0;
 
+        // Debug: el etkileyen mesajlari logla
+        if(["MSG_DRAW","MSG_SHUFFLE_HAND","MSG_MOVE","MSG_CHAINING","MSG_SET"].includes(name)){
+            const hand=Field.cards[myTeam]?.hand||[];
+            console.log(`[${name}] code=${code} cname=${cname} hand=[${hand.map(c=>c.code).join(",")}] (${hand.length})`);
+        }
+
         if(name==="MSG_NEW_TURN"){
             turnCount++; Field.setTurn(turnCount);
             UI.log(`━━ Tur ${turnCount} (${p(msg.player)}) ━━`,"important");
