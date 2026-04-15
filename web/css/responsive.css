@@ -181,7 +181,13 @@
 
     /* --- POPUP MENU (kart uzerindeki) --- */
     .card-popup { min-width: 100px; }
-    .popup-btn { padding: 8px 12px; font-size: 12px; }
+    .popup-btn { padding: 10px 14px; font-size: 12px; min-height: 44px; }
+
+    /* --- TOUCH TARGET BOYUTLARI (min 44px) --- */
+    .mp-footer-actions .mp-btn { min-height: 44px; }
+    .drawer-tab { min-height: 44px; }
+    .coll-mob-tab { min-height: 44px; }
+    .coll-filter { min-height: 40px; padding: 8px 12px; }
 
     /* --- SONUC EKRANI --- */
     #result { padding: 20px; text-align: center; }
