@@ -36,22 +36,49 @@
     }
 
     // ===== KART LONG-PRESS PREVIEW =====
-    let pressTimer = null, pressTarget = null;
+    let pressTimer = null, pressTarget = null, longPressTriggered = false;
 
     document.addEventListener("pointerdown", (e) => {
-        const card = e.target.closest(".hand-card, .card-face");
-        if (!card) return;
-        pressTarget = card;
-        pressTimer = setTimeout(() => {
-            const code = card.dataset?.code || card.querySelector("img")?.src?.match(/\/(\d+)\.jpg/)?.[1];
-            if (code && code !== "0") {
-                document.getElementById("preview-img").src =
-                    `https://images.ygoprodeck.com/images/cards/${code}.jpg`;
-                document.getElementById("card-preview-overlay").classList.add("active");
-            }
-            pressTarget = null;
-        }, 400);
+        longPressTriggered = false;
+
+        // Duello kartlari
+        const duelCard = e.target.closest(".hand-card, .card-face");
+        if (duelCard) {
+            pressTarget = duelCard;
+            pressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                const code = duelCard.dataset?.code || duelCard.querySelector("img")?.src?.match(/\/(\d+)\.jpg/)?.[1];
+                if (code && code !== "0") {
+                    document.getElementById("preview-img").src =
+                        `https://images.ygoprodeck.com/images/cards/${code}.jpg`;
+                    document.getElementById("card-preview-overlay").classList.add("active");
+                }
+                pressTarget = null;
+            }, 400);
+            return;
+        }
+
+        // Koleksiyon kartlari — long-press = preview (sag tik muadili)
+        const collCard = e.target.closest(".coll-card");
+        if (collCard) {
+            pressTarget = collCard;
+            pressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                const m = collCard.getAttribute("onclick")?.match(/\d+/);
+                if (m && typeof Collection !== "undefined") Collection.preview(parseInt(m[0]));
+                pressTarget = null;
+            }, 400);
+        }
     });
+
+    // Koleksiyon kartinda long-press olduysa click'i engelle
+    document.addEventListener("click", (e) => {
+        if (longPressTriggered && e.target.closest(".coll-card")) {
+            e.stopPropagation();
+            e.preventDefault();
+            longPressTriggered = false;
+        }
+    }, true);
 
     document.addEventListener("pointerup", () => {
         clearTimeout(pressTimer);

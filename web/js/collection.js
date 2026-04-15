@@ -157,7 +157,7 @@ const Collection = {
             }
             const copyBadge = copies > 0 ? `<span class="coll-copy-badge">x${copies}</span>` : "";
 
-            return `<div class="${cls}" onclick="Collection.preview(${card.c})">
+            return `<div class="${cls}" onclick="Collection.quickAdd(${card.c})" oncontextmenu="event.preventDefault();Collection.preview(${card.c})">
                 <span class="coll-lock">&#x1F512;</span>
                 ${badge}${copyBadge}
                 <img class="coll-card-img" src="${this.IMG(card.c)}" alt="${card.n}" loading="lazy">
@@ -267,6 +267,17 @@ const Collection = {
     updateDust() {
         const el = document.getElementById("coll-dust");
         if (el) el.textContent = this.dust;
+    },
+
+    quickAdd(code) {
+        if (!this.myCards.has(code)) { this.preview(code); return; }
+        const copies = this.countInDeck(code);
+        const max = this.maxCopies(code);
+        if (copies < max) {
+            this.toggleDeck(code);
+        } else {
+            this.preview(code);
+        }
     },
 
     preview(code) {
