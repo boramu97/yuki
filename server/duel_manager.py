@@ -264,10 +264,20 @@ class DuelManager:
                     self._pending_player = target
 
                     if target == self.bot_team:
-                        # Bot'un yanıtı geçersizdi — AI'ı yeniden tetikle
-                        print(f"[BOT RETRY] msg={self._last_select_type:#x}")
-                        response = ai_respond(self._last_select_type, self._last_select_msg)
-                        self._pending_response = response
+                        # Bot'un yanıtı geçersizdi — retry sayısını kontrol et
+                        self._bot_retry_count = getattr(self, "_bot_retry_count", 0) + 1
+                        print(f"[BOT RETRY #{self._bot_retry_count}] msg={self._last_select_type:#x}")
+                        if self._bot_retry_count > 3:
+                            print(f"[BOT STUCK] {self._bot_retry_count} retry — fallback -1")
+                            self._pending_response = b"\xff\xff\xff\xff"
+                            self._bot_retry_count = 0
+                        else:
+                            try:
+                                response = ai_respond(self._last_select_type, self._last_select_msg)
+                            except Exception as e:
+                                print(f"[BOT RETRY ERROR] {e}")
+                                response = b"\xff\xff\xff\xff"
+                            self._pending_response = response
                         self._response_event.set()
                     else:
                         player = self.room.get_player(target)
@@ -315,7 +325,13 @@ class DuelManager:
                     from server.ocg_binding import MSG_NAMES
                     mname = MSG_NAMES.get(msg_type, f"{msg_type:#x}")
                     print(f"[BOT] {mname} → ai_respond")
-                    response = ai_respond(msg_type, msg)
+                    self._bot_retry_count = 0
+                    try:
+                        response = ai_respond(msg_type, msg)
+                    except Exception as e:
+                        print(f"[BOT AI ERROR] {mname}: {e}")
+                        import traceback; traceback.print_exc()
+                        response = b"\xff\xff\xff\xff"  # fallback -1
                     print(f"[BOT] response={response.hex()}")
                     self._pending_response = response
                     self._response_event.set()

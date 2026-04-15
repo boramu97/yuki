@@ -349,13 +349,21 @@ def _select_sum(msg: dict) -> bytes:
 
 def _select_unselect(msg: dict) -> bytes:
     """Seç/kaldır — ilk seçilebilir kartı seç veya bitir."""
-    selectable = msg.get("selectable_cards", [])
+    selectable = msg.get("selectable", []) or msg.get("selectable_cards", [])
+    finishable = msg.get("finishable", False)
     min_count = msg.get("min", 0)
 
     if selectable and min_count > 0:
         return build_unselect_card_response(0)
 
-    # Yeterli seçildi, bitir
+    if finishable:
+        return build_unselect_card_response(-1)
+
+    # Secilebilir kart varsa sec
+    if selectable:
+        return build_unselect_card_response(0)
+
+    # Bitir
     return build_unselect_card_response(-1)
 
 
