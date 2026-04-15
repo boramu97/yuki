@@ -203,22 +203,44 @@
 
 /* --- Yatay telefon (landscape) --- */
 @media (max-height: 500px) and (orientation: landscape) {
-    .duel-hud { height: 32px; padding: 0 8px; }
-    .player-lp { font-size: 14px; }
-    .player-name { font-size: 8px; }
-    .p-emblem { width: 22px; height: 22px; font-size: 9px; }
-    #turn-counter { font-size: 12px; }
-    .btn-surrender { font-size: 0.5rem; }
+    /* HUD: ultra-kompakt */
+    .duel-hud { height: 30px; padding: 0 8px; }
+    .player-lp { font-size: 13px; }
+    .player-name { font-size: 7px; }
+    .p-emblem { display: none; }
+    .turn-info { padding: 0 8px; }
+    #turn-counter { font-size: 11px; }
+    .btn-surrender { display: none; }
 
-    .field { padding: 1px 2vw; gap: 1px; }
-    .card-slot { width: 7vw; height: 9.5vw; }
-    .card-stats-bar .atk, .card-stats-bar .def { font-size: 0.6vw; }
-    .hand-area { padding: 0 4vw 1px; }
-    .hand-card { width: 5.8vw; height: 7.9vw; margin-left: -0.8vw; }
-    .hand-card:hover { transform: translateY(-1.2vw) scale(1.1) rotate(0deg) !important; }
-    .status-strip { padding: 1px 4vw; }
-    #status-text { font-size: 0.6rem; padding: 1px 8px; }
+    /* Saha: vh birimleri (yukseklik kisitli) */
+    .field { padding: 1px 8vw; gap: 1px; }
+    .field-row { gap: 0.6vh; }
+    .card-slot { width: 8vh; height: 11vh; }
+    .card-stats-bar .atk, .card-stats-bar .def { font-size: max(7px, 0.8vh); }
+    .hand-area { padding: 0 10vw 1px; margin-top: -2vh; }
+    .hand-card { width: 7vh; height: 9.6vh; margin-left: -1vh; }
+    .hand-card:hover { transform: translateY(-1.5vh) scale(1.1) rotate(0deg) !important; }
+    .opp-hand-area { height: 4vh; padding: 0 10vw; }
+    .opp-hand-card { width: 4.5vh; height: 6vh; margin-left: -0.8vh; }
+    .status-strip { padding: 1px 8vw; }
+    #status-text { font-size: 0.55rem; padding: 1px 6px; }
 
-    .motor-panel { height: 50vh; }
+    /* Motor panel: yandan gelen panel */
+    .motor-panel {
+        width: 40vw; max-width: 320px; max-height: 100%; height: 100%;
+        right: 0; bottom: 0;
+        border-radius: 0; border-left: 1px solid rgba(232,200,64,0.15); border-top: none;
+        transition: transform 0.3s ease;
+    }
+    .motor-panel.minimized { transform: translateX(calc(100% - 36px)); }
+    .mp-swipe-handle { display: none !important; }
+    .mp-minimize-btn { display: block !important; }
+    .mp-actions { max-height: calc(100vh - 120px); }
+
+    /* Drawer: landscape'de yeterli yukseklik yok */
+    .mobile-drawer { display: none !important; }
+
+    /* Float paneller: genis ekranda log goster */
     .float-panel { display: none !important; }
+    #log-panel { display: block !important; max-width: 12vw; left: 4px; top: 34px; max-height: calc(100vh - 40px); }
 }
