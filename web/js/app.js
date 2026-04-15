@@ -313,16 +313,31 @@
         else if(name==="MSG_BATTLE")UI.log(`ATK ${msg.attacker_atk} vs ${msg.target_atk}`);
         else if(name==="MSG_CHAINING"){
             UI.log(`Aktiflestirildi: ${cname}`,"spell",code);
-            if(msg.location===0x08){const ex=Field.cards[msg.controller]?.szone[msg.sequence];if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;Field.render();}}
+            if(msg.location===0x08){
+                // Szone'daki karti guncelle (yuz yukari cevir)
+                const ex=Field.cards[msg.controller]?.szone[msg.sequence];
+                if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;Field.render();}
+            } else if(msg.location===0x02){
+                // Elden aktiflestirildi — motor karti szone'a tasidi, elden sil
+                const h=Field.cards[msg.controller]?.hand;
+                if(h){const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);Field.render();}
+            }
         }
         else if(name==="MSG_SHUFFLE_HAND"){
             // Motor eli yeniden gonderdi — el state'ini tamamen yenile
             const h=Field.cards[msg.player].hand;
             const cards=msg.cards||[];
+            // Sahada olan kartlarin code'larini topla (cross-zone dogrulama)
+            const onField=new Set();
+            const pdata=Field.cards[msg.player];
+            for(const s of Object.values(pdata.mzone||{})) if(s&&s.code) onField.add(s.code);
+            for(const s of Object.values(pdata.szone||{})) if(s&&s.code) onField.add(s.code);
             h.length=0;
             for(const c of cards){
+                const cc=typeof c==="object"?(c.code||0):(c||0);
+                if(cc && onField.has(cc)){console.warn("[SHUFFLE_HAND] Skipping card already on field:",cc); continue;}
                 if(typeof c==="object") h.push({code:c.code||0,position:0,card_name:c.card_name||"",card_atk:c.card_atk,card_def:c.card_def,card_type:c.card_type||0});
-                else h.push({code:c||0,position:0,card_name:"",card_type:0});
+                else h.push({code:cc,position:0,card_name:"",card_type:0});
             }
             Field.render();
         }

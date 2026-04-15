@@ -302,18 +302,23 @@ def _parse_summoned(r: BufferReader, msg: dict):
 
 
 def _parse_chaining(r: BufferReader, msg: dict):
-    """MSG_CHAINING: Zincir efekti aktifleşiyor."""
+    """MSG_CHAINING: Zincir efekti aktifleşiyor.
+
+    Format: code(u32) + loc_info(u8+u8+u32+u32) + trig_con(u8) + trig_loc(u8)
+            + trig_seq(u32) + desc(u64) + chain_count(u32)
+    """
     msg["code"] = r.read_u32()
+    # loc_info — kartın şu anki konumu
     msg["controller"] = r.read_u8()
     msg["location"] = r.read_u8()
-    msg["sequence"] = r.read_u8()
-    msg["position"] = r.read_u8()
-    # Tetikleyen kart
+    msg["sequence"] = r.read_u32()
+    msg["position"] = r.read_u32()
+    # Tetikleyen konum
     msg["triggering_controller"] = r.read_u8()
     msg["triggering_location"] = r.read_u8()
-    msg["triggering_sequence"] = r.read_u8()
+    msg["triggering_sequence"] = r.read_u32()
     msg["effect_description"] = r.read_u64()
-    msg["chain_count"] = r.read_u8()
+    msg["chain_count"] = r.read_u32()
 
 
 def _parse_chain_end(r: BufferReader, msg: dict):
