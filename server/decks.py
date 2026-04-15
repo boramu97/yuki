@@ -600,3 +600,69 @@ PEGASUS_DECK = [
     11901678,   # Black Skull Dragon
     11901678,   # Black Skull Dragon (x2)
 ]
+
+# Jaden Yuki'nin Elemental HERO + Neo-Spacian destesi (40 main + 15 extra)
+JADEN_DECK = [
+    # Monster Cards (20)
+    89943723,   # Elemental HERO Neos
+    21844576,   # Elemental HERO Avian
+    58932615,   # Elemental HERO Burstinatrix
+    84327329,   # Elemental HERO Clayman
+    20721928,   # Elemental HERO Sparkman
+    6480253,    # Wroughtweiler
+    79979666,   # Elemental HERO Bubbleman
+    86188410,   # Elemental HERO Wildheart
+    89252153,   # Elemental HERO Necroshade
+    59793705,   # Elemental HERO Bladedge
+    89312388,   # Elemental HERO Prisma
+    17955766,   # Neo-Spacian Aqua Dolphin
+    54959865,   # Neo-Spacian Air Hummingbird
+    89621922,   # Neo-Spacian Flare Scarab
+    80344569,   # Neo-Spacian Grand Mole
+    43237273,   # Neo-Spacian Dark Panther
+    17732278,   # Neo-Spacian Glow Moss
+    33875961,   # Dark Catapulter
+    42256406,   # Card Blocker
+    57116033,   # Winged Kuriboh
+
+    # Spell Cards (13)
+    24094653,   # Polymerization
+    18511384,   # Fusion Recovery
+    45906428,   # Miracle Fusion
+    63035430,   # Skyscraper
+    74825788,   # H - Heated Heart
+    213326,     # E - Emergency Call
+    37318031,   # R - Righteous Justice
+    63703130,   # O - Oversoul
+    81913510,   # NEX
+    82639107,   # Convert Contact
+    53046408,   # Emergency Provisions
+    14772491,   # Common Soul
+    55144522,   # Pot of Greed
+
+    # Trap Cards (7)
+    22020907,   # Hero Signal
+    26647858,   # Hero Ring
+    44676200,   # Hero Barrier
+    191749,     # Hero Flash!!
+    37412656,   # Hero Blast
+    78387742,   # Fake Hero
+    11913700,   # Instant Neo Space
+
+    # Extra Deck (15)
+    35809262,   # Elemental HERO Flame Wingman
+    61204971,   # Elemental HERO Thunder Giant
+    47737087,   # Elemental HERO Rampart Blaster
+    25366484,   # Elemental HERO Shining Flare Wingman
+    83121692,   # Elemental HERO Tempest
+    10526791,   # Elemental HERO Wildedge
+    81197327,   # Elemental HERO Steam Healer
+    14225239,   # Elemental HERO Mariner
+    81003500,   # Elemental HERO Necroid Shaman
+    55615891,   # Elemental HERO Wild Wingman
+    29343734,   # Elemental HERO Electrum
+    52031567,   # Elemental HERO Mudballman
+    41517968,   # Elemental HERO Darkbright
+    60493189,   # Elemental HERO Plasma Vice
+    31111109,   # Elemental HERO Divine Neos
+]

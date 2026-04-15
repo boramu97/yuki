@@ -334,7 +334,7 @@ class UserDatabase:
         from server.decks import (
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
         )
         return {
             "Yugi Muto": sorted(set(YUGI_DECK)),
@@ -348,6 +348,7 @@ class UserDatabase:
             "Weevil Underwood": sorted(set(INSECT_DECK)),
             "Rex Raptor": sorted(set(REX_RAPTOR_DECK)),
             "Pegasus (Toon)": sorted(set(PEGASUS_DECK)),
+            "Jaden Yuki": sorted(set(JADEN_DECK)),
         }
 
     # --- Koleksiyon ---
