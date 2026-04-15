@@ -143,6 +143,11 @@
         });
     });
 
+    document.getElementById("btn-back-home-result").onclick = () => {
+        Field.init(0); turnCount = 0;
+        goHome();
+    };
+
     document.getElementById("btn-logout").onclick = () => {
         localStorage.removeItem("yuki_token");
         localStorage.removeItem("yuki_username");
@@ -329,8 +334,10 @@
                 await ensureConnected();
                 WS.auth(token);
             } catch(e) {
-                // Bağlanamadı — login ekranında kal
+                UI.showScreen("auth-screen");
             }
+        } else {
+            UI.showScreen("auth-screen");
         }
     })();
 })();
