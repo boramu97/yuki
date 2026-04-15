@@ -315,6 +315,17 @@
             UI.log(`Aktiflestirildi: ${cname}`,"spell",code);
             if(msg.location===0x08){const ex=Field.cards[msg.controller]?.szone[msg.sequence];if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;Field.render();}}
         }
+        else if(name==="MSG_SHUFFLE_HAND"){
+            // Motor eli yeniden gonderdi — el state'ini tamamen yenile
+            const h=Field.cards[msg.player].hand;
+            const cards=msg.cards||[];
+            h.length=0;
+            for(const c of cards){
+                if(typeof c==="object") h.push({code:c.code||0,position:0,card_name:c.card_name||"",card_atk:c.card_atk,card_def:c.card_def,card_type:c.card_type||0});
+                else h.push({code:c||0,position:0,card_name:"",card_type:0});
+            }
+            Field.render();
+        }
         else if(name==="MSG_FLIPSUMMONING"){Field.summonCard(msg, false);UI.log(`Flip: ${cname}`,"summon",code)}
         else if(name==="MSG_LPUPDATE")Field.updateLP(msg.player,msg.lp);
         else if(name==="MSG_STAT_UPDATE"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);if(c){c.card_atk=msg.card_atk;c.card_def=msg.card_def;Field.render();}}

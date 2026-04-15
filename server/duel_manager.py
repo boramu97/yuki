@@ -452,7 +452,12 @@ class DuelManager:
             msg.update(self._enrich_card(msg["code"]))
 
         # "cards" listesi olan mesajlar (DRAW, SELECT_CARD vs.)
-        for card_entry in msg.get("cards", []):
+        # SHUFFLE_HAND gibi int listesi olabilir — dict'e cevir
+        cards = msg.get("cards", [])
+        if cards and not isinstance(cards[0], dict):
+            cards = [{"code": c} for c in cards]
+            msg["cards"] = cards
+        for card_entry in cards:
             if isinstance(card_entry, dict) and card_entry.get("code"):
                 card_entry.update(self._enrich_card(card_entry["code"]))
 
@@ -487,7 +492,7 @@ class DuelManager:
         # MSG_SHUFFLE_HAND: Rakibin el kartlarini gizle
         if name == "MSG_SHUFFLE_HAND" and msg.get("player") != viewer_team:
             filtered = dict(msg)
-            filtered["cards"] = [0] * msg.get("count", 0)
+            filtered["cards"] = [{"code": 0} for _ in range(msg.get("count", 0))]
             return filtered
 
         return msg
