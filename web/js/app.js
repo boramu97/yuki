@@ -313,15 +313,20 @@
         else if(name==="MSG_BATTLE")UI.log(`ATK ${msg.attacker_atk} vs ${msg.target_atk}`);
         else if(name==="MSG_CHAINING"){
             UI.log(`Aktiflestirildi: ${cname}`,"spell",code);
+            const con=msg.controller;
+            // Kartın su anki konumu (location) szone olabilir — motor dahili olarak tasir
             if(msg.location===0x08){
-                // Szone'daki karti guncelle (yuz yukari cevir)
-                const ex=Field.cards[msg.controller]?.szone[msg.sequence];
-                if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;Field.render();}
-            } else if(msg.location===0x02){
-                // Elden aktiflestirildi — motor karti szone'a tasidi, elden sil
-                const h=Field.cards[msg.controller]?.hand;
-                if(h){const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);Field.render();}
+                const ex=Field.cards[con]?.szone[msg.sequence];
+                if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;}
             }
+            // triggering_location = kartın orijinal konumu (chain'e girmeden once)
+            // Elden aktiflestirildi ama motor MSG_MOVE gondermez — elden silmemiz gerekiyor
+            const trigLoc=msg.triggering_location||0;
+            if(trigLoc===0x02){
+                const h=Field.cards[con]?.hand;
+                if(h){const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);}
+            }
+            Field.render();
         }
         else if(name==="MSG_SHUFFLE_HAND"){
             // Motor eli yeniden gonderdi — el state'ini tamamen yenile
