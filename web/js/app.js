@@ -292,7 +292,7 @@
             else if(cname&&to===0x20)UI.log(`${cname} → Surgun`,"move",code);
         }
         else if(name==="MSG_SUMMONING"||name==="MSG_SPSUMMONING"){
-            Field.summonCard(msg);
+            Field.summonCard(msg, name==="MSG_SUMMONING");
             UI.log(`${name==="MSG_SUMMONING"?"Cagrildi":"Ozel Cagri"}: ${cname}`,"summon",code);
         }
         else if(name==="MSG_SET"){
@@ -315,7 +315,7 @@
             UI.log(`Aktiflestirildi: ${cname}`,"spell",code);
             if(msg.location===0x08){const ex=Field.cards[msg.controller]?.szone[msg.sequence];if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;Field.render();}}
         }
-        else if(name==="MSG_FLIPSUMMONING"){Field.summonCard(msg);UI.log(`Flip: ${cname}`,"summon",code)}
+        else if(name==="MSG_FLIPSUMMONING"){Field.summonCard(msg, false);UI.log(`Flip: ${cname}`,"summon",code)}
         else if(name==="MSG_LPUPDATE")Field.updateLP(msg.player,msg.lp);
         else if(name==="MSG_STAT_UPDATE"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);if(c){c.card_atk=msg.card_atk;c.card_def=msg.card_def;Field.render();}}
         else if(name==="MSG_ADD_COUNTER"){Field.addCounter(msg.controller,msg.location,msg.sequence,msg.counter_type,msg.count);const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} +${msg.count} sayac`,"spell",c?.code)}

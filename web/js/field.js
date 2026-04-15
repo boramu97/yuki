@@ -80,14 +80,18 @@ const Field = {
         for (const c of cards) this.cards[player].hand.push({code:c.code||0,position:c.position||0,card_name:c.card_name||"",card_atk:c.card_atk,card_def:c.card_def,card_type:c.card_type||0});
         this.render();
     },
-    summonCard(msg) {
+    summonCard(msg, fromHand) {
         const z=(msg.location||0x04)===0x04?"mzone":"szone";
         this.cards[msg.controller][z][msg.sequence]={code:msg.code,position:msg.position||1,card_name:msg.card_name||"",card_atk:msg.card_atk,card_def:msg.card_def,card_type:msg.card_type||0};
-        // Elden kaldir — code eslesen veya gizli kart (code=0) varsa onu sil
+        // Elden kaldir
         const h=this.cards[msg.controller].hand;
         const i=h.findIndex(c=>c.code===msg.code);
         if(i>=0) h.splice(i,1);
-        else if(h.length>0) { const j=h.findIndex(c=>!c.code||c.code===0); if(j>=0)h.splice(j,1); else h.pop(); }
+        else if(fromHand && h.length>0) {
+            // Normal summon kesin elden gelir — gizli kart fallback
+            const j=h.findIndex(c=>!c.code||c.code===0);
+            if(j>=0) h.splice(j,1); else h.pop();
+        }
         this.render();
     },
 
