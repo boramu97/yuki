@@ -20,6 +20,9 @@
 .coll-deck-filter select{padding:7px 12px;border:1px solid var(--gold-border);border-radius:4px;background:var(--bg-hud);color:var(--text);font-family:inherit;font-size:0.8rem;cursor:pointer;outline:none;min-width:180px}
 .coll-deck-filter select:focus{border-color:var(--gold)}
 
+/* Mobil tab bar — desktop'ta gizli */
+.coll-mobile-tabs{display:none}
+
 .coll-main{display:flex;flex:1;overflow:hidden}
 .coll-grid-area{flex:1;padding:16px 20px;overflow-y:auto;overflow-x:hidden}
 .coll-grid-area::-webkit-scrollbar{width:4px}

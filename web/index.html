@@ -324,7 +324,11 @@
                 </select>
             </div>
         </div>
-        <div class="coll-main">
+        <div class="coll-mobile-tabs" id="coll-mobile-tabs">
+            <button class="coll-mob-tab active" data-coll-tab="grid">Kartlar</button>
+            <button class="coll-mob-tab" data-coll-tab="deck">Deste (<span id="coll-mob-deck-num">0</span>/40)</button>
+        </div>
+        <div class="coll-main" data-active-tab="grid">
             <div class="coll-grid-area">
                 <div class="coll-results" id="coll-results"></div>
                 <div class="coll-grid" id="coll-grid"></div>

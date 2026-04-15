@@ -55,14 +55,30 @@
     .coll-toolbar { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
     .coll-search { flex: 1 1 100%; }
     .coll-filters { flex-wrap: wrap; }
-    .coll-main { flex-direction: column; min-height: 0; overflow: auto; }
-    .coll-sidebar { width: 100%; max-height: 35vh; border-left: none; border-top: 1px solid var(--gold-border); }
     .coll-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
     .coll-deck-header { flex-wrap: wrap; gap: 4px; }
     .coll-deck-header input { font-size: 0.8rem; width: 100px; }
     #btn-duel-with-deck { font-size: 0.7rem; padding: 6px 10px; }
     .coll-slot-tab { font-size: 0.62rem; padding: 8px 2px; }
     .slot-active-badge { font-size: 0.42rem; padding: 1px 3px; }
+
+    /* Koleksiyon mobil tab layout */
+    .coll-mobile-tabs {
+        display: flex; flex-shrink: 0;
+        border-bottom: 1px solid var(--gold-border); background: var(--bg-hud);
+    }
+    .coll-mob-tab {
+        flex: 1; padding: 10px 0; background: transparent; border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted); font-family: inherit; font-size: 0.82rem;
+        letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+    }
+    .coll-mob-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .coll-main { flex-direction: column; min-height: 0; overflow: hidden; flex: 1; }
+    .coll-main .coll-grid-area { display: none; flex: 1; overflow-y: auto; }
+    .coll-main .coll-sidebar { display: none; width: 100%; max-height: unset; border-left: none; border-top: none; flex: 1; overflow-y: auto; }
+    .coll-main[data-active-tab="grid"] .coll-grid-area { display: block; }
+    .coll-main[data-active-tab="deck"] .coll-sidebar { display: flex; }
 
     /* --- DUELLO HUD --- */
     .duel-hud { height: 42px; padding: 0 8px; gap: 4px; }

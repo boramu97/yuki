@@ -193,6 +193,8 @@ const Collection = {
 
         list.innerHTML = html;
         document.getElementById("coll-deck-num").textContent = dk.length;
+        const mobNum = document.getElementById("coll-mob-deck-num");
+        if (mobNum) mobNum.textContent = dk.length;
         document.getElementById("btn-duel-with-deck").disabled = dk.length !== 40;
         this.renderSlotTabs();
     },
@@ -418,4 +420,14 @@ WS.on("disenchant_result", (d) => {
             Collection.myCards.size + " / " + Collection.allCards.length + " kart";
         Collection.render();
     }
+});
+
+// Mobil koleksiyon tab degistirme
+document.querySelectorAll(".coll-mob-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+        document.querySelectorAll(".coll-mob-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const main = document.querySelector(".coll-main");
+        if (main) main.dataset.activeTab = tab.dataset.collTab;
+    });
 });
