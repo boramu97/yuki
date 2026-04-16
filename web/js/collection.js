@@ -42,6 +42,7 @@ const Collection = {
     countInDeck(code) { return this.deck().filter(c => c === code).length; },
     maxCopies(code) { return this.LIMITED_1.has(code) ? 1 : 3; },
     isMonster(t) { return t === "monster" || t === "fusion"; },
+    owns(code) { return this.myCards.has(code) || this.isFusion(code); },
 
     open() {
         UI.showScreen("collection-screen");
@@ -103,8 +104,8 @@ const Collection = {
             cards = cards.filter(c => c.n.toLowerCase().includes(q));
         }
         cards.sort((a, b) => {
-            const ao = this.myCards.has(a.c) ? 0 : 1;
-            const bo = this.myCards.has(b.c) ? 0 : 1;
+            const ao = this.owns(a.c) ? 0 : 1;
+            const bo = this.owns(b.c) ? 0 : 1;
             if (ao !== bo) return ao - bo;
             return a.n.localeCompare(b.n);
         });
@@ -118,7 +119,7 @@ const Collection = {
 
         const dkCodes = this.deckFilter && this.presetDecks[this.deckFilter]
             ? new Set(this.presetDecks[this.deckFilter]) : null;
-        const ownedInDk = dkCodes ? [...dkCodes].filter(c => this.myCards.has(c)).length : 0;
+        const ownedInDk = dkCodes ? [...dkCodes].filter(c => this.owns(c)).length : 0;
 
         if (this.deckFilter) {
             info.innerHTML = `<span class="hl">${this.deckFilter}</span> — ${filtered.length} kart (elinde: <span class="hl">${ownedInDk}</span>/${dkCodes.size})`;
@@ -143,7 +144,7 @@ const Collection = {
         }
 
         grid.innerHTML = filtered.map(card => {
-            const owned = this.myCards.has(card.c);
+            const owned = this.owns(card.c);
             const copies = this.countInDeck(card.c);
             const cls = [
                 "coll-card",
@@ -157,6 +158,7 @@ const Collection = {
                     ? '<span class="coll-deck-badge owned">Var</span>'
                     : '<span class="coll-deck-badge missing">Eksik</span>';
             }
+            if (card.t === "fusion") badge = "";  // Fusion her zaman acik
             const copyBadge = copies > 0 ? `<span class="coll-copy-badge">x${copies}</span>` : "";
 
             return `<div class="${cls}" onclick="Collection.quickAdd(${card.c})" oncontextmenu="event.preventDefault();Collection.preview(${card.c})">
@@ -259,7 +261,7 @@ const Collection = {
     extraDeckCount() { return this.deck().filter(c => this.isFusion(c)).length; },
 
     toggleDeck(code) {
-        if (!this.myCards.has(code)) return;
+        if (!this.owns(code)) return;
         const count = this.countInDeck(code);
         const max = this.maxCopies(code);
         const isFus = this.isFusion(code);
@@ -291,7 +293,7 @@ const Collection = {
     },
 
     quickAdd(code) {
-        if (!this.myCards.has(code)) { this.preview(code); return; }
+        if (!this.owns(code)) { this.preview(code); return; }
         const copies = this.countInDeck(code);
         const max = this.maxCopies(code);
         const isFus = this.isFusion(code);
@@ -306,7 +308,7 @@ const Collection = {
 
     preview(code) {
         const card = this.allCards.find(c => c.c === code);
-        const owned = this.myCards.has(code);
+        const owned = this.owns(code);
         const overlay = document.getElementById("coll-preview-overlay");
         const img = document.getElementById("coll-preview-img");
         const actions = document.getElementById("coll-preview-actions");
@@ -327,13 +329,15 @@ const Collection = {
             if (copies > 0) {
                 html += `<button class="coll-prev-btn deck-rm" onclick="Collection.removeOne(${code});Collection.preview(${code})">Desteden Cikar</button>`;
             }
-            // Bozdur butonu
-            const gain = this.disCost(card);
-            const inDeck = this.isCardInAnyDeck(code);
-            if (inDeck) {
-                html += `<button class="coll-prev-btn dis" disabled>Destede — bozdurulamaz</button>`;
-            } else {
-                html += `<button class="coll-prev-btn dis" onclick="Collection.confirmDisenchant(${code}, '${card.n.replace(/'/g,"\\'")}', ${gain})">Bozdur — +${gain} toz</button>`;
+            // Bozdur butonu (fusion kartlari bozdurulamaz — herkese acik)
+            if (card.t !== "fusion") {
+                const gain = this.disCost(card);
+                const inDeck = this.isCardInAnyDeck(code);
+                if (inDeck) {
+                    html += `<button class="coll-prev-btn dis" disabled>Destede — bozdurulamaz</button>`;
+                } else {
+                    html += `<button class="coll-prev-btn dis" onclick="Collection.confirmDisenchant(${code}, '${card.n.replace(/'/g,"\\'")}', ${gain})">Bozdur — +${gain} toz</button>`;
+                }
             }
         } else if (card && !owned) {
             // Kilitli kart — Aç butonu
