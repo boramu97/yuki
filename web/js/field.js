@@ -16,7 +16,7 @@ const Field = {
 
     init(team) {
         this.myTeam = team; this.lp = [8000,8000]; this.startLp = 8000; this.turn = 0;
-        this.cards = {0:{mzone:{},szone:{},hand:[]},1:{mzone:{},szone:{},hand:[]}};
+        this.cards = {0:{mzone:{},szone:{},hand:[],grave:[]},1:{mzone:{},szone:{},hand:[],grave:[]}};
         this.render();
     },
     selfTeam() { return this.myTeam; },
@@ -70,11 +70,13 @@ const Field = {
         if (loc===0x04) delete this.cards[con]?.mzone[seq];
         else if (loc===0x08) delete this.cards[con]?.szone[seq];
         else if (loc===0x02) { const h=this.cards[con]?.hand; if(h){const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);} }
+        else if (loc===0x10) { const g=this.cards[con]?.grave; if(g){const i=g.findIndex(c=>c.code===code);if(i>=0)g.splice(i,1);} }
     },
     _addTo(con, loc, seq, data) {
         if (loc===0x04) this.cards[con].mzone[seq]=data;
         else if (loc===0x08) this.cards[con].szone[seq]=data;
         else if (loc===0x02) this.cards[con].hand.push(data);
+        else if (loc===0x10) this.cards[con].grave.push(data);
     },
     addToHand(player, cards) {
         for (const c of cards) this.cards[player].hand.push({code:c.code||0,position:c.position||0,card_name:c.card_name||"",card_atk:c.card_atk,card_def:c.card_def,card_type:c.card_type||0});
@@ -102,6 +104,51 @@ const Field = {
         this._renderZone("opp-szone",this.oppTeam(),"szone");
         this._renderHand();
         this._renderOppHand();
+        this._renderGraveCount();
+    },
+
+    _renderGraveCount() {
+        const selfG=this.cards[this.selfTeam()]?.grave||[];
+        const oppG=this.cards[this.oppTeam()]?.grave||[];
+        const se=document.getElementById("self-grave-count");
+        const oe=document.getElementById("opp-grave-count");
+        if(se) se.textContent=selfG.length;
+        if(oe) oe.textContent=oppG.length;
+    },
+
+    openGraveViewer(team) {
+        const grave=this.cards[team]?.grave||[];
+        const overlay=document.getElementById("grave-viewer-overlay");
+        const container=document.getElementById("grave-viewer-cards");
+        const title=document.getElementById("grave-viewer-title");
+        if(!overlay||!container) return;
+        title.textContent=team===this.myTeam?"Mezarlığın":"Rakip Mezarlık";
+        container.innerHTML="";
+        if(grave.length===0){
+            container.innerHTML='<div class="grave-empty">Mezarlık boş</div>';
+        } else {
+            // En son eklenen uste gelsin
+            [...grave].reverse().forEach(card=>{
+                const tile=document.createElement("div");
+                tile.className="grave-card-tile";
+                if(card.code){
+                    const img=document.createElement("img");
+                    img.src=cardImageUrl(card.code); img.loading="lazy";
+                    img.onclick=(e)=>{
+                        e.stopPropagation();
+                        document.getElementById("preview-img").src=cardImageUrlFull(card.code);
+                        document.getElementById("card-preview-overlay").classList.add("active");
+                    };
+                    tile.appendChild(img);
+                }
+                const name=document.createElement("div");
+                name.className="grave-card-name";
+                name.textContent=card.card_name||`#${card.code}`;
+                tile.appendChild(name);
+                container.appendChild(tile);
+            });
+        }
+        overlay.classList.add("active");
     },
 
     _renderOppHand() {
@@ -299,6 +346,12 @@ document.addEventListener("click",(e)=>{
 // Motor panel toggle — handle ve minimize butonu
 document.getElementById("mp-swipe-handle")?.addEventListener("click",(e)=>{e.stopPropagation();UI.toggleMotorPanel();});
 document.getElementById("mp-minimize-btn")?.addEventListener("click",(e)=>{e.stopPropagation();UI.toggleMotorPanel();});
+
+// Mezarlik zone tiklama
+document.getElementById("self-grave")?.addEventListener("click",()=>Field.openGraveViewer(Field.selfTeam()));
+document.getElementById("opp-grave")?.addEventListener("click",()=>Field.openGraveViewer(Field.oppTeam()));
+document.getElementById("grave-viewer-overlay")?.addEventListener("click",(e)=>{if(e.target.id==="grave-viewer-overlay")e.target.classList.remove("active")});
+document.getElementById("grave-viewer-close")?.addEventListener("click",()=>document.getElementById("grave-viewer-overlay")?.classList.remove("active"));
 
 // Mobil drawer tab degistirme
 document.querySelectorAll(".drawer-tab").forEach(tab=>{

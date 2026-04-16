@@ -134,6 +134,8 @@ const Collection = {
         document.getElementById("cnt-monster").textContent = src.filter(c => this.isMonster(c.t)).length;
         document.getElementById("cnt-spell").textContent = src.filter(c => c.t === "spell").length;
         document.getElementById("cnt-trap").textContent = src.filter(c => c.t === "trap").length;
+        const cntFusion = document.getElementById("cnt-fusion");
+        if (cntFusion) cntFusion.textContent = src.filter(c => c.t === "fusion").length;
 
         if (!filtered.length) {
             grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-style:italic">Kart bulunamadi</div>';
@@ -175,7 +177,8 @@ const Collection = {
         const dk = this.deck();
         const codeSet = new Set(dk);
         const deckCards = this.allCards.filter(c => codeSet.has(c.c));
-        const monsters = deckCards.filter(c => this.isMonster(c.t));
+        const monsters = deckCards.filter(c => c.t === "monster");
+        const fusions = deckCards.filter(c => c.t === "fusion");
         const spells = deckCards.filter(c => c.t === "spell");
         const traps = deckCards.filter(c => c.t === "trap");
         const list = document.getElementById("coll-deck-list");
@@ -190,12 +193,16 @@ const Collection = {
         html += section("Canavarlar", "monster", monsters);
         html += section("Buyuler", "spell", spells);
         html += section("Tuzaklar", "trap", traps);
+        if (fusions.length) html += section("Extra Deck", "fusion", fusions);
 
         list.innerHTML = html;
-        document.getElementById("coll-deck-num").textContent = dk.length;
+        const mainCount = this.mainDeckCount();
+        const extraCount = this.extraDeckCount();
+        const label = extraCount > 0 ? `${mainCount}+${extraCount}` : `${mainCount}`;
+        document.getElementById("coll-deck-num").textContent = label;
         const mobNum = document.getElementById("coll-mob-deck-num");
-        if (mobNum) mobNum.textContent = dk.length;
-        document.getElementById("btn-duel-with-deck").disabled = dk.length !== 40;
+        if (mobNum) mobNum.textContent = label;
+        document.getElementById("btn-duel-with-deck").disabled = mainCount !== 40;
         this.renderSlotTabs();
     },
 
@@ -214,20 +221,23 @@ const Collection = {
     renderSlotTabs() {
         const el = document.getElementById("coll-slots");
         el.innerHTML = this.deckSlots.map((slot, i) => {
-            const cnt = slot.cards.length;
+            const mainCnt = slot.cards.filter(c => !this.isFusion(c)).length;
+            const extraCnt = slot.cards.filter(c => this.isFusion(c)).length;
             const active = i === this.activeSlot ? "active" : "";
-            const ready = cnt === 40 ? "ready" : "";
+            const ready = mainCnt === 40 ? "ready" : "";
             const isActive = i === this.activeDeckSlot;
             const badge = isActive ? '<span class="slot-active-badge">AKTIF</span>' : "";
+            const label = extraCnt > 0 ? `${mainCnt}+${extraCnt}` : `${mainCnt}/40`;
             return `<button class="coll-slot-tab ${active} ${ready} ${isActive?"is-active":""}" onclick="Collection.switchSlot(${i})">
-                ${slot.name}<span class="slot-cnt">${cnt}/40</span>${badge}
+                ${slot.name}<span class="slot-cnt">${label}</span>${badge}
             </button>`;
         }).join("");
     },
 
     setAsActiveDeck() {
         const slot = this.activeSlot;
-        if (this.deckSlots[slot].cards.length !== 40) return;
+        const mainCnt = this.deckSlots[slot].cards.filter(c => !this.isFusion(c)).length;
+        if (mainCnt !== 40) return;
         this.activeDeckSlot = slot;
         WS.setActiveDeck(slot);
         this.renderSlotTabs();
@@ -240,18 +250,29 @@ const Collection = {
         this.render();
     },
 
+    isFusion(code) {
+        const card = this.allCards.find(c => c.c === code);
+        return card && card.t === "fusion";
+    },
+
+    mainDeckCount() { return this.deck().filter(c => !this.isFusion(c)).length; },
+    extraDeckCount() { return this.deck().filter(c => this.isFusion(c)).length; },
+
     toggleDeck(code) {
         if (!this.myCards.has(code)) return;
         const count = this.countInDeck(code);
         const max = this.maxCopies(code);
+        const isFus = this.isFusion(code);
+        const limit = isFus ? 15 : 40;
+        const current = isFus ? this.extraDeckCount() : this.mainDeckCount();
         if (count > 0 && count >= max) {
             const idx = this.deck().indexOf(code);
             if (idx !== -1) this.deck().splice(idx, 1);
         } else if (count > 0) {
-            if (this.deck().length < 40) this.deck().push(code);
+            if (current < limit) this.deck().push(code);
             else { const idx = this.deck().indexOf(code); if (idx !== -1) this.deck().splice(idx, 1); }
         } else {
-            if (this.deck().length < 40) this.deck().push(code);
+            if (current < limit) this.deck().push(code);
         }
         this.render();
         this.autoSave();
@@ -273,7 +294,10 @@ const Collection = {
         if (!this.myCards.has(code)) { this.preview(code); return; }
         const copies = this.countInDeck(code);
         const max = this.maxCopies(code);
-        if (copies < max) {
+        const isFus = this.isFusion(code);
+        const limit = isFus ? 15 : 40;
+        const current = isFus ? this.extraDeckCount() : this.mainDeckCount();
+        if (copies < max && current < limit) {
             this.toggleDeck(code);
         } else {
             this.preview(code);

@@ -86,6 +86,7 @@
 .coll-dk-title.monster::before{background:var(--atk)}
 .coll-dk-title.spell::before{background:#4a9a6a}
 .coll-dk-title.trap::before{background:#c45a8a}
+.coll-dk-title.fusion::before{background:var(--purple)}
 .coll-dk-card{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:3px;margin-bottom:2px;transition:background 0.15s;cursor:pointer}
 .coll-dk-card:hover{background:rgba(180,140,60,0.06)}
 .coll-dk-card img{width:28px;height:40px;object-fit:cover;border-radius:2px;border:1px solid var(--gold-border)}

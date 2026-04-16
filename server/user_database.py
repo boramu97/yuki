@@ -101,7 +101,7 @@ class UserDatabase:
         TYPE_TRAP = 0x4
         TYPE_FUSION = 0x40
 
-        monsters, spells, traps = [], [], []
+        monsters, spells, traps, fusions = [], [], [], []
         for code in all_codes:
             row = card_db.execute(
                 "SELECT type FROM datas WHERE id = ?", (code,)
@@ -110,7 +110,7 @@ class UserDatabase:
                 continue
             ctype = row[0]
             if ctype & TYPE_FUSION:
-                continue  # Extra deck — koleksiyona dahil değil
+                fusions.append(code)
             elif ctype & TYPE_TRAP:
                 traps.append(code)
             elif ctype & TYPE_SPELL:
@@ -118,15 +118,16 @@ class UserDatabase:
             else:
                 monsters.append(code)
         card_db.close()
-        return monsters, spells, traps
+        return monsters, spells, traps, fusions
 
     def _generate_starter_collection(self, user_id: int):
-        """Yeni kullanıcıya 60 rastgele kart verir (25 monster, 20 spell, 15 trap)."""
-        monsters, spells, traps = self._load_card_pool()
+        """Yeni kullanıcıya 65 rastgele kart verir (25 monster, 20 spell, 15 trap, 5 fusion)."""
+        monsters, spells, traps, fusions = self._load_card_pool()
         selected = (
             random.sample(monsters, min(25, len(monsters)))
             + random.sample(spells, min(20, len(spells)))
             + random.sample(traps, min(15, len(traps)))
+            + random.sample(fusions, min(5, len(fusions)))
         )
         for code in selected:
             self._conn.execute(
@@ -302,11 +303,11 @@ class UserDatabase:
 
     def get_card_pool(self) -> list[dict]:
         """Tüm destelerdeki benzersiz kartları tip bilgisiyle döndürür."""
-        monsters, spells, traps = self._load_card_pool()
+        monsters, spells, traps, fusions = self._load_card_pool()
         card_db = sqlite3.connect(str(CARD_DB_PATH))
 
         pool = []
-        for code in sorted(set(monsters + spells + traps)):
+        for code in sorted(set(monsters + spells + traps + fusions)):
             row = card_db.execute(
                 "SELECT d.type, d.atk, d.def, d.level, t.name "
                 "FROM datas d JOIN texts t ON d.id=t.id WHERE d.id=?",
@@ -315,8 +316,10 @@ class UserDatabase:
             if not row:
                 continue
             ctype, atk, defn, level_raw, name = row
-            TYPE_SPELL, TYPE_TRAP = 0x2, 0x4
-            if ctype & TYPE_TRAP:
+            TYPE_SPELL, TYPE_TRAP, TYPE_FUSION = 0x2, 0x4, 0x40
+            if ctype & TYPE_FUSION:
+                kind = "fusion"
+            elif ctype & TYPE_TRAP:
                 kind = "trap"
             elif ctype & TYPE_SPELL:
                 kind = "spell"
@@ -416,7 +419,7 @@ class UserDatabase:
         """Bir deste slotunu kaydeder. Kartlar koleksiyonda olmalı."""
         if slot < 0 or slot > 2:
             return False
-        if len(cards) > 40:
+        if len(cards) > 55:  # 40 main + 15 extra
             return False
         self._conn.execute(
             """INSERT INTO user_decks (user_id, slot, name, cards)

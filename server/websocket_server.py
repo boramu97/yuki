@@ -61,7 +61,7 @@ from server.response_builder import (
 from server.decks import (
     YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
     JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-    INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK,
+    INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
 )
 import random as _random
 from server.ocg_binding import (
@@ -78,7 +78,7 @@ from server.ocg_binding import (
 # Varsayilan test destesi
 DEFAULT_DECK = BASTION_DECK
 
-# Bot desteleri (sadece main deck kartlari — extra deck haric)
+# Bot desteleri (main + extra deck — motor ayirir)
 BOT_DECKS = {
     "Yugi": YUGI_DECK,
     "Kaiba": KAIBA_DECK,
@@ -89,6 +89,7 @@ BOT_DECKS = {
     "Weevil": INSECT_DECK,
     "Rex": REX_RAPTOR_DECK,
     "Pegasus": PEGASUS_DECK,
+    "Jaden": JADEN_DECK,
 }
 
 # --- Macera Tanımları ---

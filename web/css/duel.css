@@ -157,6 +157,64 @@
 .card-menu button:hover{background:rgba(180,80,30,0.3);border-color:var(--gold);color:var(--gold)}
 .card-menu button.primary{background:rgba(180,80,30,0.25);border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
 
+/* MEZARLIK ZONE */
+.grave-zone{
+    width:5vw;height:10.2vw;border-radius:4px;position:relative;cursor:pointer;
+    background:rgba(40,10,50,0.5);
+    border:1px solid rgba(154,106,186,0.2);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    transition:border-color 0.3s,box-shadow 0.3s;
+    margin-left:1.2vw;flex-shrink:0;
+}
+.grave-zone:hover{
+    border-color:rgba(154,106,186,0.5);
+    box-shadow:0 0 16px rgba(154,106,186,0.15);
+}
+.grave-icon{font-size:1.6vw;opacity:0.6;filter:grayscale(0.3)}
+.grave-count{
+    font-size:1.1vw;font-weight:700;color:var(--purple,#9a6aba);
+    text-shadow:0 0 6px rgba(154,106,186,0.3);
+}
+
+/* MEZARLIK GORUNTULEYICI */
+#grave-viewer-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:190;
+    align-items:center;justify-content:center;
+}
+#grave-viewer-overlay.active{display:flex}
+.grave-viewer{
+    background:rgba(20,14,30,0.97);border:1px solid rgba(154,106,186,0.3);
+    border-radius:10px;width:min(90vw,480px);max-height:80vh;display:flex;flex-direction:column;
+    box-shadow:0 0 40px rgba(154,106,186,0.1);
+}
+.grave-viewer-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 18px;border-bottom:1px solid rgba(154,106,186,0.15);
+}
+.grave-viewer-header span{font-size:1rem;color:var(--purple,#9a6aba);letter-spacing:2px;font-weight:600}
+.grave-viewer-close{
+    background:none;border:none;color:#888;font-size:1.5rem;cursor:pointer;padding:0 4px;
+    transition:color 0.15s;
+}
+.grave-viewer-close:hover{color:#fff}
+.grave-viewer-cards{
+    padding:12px;overflow-y:auto;display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;
+}
+.grave-card-tile{
+    display:flex;flex-direction:column;align-items:center;cursor:pointer;
+    transition:transform 0.15s;
+}
+.grave-card-tile:hover{transform:scale(1.08)}
+.grave-card-tile img{width:70px;height:102px;object-fit:cover;border-radius:3px;border:1px solid rgba(154,106,186,0.2)}
+.grave-card-name{
+    font-size:0.6rem;color:#a09080;text-align:center;margin-top:3px;
+    max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.grave-empty{
+    grid-column:1/-1;text-align:center;color:#666;font-style:italic;padding:30px 0;
+}
+
 /* EL KARTLARI */
 .hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none}
 .hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto}

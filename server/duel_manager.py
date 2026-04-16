@@ -26,7 +26,9 @@ from server.ocg_binding import (
     MSG_WIN, MSG_RETRY, MSG_ADD_COUNTER, MSG_REMOVE_COUNTER,
     MSG_SUMMONING, MSG_SUMMONED, MSG_SPSUMMONING, MSG_SPSUMMONED,
     MSG_FLIPSUMMONING, MSG_FLIPSUMMONED, MSG_SELECT_BATTLECMD,
+    MSG_CHAIN_END, MSG_EQUIP, MSG_UNEQUIP,
     QUERY_CODE, QUERY_ATTACK, QUERY_DEFENSE, QUERY_POSITION,
+    TYPE_FUSION, TYPE_SYNCHRO, TYPE_XYZ, TYPE_LINK,
 )
 from server.card_database import CardDatabase
 from server.message_parser import split_messages, parse_message, INTERACTIVE_MESSAGES
@@ -159,24 +161,44 @@ class DuelManager:
                 content = path.read_text(encoding="utf-8")
                 self._core.load_script(self._duel, content, script_name)
 
-        # Desteleri karistir ve ekle
-        deck0 = list(p0.deck)
-        deck1 = list(p1.deck)
-        random.shuffle(deck0)
-        random.shuffle(deck1)
+        # Extra deck tipi maskesi (Fusion, Synchro, Xyz, Link)
+        EXTRA_TYPE_MASK = TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK
+
+        # Desteleri main ve extra olarak ayir
+        def split_deck(deck_list):
+            main, extra = [], []
+            for code in deck_list:
+                card = self._db.get_card(code)
+                if card and card.type & EXTRA_TYPE_MASK:
+                    extra.append(code)
+                else:
+                    main.append(code)
+            return main, extra
+
+        main0, extra0 = split_deck(p0.deck)
+        main1, extra1 = split_deck(p1.deck)
+
+        random.shuffle(main0)
+        random.shuffle(main1)
 
         # Garantili baslangic kartlari — varsa desteden cikar, en sona ekle (ilk cekilecek)
         guaranteed = getattr(self, "guaranteed_draws", {})
         for team, codes in guaranteed.items():
-            deck = deck1 if team == 1 else deck0
+            deck = main1 if team == 1 else main0
             for code in codes:
                 if code in deck:
                     deck.remove(code)
 
-        for code in deck0:
+        for code in main0:
             self._core.add_card(self._duel, team=0, code=code, loc=LOCATION_DECK)
-        for code in deck1:
+        for code in main1:
             self._core.add_card(self._duel, team=1, code=code, loc=LOCATION_DECK)
+
+        # Extra deck kartlarini ekle
+        for code in extra0:
+            self._core.add_card(self._duel, team=0, code=code, loc=LOCATION_EXTRA)
+        for code in extra1:
+            self._core.add_card(self._duel, team=1, code=code, loc=LOCATION_EXTRA)
 
         # Garantili kartlari en son ekle (destenin en ustu = ilk cekilis)
         for team, codes in guaranteed.items():
@@ -394,6 +416,12 @@ class DuelManager:
                         msg.get("sequence", 0),
                     )
 
+                # Equip/unequip ve zincir sonu → tum mzone stat'larini yenile
+                # Equip spell'ler ATK/DEF degistirir, motor bunu dahili yapar
+                # ama istemciye guncelleme gondermez
+                if msg_type in (MSG_EQUIP, MSG_UNEQUIP, MSG_CHAIN_END):
+                    await self._refresh_all_mzone_stats()
+
     async def _send_card_stat_update(self, controller, location, sequence):
         """Kartin guncel ATK/DEF degerini motordan sorgulayip istemcilere gonderir."""
         if not self._duel or location not in (LOCATION_MZONE, LOCATION_SZONE):
@@ -442,6 +470,12 @@ class DuelManager:
             })
         except Exception as e:
             print(f"[STAT QUERY ERROR] {e}")
+
+    async def _refresh_all_mzone_stats(self):
+        """Her iki oyuncunun mzone'undaki tum canavarlar icin ATK/DEF guncelle."""
+        for team in (0, 1):
+            for seq in range(7):
+                await self._send_card_stat_update(team, LOCATION_MZONE, seq)
 
     def _enrich_card(self, code: int) -> dict:
         """Kart kodundan isim/ATK/DEF/type bilgisi dondurur."""

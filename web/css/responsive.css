@@ -101,6 +101,14 @@
     .status-strip { padding: 4px 8px; gap: 8px; }
     #status-text { font-size: 0.7rem; padding: 2px 10px; white-space: normal; text-align: center; }
 
+    /* --- MEZARLIK ZONE MOBIL --- */
+    .grave-zone { width: 10vw; height: 21.8vw; margin-left: 2vw; }
+    .grave-icon { font-size: 3.5vw; }
+    .grave-count { font-size: 2.5vw; }
+    .grave-viewer-cards { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; }
+    .grave-card-tile img { width: 60px; height: 87px; }
+    .grave-card-name { font-size: 0.5rem; max-width: 60px; }
+
     /* --- DUELLO EL --- */
     .hand-area { padding: 0 4px 2px; }
     .hand-card { width: 13vw; height: 17.8vw; margin-left: -2vw; border-width: 1px; }
@@ -240,6 +248,9 @@
     .hand-card:hover { transform: translateY(-1.5vh) scale(1.1) rotate(0deg) !important; }
     .opp-hand-area { height: 4vh; padding: 0 10vw; }
     .opp-hand-card { width: 4.5vh; height: 6vh; margin-left: -0.8vh; }
+    .grave-zone { width: 5vh; height: 11vh; margin-left: 1vh; }
+    .grave-icon { font-size: 1.5vh; }
+    .grave-count { font-size: 1.2vh; }
     .status-strip { padding: 1px 8vw; }
     #status-text { font-size: 0.55rem; padding: 1px 6px; }
 

@@ -160,6 +160,10 @@
             <div class="field">
                 <div class="field-row" id="opp-szone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                    <div class="grave-zone" id="opp-grave" title="Rakip Mezarlık">
+                        <div class="grave-icon">&#x1F480;</div>
+                        <div class="grave-count" id="opp-grave-count">0</div>
+                    </div>
                 </div>
                 <div class="field-row" id="opp-mzone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
@@ -177,6 +181,21 @@
                 </div>
                 <div class="field-row" id="self-szone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                    <div class="grave-zone" id="self-grave" title="Mezarlığın">
+                        <div class="grave-icon">&#x1F480;</div>
+                        <div class="grave-count" id="self-grave-count">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mezarlik goruntuleyici -->
+            <div id="grave-viewer-overlay">
+                <div class="grave-viewer">
+                    <div class="grave-viewer-header">
+                        <span id="grave-viewer-title">Mezarlık</span>
+                        <button class="grave-viewer-close" id="grave-viewer-close">&times;</button>
+                    </div>
+                    <div class="grave-viewer-cards" id="grave-viewer-cards"></div>
                 </div>
             </div>
 
@@ -317,6 +336,7 @@
                 <button class="coll-filter" data-filter="monster">Canavarlar <span class="coll-filter-count" id="cnt-monster"></span></button>
                 <button class="coll-filter" data-filter="spell">Buyuler <span class="coll-filter-count" id="cnt-spell"></span></button>
                 <button class="coll-filter" data-filter="trap">Tuzaklar <span class="coll-filter-count" id="cnt-trap"></span></button>
+                <button class="coll-filter" data-filter="fusion">Fusion <span class="coll-filter-count" id="cnt-fusion"></span></button>
             </div>
             <div class="coll-deck-filter">
                 <select id="coll-deck-filter">
