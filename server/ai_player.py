@@ -175,13 +175,6 @@ def _battle_cmd(msg: dict) -> bytes:
     opp_monsters = msg.get("opponent_monsters", [])
 
     if attackable:
-        # Rakibin en güçlü yüz yukarı saldırı canavarını bul
-        opp_max_atk = 0
-        for m in opp_monsters:
-            pos = m.get("position", 0)
-            if pos & 0x1:  # Yüz yukarı saldırı (FACEUP_ATTACK)
-                opp_max_atk = max(opp_max_atk, m.get("atk", 0))
-
         for i, card in enumerate(attackable):
             my_atk = card.get("card_atk", 0) or 0
             direct = card.get("direct_attackable", False)
@@ -190,8 +183,24 @@ def _battle_cmd(msg: dict) -> bytes:
             if direct:
                 return build_battle_cmd_response("attack", i)
 
-            # Rakipten güçlüyse saldır
-            if my_atk > opp_max_atk and my_atk > 0:
+            if my_atk <= 0:
+                continue
+
+            # Rakipte yenebileceğim bir canavar var mı?
+            can_win = False
+            for m in opp_monsters:
+                pos = m.get("position", 0)
+                if pos & 0x1:  # Yüz yukarı saldırı — ATK karşılaştır
+                    if my_atk > (m.get("atk", 0) or 0):
+                        can_win = True
+                        break
+                elif pos & 0x4:  # Yüz yukarı savunma — DEF karşılaştır
+                    if my_atk > (m.get("def", 0) or 0):
+                        can_win = True
+                        break
+                # Yüz aşağı savunma — stat bilinmiyor, riskli, atlat
+
+            if can_win:
                 return build_battle_cmd_response("attack", i)
 
     # Efekt aktifleştir

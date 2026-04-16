@@ -178,6 +178,13 @@ class DuelManager:
         main0, extra0 = split_deck(p0.deck)
         main1, extra1 = split_deck(p1.deck)
 
+        print(f"[DUEL] P0({p0.name}): deck={len(p0.deck)} -> main={len(main0)} extra={len(extra0)}")
+        print(f"[DUEL] P1({p1.name}): deck={len(p1.deck)} -> main={len(main1)} extra={len(extra1)}")
+        if extra0:
+            print(f"[DUEL] P0 extra: {extra0}")
+        if extra1:
+            print(f"[DUEL] P1 extra: {extra1}")
+
         random.shuffle(main0)
         random.shuffle(main1)
 

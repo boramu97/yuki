@@ -23,6 +23,10 @@ def _pack_u16(value: int) -> bytes:
     return struct.pack("<H", value)
 
 
+def _pack_u64(value: int) -> bytes:
+    return struct.pack("<Q", value)
+
+
 def _pack_u8(value: int) -> bytes:
     return struct.pack("<B", value)
 
@@ -196,8 +200,8 @@ def build_unselect_card_response(index: int) -> bytes:
 # --- İlan ---
 
 def build_announce_race_response(race_mask: int) -> bytes:
-    """MSG_ANNOUNCE_RACE yanıtı: İlan edilen ırk bit maskesi."""
-    return _pack_u32(race_mask)
+    """MSG_ANNOUNCE_RACE yanıtı: İlan edilen ırk bit maskesi (u64 — OCGCore race 64-bit)."""
+    return _pack_u64(race_mask)
 
 
 def build_announce_attrib_response(attrib_mask: int) -> bytes:
