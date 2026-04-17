@@ -32,8 +32,15 @@ const Collection = {
         return "B";
     },
 
-    craftCost(card) { return this.DUST_TABLE[this.cardTier(card)].craft; },
-    disCost(card) { return this.DUST_TABLE[this.cardTier(card)].dis; },
+    // Sunucu otoritatif: card.cc/dc dolu geliyor. Fallback olarak local hesap.
+    craftCost(card) {
+        if (card && typeof card.cc === "number") return card.cc;
+        return this.DUST_TABLE[this.cardTier(card)].craft;
+    },
+    disCost(card) {
+        if (card && typeof card.dc === "number") return card.dc;
+        return this.DUST_TABLE[this.cardTier(card)].dis;
+    },
 
     IMG: (code) => `https://images.ygoprodeck.com/images/cards_small/${code}.jpg`,
     IMG_BIG: (code) => `https://images.ygoprodeck.com/images/cards/${code}.jpg`,

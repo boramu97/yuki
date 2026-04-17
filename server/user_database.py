@@ -218,6 +218,20 @@ class UserDatabase:
         "C": {"disenchant": 3,  "craft": 10},
     }
 
+    @staticmethod
+    def _tier_from_stats(ctype: int, atk: int) -> str:
+        """Type-flag + ATK'tan tier hesaplar. Tek kaynak — server otoritatif."""
+        TYPE_SPELL, TYPE_TRAP = 0x2, 0x4
+        if ctype & (TYPE_SPELL | TYPE_TRAP):
+            return "B"
+        if atk >= 2500:
+            return "S"
+        if atk >= 1800:
+            return "A"
+        if atk < 1000:
+            return "C"
+        return "B"
+
     def card_tier(self, code: int) -> str:
         """Kart kodundan tier hesaplar."""
         card_db = sqlite3.connect(str(CARD_DB_PATH))
@@ -227,18 +241,7 @@ class UserDatabase:
         card_db.close()
         if not row:
             return "B"
-        ctype, atk = row
-        TYPE_SPELL, TYPE_TRAP = 0x2, 0x4
-        if ctype & (TYPE_SPELL | TYPE_TRAP):
-            return "B"
-        # Monster — ATK bazlı
-        if atk >= 2500:
-            return "S"
-        if atk >= 1800:
-            return "A"
-        if atk < 1000:
-            return "C"
-        return "B"
+        return self._tier_from_stats(row[0], row[1])
 
     def get_dust(self, user_id: int) -> int:
         """Kullanıcının toz miktarını döndürür."""
@@ -336,9 +339,12 @@ class UserDatabase:
                 kind = "spell"
             else:
                 kind = "monster"
+            tier = self._tier_from_stats(ctype, atk)
             pool.append({
                 "c": code, "n": name, "t": kind,
                 "a": atk, "d": defn, "l": level_raw & 0xFF,
+                "cc": self.DUST_TABLE[tier]["craft"],
+                "dc": self.DUST_TABLE[tier]["disenchant"],
             })
         card_db.close()
         return pool
