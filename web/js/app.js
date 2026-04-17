@@ -415,7 +415,9 @@
     }
     function renderIslandPath(nodes, completed){
         const host=document.getElementById("path-scroll");
-        if (!host) return;
+        if (!host) { console.warn("[island-path] #path-scroll yok"); return; }
+        console.log("[island-path] render baslıyor:", nodes.length, "dugum, tamamlanan:", completed);
+        console.log("[island-path] host:", host, "offsetHeight:", host.offsetHeight, "childCount:", host.children.length);
         // SVG gradient definition (bir kez)
         let defs=document.getElementById("pathGradDefs");
         if (!defs){
