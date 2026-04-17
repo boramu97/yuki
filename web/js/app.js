@@ -13,15 +13,30 @@
         authStatus.className = "status " + (isError ? "error" : "success");
     }
 
+    let _authInFlight = null;
     async function ensureConnected() {
         if (!WS.connected) {
+            console.log("[ensureConnected] WS kopuk, yeniden baglan");
             await WS.connect();
-            // Reconnect sonrasi server-side auth kaybolur — token varsa tekrar auth
+            // Reconnect sonrasi server-side auth kaybolur — token varsa tekrar auth yap ve YANITINI BEKLE
             const token = localStorage.getItem("yuki_token");
             if (token) {
-                WS.auth(token);
-                // Auth mesajinin server'da islenmesini kisa bir sure bekle
-                await new Promise(r => setTimeout(r, 150));
+                console.log("[ensureConnected] re-auth gonderiliyor");
+                await new Promise((resolve) => {
+                    const timeout = setTimeout(() => {
+                        console.warn("[ensureConnected] auth timeout");
+                        resolve();
+                    }, 3000);
+                    const original = WS.handlers["auth_result"];
+                    WS.handlers["auth_result"] = (d) => {
+                        clearTimeout(timeout);
+                        WS.handlers["auth_result"] = original;
+                        if (original) original(d);
+                        console.log("[ensureConnected] auth tamam");
+                        resolve();
+                    };
+                    WS.auth(token);
+                });
             }
         }
     }
@@ -301,7 +316,7 @@
         try { WS.getAdventures(); } catch(e) {}
     });
 
-    WS.on("error",(d)=>{UI.setStatus(d.message)});
+    WS.on("error",(d)=>{console.error("[WS error]", d.message); UI.setStatus(d.message)});
     WS.on("disconnect",()=>{UI.setStatus("Baglanti koptu")});
 
     function p(player){return player===myTeam?myName:oppName}
@@ -496,7 +511,9 @@
             const btn = row.querySelector(".path-node");
             if (!btn) return;
             btn.addEventListener("click", async () => {
-                try { await ensureConnected(); } catch(e) { return; }
+                console.log("[node-click] idx=", idx, "type=", type, "state=", state);
+                try { await ensureConnected(); } catch(e) { console.error("[node-click] ensureConnected hata:", e); return; }
+                console.log("[node-click] WS.connected=", WS.connected, "-> gonderiliyor");
                 if (type === "duel" || type === "boss") {
                     WS.playAdventure("duel_island", idx);
                 } else if (type === "mystery") {
