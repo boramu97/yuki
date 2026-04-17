@@ -198,7 +198,10 @@ def _battle_cmd(msg: dict) -> bytes:
                     if my_atk > (m.get("def", 0) or 0):
                         can_win = True
                         break
-                # Yüz aşağı savunma — stat bilinmiyor, riskli, atlat
+                elif pos & 0x8:  # Yüz aşağı savunma — stat bilinmiyor, makul ATK'yla dene
+                    if my_atk >= 1500:
+                        can_win = True
+                        break
 
             if can_win:
                 return build_battle_cmd_response("attack", i)

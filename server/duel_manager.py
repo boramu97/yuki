@@ -117,6 +117,7 @@ class DuelManager:
         self._last_select_msg: dict | None = None  # RETRY icin son SELECT
         self._last_select_type: int = 0  # Son SELECT mesaj tipi (bot için)
         self._pending_summon: dict | None = None  # Çağrı tamamlanınca stat sorgusu için
+        self._last_hand_snapshot: dict[int, list[int]] = {0: [], 1: []}
 
     def _script_reader(self, payload, duel, name):
         """OCGCore callback: Lua scriptini dosyadan yükle."""
@@ -429,6 +430,10 @@ class DuelManager:
                 if msg_type in (MSG_EQUIP, MSG_UNEQUIP, MSG_CHAIN_END):
                     await self._refresh_all_mzone_stats()
 
+            # Her mesaj sonunda el snapshot'ini motordan sorgula ve degismisse client'lara esitle
+            # (event-driven takibin uretemedigi desync'leri otomatik duzeltir)
+            await self._sync_hands_if_changed()
+
     async def _send_card_stat_update(self, controller, location, sequence):
         """Kartin guncel ATK/DEF degerini motordan sorgulayip istemcilere gonderir."""
         if not self._duel or location not in (LOCATION_MZONE, LOCATION_SZONE):
@@ -483,6 +488,87 @@ class DuelManager:
         for team in (0, 1):
             for seq in range(7):
                 await self._send_card_stat_update(team, LOCATION_MZONE, seq)
+
+    def _query_hand(self, team: int) -> list[int]:
+        """LOCATION_HAND sorgulayip kart kodlarinin sirali listesini dondurur (motor otoritesi)."""
+        if not self._duel:
+            return []
+        try:
+            raw = self._core.query_location(self._duel, team, LOCATION_HAND, QUERY_CODE)
+        except Exception:
+            return []
+        if not raw or len(raw) < 4:
+            return []
+        codes: list[int] = []
+        off = 4  # u32 total_size prefix'i atla
+        current_code = 0
+        while off + 2 <= len(raw):
+            sz = _struct.unpack_from("<H", raw, off)[0]
+            off += 2
+            if sz < 4:
+                # Bos slot marker (i16=0) — handte olmamali, atla
+                continue
+            if off + 4 > len(raw):
+                break
+            flag = _struct.unpack_from("<I", raw, off)[0]
+            off += 4
+            data_size = sz - 4
+            if flag == 0x80000000:
+                # Kart kayitinin sonu — biriken code'u listeye ekle
+                codes.append(current_code)
+                current_code = 0
+                continue
+            if flag == QUERY_CODE and data_size >= 4:
+                current_code = _struct.unpack_from("<I", raw, off)[0]
+            off += data_size
+        return codes
+
+    async def _sync_hands_if_changed(self):
+        """Her iki oyuncunun elini motordan sorgula, degismisse client'lara gonder.
+
+        Bu, el state'ini event-driven takip yerine motor otoritesinden esitler.
+        Desync yaratan tum edge case'leri (elden aktivasyon, flip efektleri vs.)
+        otomatik duzeltir.
+        """
+        if not self._duel:
+            return
+        hands = {0: self._query_hand(0), 1: self._query_hand(1)}
+        if hands == self._last_hand_snapshot:
+            return
+        self._last_hand_snapshot = {0: list(hands[0]), 1: list(hands[1])}
+
+        my_info = {
+            0: [self._hand_card_info(c) for c in hands[0]],
+            1: [self._hand_card_info(c) for c in hands[1]],
+        }
+        for p in self.room.players:
+            if p.team == self.bot_team:
+                continue
+            own = my_info[p.team]
+            opp_masked = [{"code": 0} for _ in hands[1 - p.team]]
+            payload = {
+                str(p.team): own,
+                str(1 - p.team): opp_masked,
+            }
+            try:
+                await p.send({"action": "hand_sync", "hands": payload})
+            except Exception as e:
+                print(f"[HAND_SYNC SEND ERROR] {e}")
+
+    def _hand_card_info(self, code: int) -> dict:
+        """El snapshot'i icin kart meta verisi."""
+        if not code:
+            return {"code": 0}
+        card = self._db.get_card(code)
+        if not card:
+            return {"code": code}
+        return {
+            "code": code,
+            "card_name": card.name,
+            "card_atk": card.attack,
+            "card_def": card.defense,
+            "card_type": card.type,
+        }
 
     def _enrich_card(self, code: int) -> dict:
         """Kart kodundan isim/ATK/DEF/type bilgisi dondurur."""

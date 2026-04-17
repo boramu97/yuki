@@ -203,6 +203,28 @@
     };
 
     WS.on("info",(d)=>{if(d.msg) handleInfo(d.msg)});
+    WS.on("hand_sync",(d)=>{
+        // Motor otoriteli el snapshot'i — event-driven takipten bagimsiz olarak
+        // el state'ini tamamen yeniler. Desync imkansiz hale gelir.
+        if (!d.hands) return;
+        for (const t of ["0","1"]) {
+            const team = +t;
+            const cards = d.hands[t] || [];
+            const h = Field.cards[team].hand;
+            h.length = 0;
+            for (const c of cards) {
+                h.push({
+                    code: c.code || 0,
+                    position: 0,
+                    card_name: c.card_name || "",
+                    card_atk: c.card_atk,
+                    card_def: c.card_def,
+                    card_type: c.card_type || 0,
+                });
+            }
+        }
+        Field.render();
+    });
     WS.on("select",(d)=>{if(d.msg){console.log("[SELECT]",d.msg.name,"type="+d.msg.type,"player="+d.msg.player);UI.handleSelect(d.msg);}});
     WS.on("retry",()=>{UI.log("Gecersiz, tekrar sec!","damage");if(UI.currentSelect)UI.handleSelect(UI.currentSelect)});
     WS.on("duel_end",(d)=>{
