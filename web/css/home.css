@@ -16,7 +16,7 @@
     box-shadow:0 0 30px rgba(200,160,40,0.08);transform:translateY(-4px)}
 .home-card:disabled{opacity:0.4;cursor:not-allowed}
 .home-card-icon{font-size:3rem}
-img.home-card-icon{width:100%;max-width:200px;height:160px;object-fit:contain;
+img.home-card-icon{display:block;width:200px;height:140px;object-fit:contain;flex-shrink:0;
     filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5));
     transition:transform 0.25s}
 .home-card:hover:not(:disabled) img.home-card-icon{transform:scale(1.06)}
