@@ -155,7 +155,7 @@ def _roll_random_cards(user_id: int, count: int, exclude_owned: bool = True) -> 
     if not pool:
         # Her seyi sahipse fusion disindan tekrar havuz olustur
         pool = monsters + spells + traps
-    random.shuffle(pool)
+    _random.shuffle(pool)
     return pool[:count]
 
 
