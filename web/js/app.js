@@ -99,8 +99,10 @@
         Collection.open();
     };
 
-    document.getElementById("nav-adventures").onclick = () => {
+    document.getElementById("nav-adventures").onclick = async () => {
         UI.showScreen("adventures-screen");
+        // Düello Adası ilerleme çubuğu için veri çek
+        try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
     };
 
     document.getElementById("btn-back-home").onclick = () => {
@@ -251,9 +253,17 @@
         const map=document.getElementById("island-map");
         const adv=d.adventures?.duel_island;
         if(!adv) return;
+        // Maceralar hub'da Düello Adası tile'ının ilerleme çubuğu
+        const completed=adv.completed||[];
+        const totalStages=adv.stages?.length||5;
+        const doneCount=completed.length;
+        const pct=Math.round((doneCount/totalStages)*100);
+        const lbl=document.getElementById("island-progress-label");
+        const fill=document.getElementById("island-progress-fill");
+        if(lbl) lbl.textContent = doneCount>=totalStages?"Tamamlandı":`Aşama ${doneCount}/${totalStages}`;
+        if(fill) fill.style.width = pct+"%";
         // Eski butonlari temizle (img haric)
         map.querySelectorAll(".stage").forEach(el=>el.remove());
-        const completed=adv.completed||[];
         const icons=["&#x1F996;","&#x1FAB2;","&#x1F985;","&#x1F3B2;","&#x1F441;"];
         const labels=["1. Tur","2. Tur","3. Tur","4. Tur","Final"];
         // Harita uzerinde konumlar (% cinsinden — sahilden kaleye yol)

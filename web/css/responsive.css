@@ -33,6 +33,19 @@
     /* --- MACERALAR MENU --- */
     .adv-menu { padding: 20px 16px; }
     .adv-banner { padding: 16px 18px; gap: 14px; }
+
+    /* Maceralar — tile hub */
+    .adv-tagline { padding: 24px 16px 4px; }
+    .adv-tagline-main { font-size: 1.3rem; letter-spacing: 0.08em; }
+    .adv-tagline-sub { font-size: 0.72rem; letter-spacing: 1px; }
+    .mode-grid, .secondary-grid { padding: 0 16px; gap: 14px; margin: 20px auto; grid-template-columns: 1fr; }
+    .mode-tile { height: 210px; }
+    .mode-tile.locked { height: 170px; }
+    .tile-content { left: 20px; right: 20px; bottom: 18px; }
+    .tile-name { font-size: 1.3rem; margin-bottom: 6px; }
+    .tile-desc { font-size: 0.82rem; margin-bottom: 12px; }
+    .tile-meta { font-size: 0.65rem; margin-bottom: 6px; }
+    .adv-header-spacer { display: none; }
     .banner-name { font-size: 1rem; }
 
     /* --- ANTRENMAN (bot grid) --- */

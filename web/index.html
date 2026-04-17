@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Yuki — Duel</title>
-    <link rel="stylesheet" href="css/base.css?v=2">
-    <link rel="stylesheet" href="css/auth.css?v=2">
-    <link rel="stylesheet" href="css/home.css?v=2">
-    <link rel="stylesheet" href="css/lobby.css?v=2">
-    <link rel="stylesheet" href="css/duel.css?v=2">
-    <link rel="stylesheet" href="css/motor-panel.css?v=2">
-    <link rel="stylesheet" href="css/float-panels.css?v=2">
-    <link rel="stylesheet" href="css/card-popup.css?v=2">
-    <link rel="stylesheet" href="css/collection.css?v=2">
-    <link rel="stylesheet" href="css/adventures.css?v=2">
-    <link rel="stylesheet" href="css/result.css?v=2">
-    <link rel="stylesheet" href="css/responsive.css?v=2">
+    <link rel="stylesheet" href="css/base.css?v=3">
+    <link rel="stylesheet" href="css/auth.css?v=3">
+    <link rel="stylesheet" href="css/home.css?v=3">
+    <link rel="stylesheet" href="css/lobby.css?v=3">
+    <link rel="stylesheet" href="css/duel.css?v=3">
+    <link rel="stylesheet" href="css/motor-panel.css?v=3">
+    <link rel="stylesheet" href="css/float-panels.css?v=3">
+    <link rel="stylesheet" href="css/card-popup.css?v=3">
+    <link rel="stylesheet" href="css/collection.css?v=3">
+    <link rel="stylesheet" href="css/adventures.css?v=3">
+    <link rel="stylesheet" href="css/result.css?v=3">
+    <link rel="stylesheet" href="css/responsive.css?v=3">
 </head>
 <body>
     <!-- GİRİŞ / KAYIT -->
@@ -226,25 +226,72 @@
 
     <!-- MACERALAR — Ana Menu -->
     <div id="adventures-screen" class="screen">
+        <div class="adv-backdrop"></div>
         <div class="adv-header">
             <button class="btn" id="btn-back-adventures">&larr; Ana Sayfa</button>
             <h1 class="adv-title">Maceralar</h1>
+            <span class="adv-header-spacer"></span>
         </div>
-        <div class="adv-menu">
-            <button class="adv-banner" id="banner-training">
-                <div class="banner-icon">&#x2694;</div>
-                <div class="banner-text">
-                    <div class="banner-name">Antrenman</div>
-                    <div class="banner-desc">Istedigin rakibe karsi pratik yap</div>
+
+        <div class="adv-tagline">
+            <div class="adv-tagline-main">Yolunu <em>seç</em>, destini dene.</div>
+            <div class="adv-tagline-sub">— Her mod, farklı bir sınav —</div>
+        </div>
+
+        <div class="mode-grid">
+            <button class="mode-tile tile-training" id="banner-training">
+                <div class="tile-art"></div>
+                <div class="tile-overlay"></div>
+                <div class="tile-shine"></div>
+                <div class="tile-content">
+                    <div class="tile-meta">Serbest Mod</div>
+                    <div class="tile-name">Antrenman Salonu</div>
+                    <div class="tile-desc">Seçtiğin rakibe karşı sınırsız pratik yap — risksiz, ödülsüz, deneyebildiğin kadar.</div>
+                    <div class="tile-footer">
+                        <span class="tile-cta">Başla</span>
+                    </div>
                 </div>
             </button>
-            <button class="adv-banner banner-island" id="banner-duel-island">
-                <img src="img/duel-island.png" alt="" class="banner-thumb">
-                <div class="banner-text">
-                    <div class="banner-name">Duello Adasi</div>
-                    <div class="banner-desc">Finale uzanan yolu tamamla!</div>
+
+            <button class="mode-tile tile-island" id="banner-duel-island">
+                <div class="tile-art"></div>
+                <div class="tile-overlay"></div>
+                <div class="tile-shine"></div>
+                <div class="tile-content">
+                    <div class="tile-meta">Kampanya · 5 Aşama</div>
+                    <div class="tile-name">Düello Adası</div>
+                    <div class="tile-desc">Sahilden kaleye uzanan yolu tırmandın — her aşamada toz ve yeni kart kazan.</div>
+                    <div class="tile-footer">
+                        <div class="tile-progress">
+                            <div class="progress-label" id="island-progress-label">Kampanya</div>
+                            <div class="progress-bar"><div class="progress-fill" id="island-progress-fill" style="width:0%"></div></div>
+                        </div>
+                        <span class="tile-cta">Gir</span>
+                    </div>
                 </div>
             </button>
+        </div>
+
+        <div class="secondary-label">— Yakında Gelecek —</div>
+        <div class="secondary-grid">
+            <div class="mode-tile locked tile-shadow">
+                <div class="tile-art"></div>
+                <div class="tile-overlay"></div>
+                <div class="tile-content">
+                    <div class="tile-meta">Zorluk · Usta</div>
+                    <div class="tile-name">Gölge Diyarı</div>
+                    <div class="tile-desc">Kaybeden ruhunu verir. Kazanılan ödül: nadir kartlar, çok toz.</div>
+                </div>
+            </div>
+            <div class="mode-tile locked tile-tourn">
+                <div class="tile-art"></div>
+                <div class="tile-overlay"></div>
+                <div class="tile-content">
+                    <div class="tile-meta">Rekabetçi · 8 Duelist</div>
+                    <div class="tile-name">Kader Turnuvası</div>
+                    <div class="tile-desc">Haftalık eleme. Final şampiyonuna efsane kart.</div>
+                </div>
+            </div>
         </div>
     </div>
 
