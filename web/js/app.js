@@ -16,6 +16,13 @@
     async function ensureConnected() {
         if (!WS.connected) {
             await WS.connect();
+            // Reconnect sonrasi server-side auth kaybolur — token varsa tekrar auth
+            const token = localStorage.getItem("yuki_token");
+            if (token) {
+                WS.auth(token);
+                // Auth mesajinin server'da islenmesini kisa bir sure bekle
+                await new Promise(r => setTimeout(r, 150));
+            }
         }
     }
 
