@@ -73,9 +73,11 @@
 
     WS.on("auth_result", (d) => {
         if (d.success) {
+            const wasLoggedIn = !!myName;
             myName = d.username;
             if (d.active_deck_slot !== undefined) Collection.activeDeckSlot = d.active_deck_slot;
-            goHome();
+            // Sadece ilk giriste ana sayfaya yonlendir — reconnect sonrasi re-auth'ta ekranda kal
+            if (!wasLoggedIn) goHome();
         } else {
             // Token gecersiz — login ekranina don
             localStorage.removeItem("yuki_token");
