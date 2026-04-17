@@ -46,29 +46,38 @@ import random
 def _pack_i32(v): return struct.pack("<i", v)
 
 
-def ai_respond(msg_type: int, msg: dict) -> bytes:
-    """SELECT mesajına kural bazlı binary yanıt üretir."""
+def ai_respond(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes:
+    """SELECT mesajına kural bazlı binary yanıt üretir.
+
+    retry_attempt: motor kac kere RETRY istedi. Her retry'da farkli bir
+    strateji denemek icin kullanilir — ayni cevabi tekrar gondermek
+    sonsuz loop'a sebep olurdu.
+    """
 
     if msg_type == MSG_SELECT_IDLECMD:
-        return _idle_cmd(msg)
+        return _idle_cmd(msg, retry_attempt)
 
     if msg_type == MSG_SELECT_BATTLECMD:
-        return _battle_cmd(msg)
+        return _battle_cmd(msg, retry_attempt)
 
     if msg_type == MSG_SELECT_CHAIN:
-        return _chain(msg)
+        return _chain(msg, retry_attempt)
 
     if msg_type == MSG_SELECT_EFFECTYN:
-        return build_effectyn_response(True)
+        # Retry'da efekti iptal et (hayir) — belki efekt tetiklemesi problemliydi
+        return build_effectyn_response(retry_attempt == 0)
 
     if msg_type == MSG_SELECT_YESNO:
-        return build_yesno_response(True)
+        return build_yesno_response(retry_attempt == 0)
 
     if msg_type == MSG_SELECT_OPTION:
-        return build_option_response(0)
+        # Retry'da farkli secenek dene
+        options = msg.get("options", [])
+        max_idx = max(0, len(options) - 1) if options else 0
+        return build_option_response(min(retry_attempt, max_idx))
 
     if msg_type == MSG_SELECT_CARD:
-        return _select_card(msg)
+        return _select_card(msg, retry_attempt)
 
     if msg_type in (MSG_SELECT_PLACE, MSG_SELECT_DISFIELD):
         return _select_place(msg)
@@ -77,7 +86,7 @@ def ai_respond(msg_type: int, msg: dict) -> bytes:
         return _select_position(msg)
 
     if msg_type == MSG_SELECT_TRIBUTE:
-        return _select_tribute(msg)
+        return _select_tribute(msg, retry_attempt)
 
     if msg_type == MSG_SELECT_COUNTER:
         return _select_counter(msg)
@@ -86,7 +95,7 @@ def ai_respond(msg_type: int, msg: dict) -> bytes:
         return _select_sum(msg)
 
     if msg_type == MSG_SELECT_UNSELECT_CARD:
-        return _select_unselect(msg)
+        return _select_unselect(msg, retry_attempt)
 
     if msg_type == MSG_ANNOUNCE_RACE:
         races = msg.get("available", 0)
@@ -120,8 +129,12 @@ def ai_respond(msg_type: int, msg: dict) -> bytes:
     return _pack_i32(-1)
 
 
-def _idle_cmd(msg: dict) -> bytes:
-    """Ana Faz kararları — öncelik sırası ile."""
+def _idle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
+    """Ana Faz kararları — öncelik sırası ile.
+
+    retry_attempt >= 1: normal secim reddedildi, alternatif dene.
+    retry_attempt >= 2: "end" gonder — sonsuz loop'a girmeyelim.
+    """
 
     summonable = msg.get("summonable", [])
     special = msg.get("special_summonable", [])
@@ -130,49 +143,67 @@ def _idle_cmd(msg: dict) -> bytes:
     monster_setable = msg.get("monster_setable", [])
     can_battle = msg.get("can_battle_phase", False)
 
-    # 1) Spell/trap aktifle (eldeki spell'ler — güçlü hamle)
-    for i, card in enumerate(activatable):
-        loc = card.get("location", 0)
-        if loc == 0x02:  # El — spell aktifle
-            return build_idle_cmd_response("activate", i)
+    # 2+ retry → "end" ile kurtul. Motor end kabul etmezse duel_manager
+    # deadlock mekanizmasi devreye girer.
+    if retry_attempt >= 2:
+        return build_idle_cmd_response("end")
 
-    # 2) En güçlü canavarı çağır
+    # 1. deneme — normal oncelik: spell → summon → spsummon → field spell → set → battle → end
+    # retry=1 → listedeki sirayi atla, bir sonraki strateji
+    priorities = []
+
+    # 1) Eldeki spell/trap aktifle
+    for i, card in enumerate(activatable):
+        if card.get("location", 0) == 0x02:
+            priorities.append(("activate", i))
+            break
+
+    # 2) Canavar cagir
     if summonable:
-        best_idx = _best_atk_index(summonable)
-        return build_idle_cmd_response("summon", best_idx)
+        priorities.append(("summon", _best_atk_index(summonable)))
 
-    # 3) Özel çağrı
+    # 3) Ozel cagri
     if special:
-        best_idx = _best_atk_index(special)
-        return build_idle_cmd_response("spsummon", best_idx)
+        priorities.append(("spsummon", _best_atk_index(special)))
 
-    # 4) Sahadan efekt aktifle (MZONE/SZONE)
+    # 4) Sahadan efekt aktifle
     for i, card in enumerate(activatable):
-        loc = card.get("location", 0)
-        if loc in (0x04, 0x08):
-            return build_idle_cmd_response("activate", i)
+        if card.get("location", 0) in (0x04, 0x08):
+            priorities.append(("activate", i))
+            break
 
-    # 5) Spell/trap set et
+    # 5) Spell/trap set
     if spell_setable:
-        return build_idle_cmd_response("sset", 0)
+        priorities.append(("sset", 0))
 
-    # 6) Canavar set et (çağıramadıysa)
+    # 6) Canavar set
     if monster_setable:
-        return build_idle_cmd_response("mset", 0)
+        priorities.append(("mset", 0))
 
-    # 7) Savaş fazına geç (sahada canavar varsa)
+    # 7) Savaş faz
     if can_battle:
-        return build_idle_cmd_response("battle")
+        priorities.append(("battle", 0))
 
-    # 8) Turu bitir
-    return build_idle_cmd_response("end")
+    # 8) End — her zaman mumkun
+    priorities.append(("end", 0))
+
+    # Retry'a gore offset — ayni cevabi tekrarlama
+    idx = min(retry_attempt, len(priorities) - 1)
+    action, arg = priorities[idx]
+    if action == "battle" or action == "end":
+        return build_idle_cmd_response(action)
+    return build_idle_cmd_response(action, arg)
 
 
-def _battle_cmd(msg: dict) -> bytes:
+def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
     """Savaş Fazı kararları — rakip sahası kontrol edilerek."""
     attackable = msg.get("attackable", [])
     activatable = msg.get("activatable", [])
     opp_monsters = msg.get("opponent_monsters", [])
+
+    # Retry — saldiri/aktivasyon reddedildi, end'e kac
+    if retry_attempt >= 1:
+        return build_battle_cmd_response("end")
 
     if attackable:
         for i, card in enumerate(attackable):
@@ -214,13 +245,18 @@ def _battle_cmd(msg: dict) -> bytes:
     return build_battle_cmd_response("end")
 
 
-def _chain(msg: dict) -> bytes:
+def _chain(msg: dict, retry_attempt: int = 0) -> bytes:
     """Zincir fırsatı — trap/spell aktifle veya pas."""
     chains = msg.get("chains", [])
     forced = msg.get("forced", False)
 
+    # Forced + chains var → index 0 zorunlu
     if forced and chains:
-        return build_chain_response(0)
+        return build_chain_response(min(retry_attempt, len(chains) - 1))
+
+    # Retry — aktivasyon reddedildi, pas gec
+    if retry_attempt >= 1:
+        return build_chain_response(-1)
 
     # Trap varsa aktifle (SZONE'dan)
     for i, ch in enumerate(chains):
@@ -238,21 +274,31 @@ def _chain(msg: dict) -> bytes:
     return build_chain_response(-1)
 
 
-def _select_card(msg: dict) -> bytes:
-    """Kart seçimi — min adet, en güçlüleri seç."""
+def _select_card(msg: dict, retry_attempt: int = 0) -> bytes:
+    """Kart seçimi — min-max bounds ile en guclu kartlari sec.
+
+    retry'da max_count'a dogru artir, alternatif kartlar dene.
+    """
     cards = msg.get("cards", [])
-    min_count = msg.get("min", 1)
-    max_count = msg.get("max", 1)
+    min_count = max(1, msg.get("min", 1))
+    max_count = max(min_count, msg.get("max", min_count))
 
     if not cards:
-        return build_card_response([0])
+        # Bos liste — iptal
+        return build_card_response([], cancel=True)
 
-    # ATK'ya göre sırala, en güçlüleri seç
+    # Hedef sayi: min'den baslayip retry basina arttir, max'i gecme
+    target = min(min_count + retry_attempt, max_count, len(cards))
+    target = max(target, 1)
+
+    # Retry'da farkli kart subsetleri dene (en guclulerden rotasyon)
     indexed = list(enumerate(cards))
     indexed.sort(key=lambda x: x[1].get("card_atk", 0) or 0, reverse=True)
 
-    count = min(min_count, len(cards))
-    indices = [idx for idx, _ in indexed[:count]]
+    offset = retry_attempt % max(1, len(cards) - target + 1)
+    indices = [idx for idx, _ in indexed[offset:offset + target]]
+    if len(indices) < min_count:
+        indices = [idx for idx, _ in indexed[:min_count]]
     return build_card_response(indices)
 
 
@@ -307,20 +353,21 @@ def _select_position(msg: dict) -> bytes:
     return build_position_response(positions & 0xF)
 
 
-def _select_tribute(msg: dict) -> bytes:
+def _select_tribute(msg: dict, retry_attempt: int = 0) -> bytes:
     """Kurban seçimi — en düşük ATK'lıları seç."""
     cards = msg.get("cards", [])
-    min_count = msg.get("min", 1)
+    min_count = max(1, msg.get("min", 1))
+    max_count = max(min_count, msg.get("max", min_count))
 
     if not cards:
-        return build_tribute_response([0])
+        return build_tribute_response([], cancel=True)
 
-    # En düşük ATK'lıları seç (kurban için)
     indexed = list(enumerate(cards))
     indexed.sort(key=lambda x: x[1].get("card_atk", 0) or 0)
 
-    count = min(min_count, len(cards))
-    indices = [idx for idx, _ in indexed[:count]]
+    target = min(min_count + retry_attempt, max_count, len(cards))
+    target = max(target, 1)
+    indices = [idx for idx, _ in indexed[:target]]
     return build_tribute_response(indices)
 
 
@@ -359,23 +406,27 @@ def _select_sum(msg: dict) -> bytes:
     return build_sum_response(list(range(count)))
 
 
-def _select_unselect(msg: dict) -> bytes:
+def _select_unselect(msg: dict, retry_attempt: int = 0) -> bytes:
     """Seç/kaldır — ilk seçilebilir kartı seç veya bitir."""
     selectable = msg.get("selectable", []) or msg.get("selectable_cards", [])
     finishable = msg.get("finishable", False)
     min_count = msg.get("min", 0)
 
+    # Retry — bitir (varsa) aksi halde farkli index
+    if retry_attempt >= 1 and finishable:
+        return build_unselect_card_response(-1)
+
     if selectable and min_count > 0:
-        return build_unselect_card_response(0)
+        idx = min(retry_attempt, len(selectable) - 1) if selectable else 0
+        return build_unselect_card_response(max(0, idx))
 
     if finishable:
         return build_unselect_card_response(-1)
 
-    # Secilebilir kart varsa sec
     if selectable:
-        return build_unselect_card_response(0)
+        idx = min(retry_attempt, len(selectable) - 1)
+        return build_unselect_card_response(max(0, idx))
 
-    # Bitir
     return build_unselect_card_response(-1)
 
 

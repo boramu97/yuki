@@ -118,6 +118,8 @@ class DuelManager:
         self._last_select_type: int = 0  # Son SELECT mesaj tipi (bot için)
         self._pending_summon: dict | None = None  # Çağrı tamamlanınca stat sorgusu için
         self._last_hand_snapshot: dict[int, list[int]] = {0: [], 1: []}
+        self._bot_retry_count: int = 0  # Ayni SELECT icin consecutive retry
+        self._bot_total_stuck: int = 0  # Tum retry toplami (reset non-retry msg'de)
 
     def _script_reader(self, payload, duel, name):
         """OCGCore callback: Lua scriptini dosyadan yükle."""
@@ -295,15 +297,37 @@ class DuelManager:
 
                     if target == self.bot_team:
                         # Bot'un yanıtı geçersizdi — retry sayısını kontrol et
-                        self._bot_retry_count = getattr(self, "_bot_retry_count", 0) + 1
-                        print(f"[BOT RETRY #{self._bot_retry_count}] msg={self._last_select_type:#x}")
-                        if self._bot_retry_count > 3:
+                        self._bot_retry_count += 1
+                        self._bot_total_stuck += 1
+                        print(f"[BOT RETRY #{self._bot_retry_count} / total={self._bot_total_stuck}] msg={self._last_select_type:#x}")
+
+                        # ULTIMATE ESCAPE: 15+ retry — bot deadlock'ta, duello bitir
+                        if self._bot_total_stuck >= 15:
+                            print(f"[BOT DEADLOCK] {self._bot_total_stuck} retry — bot teslim, duello bitir")
+                            winner = 1 - self.bot_team
+                            reward = await self._check_adventure_reward(winner)
+                            await self.room.broadcast({
+                                "action": "duel_end",
+                                "winner": winner,
+                                "reason": "bot_deadlock",
+                                "reward": reward,
+                            })
+                            self.room.state = RoomState.FINISHED
+                            self._running = False
+                            self._response_event.set()  # _duel_loop kilidini ac
+                            return
+
+                        if self._bot_retry_count > 5:
                             print(f"[BOT STUCK] {self._bot_retry_count} retry — fallback -1")
                             self._pending_response = b"\xff\xff\xff\xff"
                             self._bot_retry_count = 0
                         else:
                             try:
-                                response = ai_respond(self._last_select_type, self._last_select_msg)
+                                response = ai_respond(
+                                    self._last_select_type,
+                                    self._last_select_msg,
+                                    retry_attempt=self._bot_retry_count,
+                                )
                             except Exception as e:
                                 print(f"[BOT RETRY ERROR] {e}")
                                 response = b"\xff\xff\xff\xff"
@@ -355,9 +379,11 @@ class DuelManager:
                     from server.ocg_binding import MSG_NAMES
                     mname = MSG_NAMES.get(msg_type, f"{msg_type:#x}")
                     print(f"[BOT] {mname} → ai_respond")
+                    # Yeni interaktif mesaj — bot ilerledi, stuck sayaclarini sifirla
                     self._bot_retry_count = 0
+                    self._bot_total_stuck = 0
                     try:
-                        response = ai_respond(msg_type, msg)
+                        response = ai_respond(msg_type, msg, retry_attempt=0)
                     except Exception as e:
                         print(f"[BOT AI ERROR] {mname}: {e}")
                         import traceback; traceback.print_exc()
