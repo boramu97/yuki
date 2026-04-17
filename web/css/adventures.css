@@ -156,7 +156,27 @@
 /* ==========================================================================
    ISLAND PATH — Roguelike dikey yol (duel-island-screen)
    ========================================================================== */
-#duel-island-screen.island-screen { padding-bottom: 60px; }
+#duel-island-screen.island-screen { padding-bottom: 60px; position: relative; }
+/* Full-screen bulanık backdrop — ayni gorsel buyutulup blur edilmis */
+#duel-island-screen.island-screen::before {
+    content: '';
+    position: fixed;
+    inset: -40px;
+    z-index: 0;
+    background-image: url('../img/duel-island-path.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    filter: blur(36px) brightness(0.42) saturate(1.15);
+    pointer-events: none;
+    /* Kenarlarda bulanik artefakt gorunmesin */
+    transform: scale(1.06);
+}
+/* Icerik backdrop'un ustunde */
+#duel-island-screen.island-screen > .adv-header,
+#duel-island-screen.island-screen > .island-intro,
+#duel-island-screen.island-screen > .path-scroll,
+#duel-island-screen.island-screen > .path-legend { position: relative; z-index: 2; }
 .island-progress { display: inline-flex; align-items: center; gap: 12px; font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-dim); min-width: 220px; justify-content: flex-end; }
 .island-progress-label { color: var(--text-muted); font-size: 0.6rem; }
 .island-progress-bar { display: block; width: 100px; height: 2px; background: rgba(180,140,60,0.15); position: relative; }
