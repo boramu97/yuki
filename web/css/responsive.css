@@ -20,6 +20,7 @@
     .home-nav { flex-direction: column; gap: 12px; width: 100%; max-width: 100%; padding: 0 16px; }
     .home-card { padding: 18px 20px; flex-direction: row; gap: 16px; min-width: unset; width: 100%; height: auto; }
     .home-card-icon { font-size: 1.8rem; }
+    img.home-card-icon { width: 72px; max-height: 56px; flex-shrink: 0; }
     .home-card-title { font-size: 0.95rem; }
     .home-card-desc { font-size: 0.72rem; text-align: left; padding: 0; }
 
