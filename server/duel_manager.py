@@ -776,12 +776,18 @@ class DuelManager:
         if not adv:
             return None
 
-        stage = adv["stages"][stage_num]
-        dust_reward = stage["dust"]
-        card_count = stage["cards"]
+        nodes = adv.get("nodes") or adv.get("stages") or []
+        if stage_num < 0 or stage_num >= len(nodes):
+            return None
+        node = nodes[stage_num]
+        # Sadece duel/boss node'lari odul verir
+        if node.get("type") not in ("duel", "boss", None):  # None = eski stages formati
+            return None
+        dust_reward = node.get("dust", 0)
+        card_count = node.get("cards", 0)
 
         # Rakibin destesinden koleksiyonda olmayan kartları bul
-        bot_deck = BOT_DECKS.get(stage["bot"], [])
+        bot_deck = BOT_DECKS.get(node["bot"], [])
         owned = set(user_db.get_collection(user_id))
         available = [c for c in set(bot_deck) if c not in owned]
         random.shuffle(available)

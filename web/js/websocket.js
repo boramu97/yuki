@@ -124,4 +124,23 @@ const WS = {
     playAdventure(adventure, stage, deck) {
         this.send({ action: "play_adventure", adventure, stage, deck });
     },
+
+    // Macera — gizem node'u
+    mysteryOffer(adventure, node) {
+        this.send({ action: "mystery_offer", adventure, node });
+    },
+    mysteryClaim(adventure, node, code) {
+        this.send({ action: "mystery_claim", adventure, node, code });
+    },
+
+    // Macera — dukkan node'u
+    shopOffer(adventure, node) {
+        this.send({ action: "shop_offer", adventure, node });
+    },
+    shopBuy(adventure, node, code) {
+        this.send({ action: "shop_buy", adventure, node, code });
+    },
+    shopLeave(adventure, node) {
+        this.send({ action: "shop_leave", adventure, node });
+    },
 };

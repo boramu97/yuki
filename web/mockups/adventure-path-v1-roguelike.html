@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Düello Adası — Roguelike Patika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap">
+<style>
+/* ==========================================================================
+   Design tokens — inherited palette from the Yuki app
+   ========================================================================== */
+:root {
+    --bg: #0d0b0e;
+    --bg-soft: #120f15;
+    --bg-hud: #1a1520;
+    --gold: #e8c840;
+    --gold-warm: #c9a646;
+    --gold-deep: #8a6820;
+    --gold-border: rgba(180,140,60,0.18);
+    --gold-border-strong: rgba(200,170,60,0.45);
+    --gold-glow: rgba(232,200,64,0.28);
+    --gold-soft: rgba(232,200,64,0.08);
+    --purple: #9a6aba;
+    --purple-glow: rgba(154,106,186,0.35);
+    --text: #d4c8a0;
+    --text-dim: #776a50;
+    --text-muted: #5a5040;
+    --blue: #5aa8d8;
+    --blue-glow: rgba(90,168,216,0.35);
+    --green: #5cb85c;
+    --green-glow: rgba(92,184,92,0.45);
+    --red: #e05040;
+    --red-deep: #8a1820;
+    --red-glow: rgba(224,80,64,0.4);
+    --panel-bg: rgba(13,11,14,0.94);
+
+    /* Motion */
+    --ease-out: cubic-bezier(.2,.8,.3,1);
+    --ease-smooth: cubic-bezier(.4,0,.2,1);
+
+    /* Type */
+    --font-display: 'Cinzel', 'Trajan Pro', Georgia, serif;
+    --font-accent: 'Cormorant Garamond', Georgia, serif;
+    --font-body: Georgia, 'Times New Roman', serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scrollbar-color: rgba(180,140,60,0.3) rgba(10,8,11,0.5); scrollbar-width: thin; }
+html::-webkit-scrollbar { width: 10px; }
+html::-webkit-scrollbar-track { background: rgba(10,8,11,0.6); }
+html::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(180,140,60,0.5), rgba(120,90,40,0.3));
+    border: 2px solid rgba(10,8,11,0.6); border-radius: 6px; }
+html::-webkit-scrollbar-thumb:hover { background: rgba(200,170,60,0.6); }
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    font-feature-settings: "liga" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Ambient backdrop — nebula, stars, drifting embers, grain, vignette
+   ========================================================================== */
+.backdrop {
+    position: fixed; inset: 0; z-index: -3;
+    background:
+        radial-gradient(ellipse 55% 38% at 50% 5%, rgba(224,80,64,0.10), transparent 65%),
+        radial-gradient(ellipse 70% 50% at 50% 100%, rgba(154,106,186,0.12), transparent 70%),
+        radial-gradient(ellipse 80% 55% at 20% 40%, rgba(90,168,216,0.06), transparent 70%),
+        radial-gradient(ellipse 90% 60% at 80% 60%, rgba(232,200,64,0.05), transparent 75%),
+        linear-gradient(180deg, #0a0614 0%, #0d0b0e 35%, #0a0512 100%);
+}
+.backdrop-stars {
+    position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    background-image:
+        radial-gradient(1px 1px at 12% 14%, rgba(255,255,255,0.9), transparent 50%),
+        radial-gradient(1px 1px at 28% 42%, rgba(255,230,160,0.7), transparent 50%),
+        radial-gradient(1.5px 1.5px at 47% 18%, rgba(255,255,255,0.85), transparent 50%),
+        radial-gradient(1px 1px at 63% 71%, rgba(200,230,255,0.8), transparent 50%),
+        radial-gradient(1px 1px at 78% 34%, rgba(255,255,255,0.7), transparent 50%),
+        radial-gradient(1.5px 1.5px at 91% 82%, rgba(255,230,180,0.6), transparent 50%),
+        radial-gradient(1px 1px at 15% 76%, rgba(255,255,255,0.75), transparent 50%),
+        radial-gradient(1px 1px at 38% 89%, rgba(200,220,255,0.5), transparent 50%),
+        radial-gradient(1px 1px at 54% 53%, rgba(255,255,255,0.8), transparent 50%),
+        radial-gradient(1px 1px at 82% 9%, rgba(255,230,160,0.7), transparent 50%);
+    background-size: 560px 440px, 620px 500px, 480px 380px, 540px 420px, 600px 460px,
+        520px 400px, 580px 440px, 460px 360px, 500px 380px, 600px 440px;
+    animation: twinkle 9s ease-in-out infinite;
+    opacity: 0.75;
+}
+@keyframes twinkle {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.95; }
+}
+
+/* Drifting embers */
+.backdrop-embers {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    overflow: hidden;
+}
+.ember {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: radial-gradient(circle, rgba(232,200,64,0.9) 0%, rgba(232,200,64,0.4) 40%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(0.3px);
+    animation: rise linear infinite;
+}
+@keyframes rise {
+    0%   { transform: translate(0, 0) scale(0.6);  opacity: 0; }
+    12%  { opacity: 1; }
+    88%  { opacity: 0.9; }
+    100% { transform: translate(calc(var(--drift, 20px)), -110vh) scale(1); opacity: 0; }
+}
+
+/* Fine grain noise */
+.backdrop-grain {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.8 0 0 0 0 0.5 0 0 0 0.12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+}
+
+/* Vignette */
+.backdrop-vignette {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+        radial-gradient(ellipse 120% 85% at 50% 50%, transparent 55%, rgba(5,3,8,0.65) 100%);
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+.adv-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 32px;
+    border-bottom: 1px solid var(--gold-border);
+    background: linear-gradient(180deg, rgba(10,8,14,0.92) 0%, rgba(10,8,14,0.7) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 12px 24px -12px rgba(0,0,0,0.6);
+}
+.adv-header::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(232,200,64,0.5) 35%, rgba(232,200,64,0.5) 65%, transparent 100%);
+}
+
+.btn-back {
+    justify-self: start;
+    background: transparent; border: 1px solid var(--gold-border);
+    color: var(--text); font-family: var(--font-body);
+    padding: 9px 18px; cursor: pointer;
+    letter-spacing: 0.22em; text-transform: uppercase; font-size: 0.72rem;
+    transition: all 0.3s var(--ease-out);
+    position: relative; overflow: hidden;
+}
+.btn-back::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(232,200,64,0.15), transparent);
+    transform: translateX(-100%); transition: transform 0.5s var(--ease-out);
+}
+.btn-back:hover { border-color: var(--gold-border-strong); background: rgba(180,140,60,0.06); color: var(--gold); }
+.btn-back:hover::before { transform: translateX(100%); }
+
+.hdr-title-wrap { justify-self: center; text-align: center; }
+.hdr-eyebrow {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    letter-spacing: 0.5em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    text-indent: 0.5em;
+}
+.hdr-title {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    font-size: 1.15rem;
+    text-indent: 0.32em;
+    text-shadow: 0 0 20px rgba(232,200,64,0.3);
+}
+
+.hdr-stats {
+    justify-self: end;
+    display: flex; gap: 22px;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+.stat-item {
+    display: flex; align-items: baseline; gap: 8px;
+    position: relative;
+}
+.stat-item + .stat-item::before {
+    content: ''; position: absolute; left: -12px; top: 15%; bottom: 15%; width: 1px;
+    background: linear-gradient(180deg, transparent, var(--gold-border), transparent);
+}
+.stat-label {
+    font-family: var(--font-display); font-size: 0.58rem;
+    color: var(--text-muted); letter-spacing: 0.32em; text-transform: uppercase;
+}
+.stat-value {
+    font-family: var(--font-display); font-weight: 600;
+    color: var(--gold); font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Journey intro
+   ========================================================================== */
+.journey-intro {
+    text-align: center;
+    padding: 56px 24px 20px;
+    position: relative;
+}
+.ornament {
+    display: inline-flex; align-items: center; gap: 10px;
+    color: rgba(232,200,64,0.45);
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    margin-bottom: 22px;
+}
+.ornament::before, .ornament::after {
+    content: ''; display: block; width: 48px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180,140,60,0.5));
+}
+.ornament::after { background: linear-gradient(90deg, rgba(180,140,60,0.5), transparent); }
+.ornament span { font-size: 0.6em; letter-spacing: 0.8em; }
+
+.journey-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4.6vw, 3.2rem);
+    color: var(--text);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    line-height: 1.05;
+    margin-bottom: 16px;
+    text-indent: 0.06em;
+    filter: drop-shadow(0 4px 24px rgba(232,200,64,0.15));
+}
+.journey-title em {
+    color: var(--gold);
+    font-style: normal;
+    font-weight: 600;
+    text-shadow: 0 0 32px rgba(232,200,64,0.4);
+    position: relative;
+}
+.journey-quote {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    color: var(--text-dim);
+    max-width: 520px;
+    margin: 0 auto 28px;
+    line-height: 1.55;
+    letter-spacing: 0.02em;
+}
+.journey-quote::before { content: '“'; color: var(--gold); font-size: 1.4em; padding-right: 0.1em; }
+.journey-quote::after { content: '”'; color: var(--gold); font-size: 1.4em; padding-left: 0.1em; }
+
+.progress-wrap {
+    display: inline-flex; align-items: center; gap: 16px;
+    padding: 8px 20px;
+    border-top: 1px solid rgba(180,140,60,0.12);
+    border-bottom: 1px solid rgba(180,140,60,0.12);
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.progress-bar {
+    width: 180px; height: 2px;
+    background: rgba(180,140,60,0.15);
+    position: relative;
+    overflow: hidden;
+}
+.progress-fill {
+    position: absolute; inset: 0 auto 0 0;
+    background: linear-gradient(90deg, var(--gold-warm), var(--gold));
+    box-shadow: 0 0 12px rgba(232,200,64,0.6);
+    transition: width 0.8s var(--ease-out);
+}
+.progress-count {
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+}
+
+/* ==========================================================================
+   The Path — scrollable container, rows with SVG connectors
+   ========================================================================== */
+.path-scroll {
+    padding: 40px 20px 140px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    max-width: 780px;
+    margin: 0 auto;
+    background-image: url('../img/duel-island-path.png');
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: top center;
+}
+/* Subtle darkening overlay behind nodes for medallion legibility */
+.path-scroll::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        /* Center column slight darken so node medallions read clearly */
+        linear-gradient(90deg, transparent 0%, transparent 30%, rgba(10,8,14,0.22) 50%, transparent 70%, transparent 100%),
+        /* Top/bottom fade to bg so boss row and origin blend smoothly */
+        linear-gradient(180deg, rgba(13,11,14,0.6) 0%, transparent 8%, transparent 92%, rgba(13,11,14,0.85) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+.path-scroll > * { position: relative; z-index: 2; }
+
+/* Row — fixed height contains node + connector SVG within */
+.path-row {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 120px;                 /* branch row gap between nodes */
+}
+.path-row.terminus { height: 260px; } /* boss row gets extra space */
+
+/* Connector SVG fills the row; nodes sit on top via z-index */
+.row-connector {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+}
+/* Connector lines sit on top of the island illustration — image already
+   shows the painted amber path, so done/locked segments are invisible
+   (image carries that info). Only active + upcoming glow to mark the
+   "next step" energy. */
+.connector-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.connector-line.done { display: none; }
+.connector-line.locked { display: none; }
+.connector-line.active {
+    stroke: url(#gradGold);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 10px rgba(255,220,100,0.9)) drop-shadow(0 0 4px rgba(232,200,64,1));
+    stroke-dasharray: 8 10;
+    animation: shimmer 1.6s linear infinite;
+}
+@keyframes shimmer { to { stroke-dashoffset: -18; } }
+.connector-line.upcoming {
+    stroke: rgba(232,200,64,0.6);
+    stroke-width: 2;
+    stroke-dasharray: 5 7;
+    filter: drop-shadow(0 0 4px rgba(232,200,64,0.4));
+}
+
+/* ==========================================================================
+   Node — metallic medallion
+   ========================================================================== */
+.node {
+    position: relative;
+    width: 98px; height: 98px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; font-family: inherit;
+    color: inherit;
+    border: none;
+    padding: 0;
+    z-index: 2;
+    transition: transform 0.4s var(--ease-out);
+    isolation: isolate;
+    --node-accent: var(--gold);
+    --node-rim: rgba(180,140,60,0.55);
+    --node-rim-hi: rgba(232,200,64,0.95);
+    --node-inner: #0f0c12;
+}
+/* Outer rim: two-tone gradient for metallic effect */
+.node::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    padding: 2px;
+    background: conic-gradient(
+        from 140deg,
+        var(--node-rim-hi) 0deg,
+        var(--node-rim) 80deg,
+        rgba(60,45,25,0.4) 180deg,
+        var(--node-rim) 280deg,
+        var(--node-rim-hi) 360deg
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    transition: opacity 0.3s, filter 0.3s;
+}
+/* Inner face: deep radial with subtle top specular highlight */
+.node::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background:
+        /* Top-inside specular arc */
+        radial-gradient(ellipse 60% 40% at 50% 12%, rgba(255,255,255,0.12) 0%, transparent 55%),
+        /* Inner volume */
+        radial-gradient(circle at 35% 32%, rgba(40,30,40,0.9) 0%, rgba(14,10,16,0.98) 65%, rgba(8,6,10,1) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        inset 0 -12px 20px rgba(0,0,0,0.5),
+        inset 0 0 0 1px rgba(0,0,0,0.4);
+    z-index: -1;
+}
+/* Drop shadow beneath (depth) */
+.node { box-shadow: 0 10px 20px -6px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5); }
+
+.node-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+    transform: translateY(-4px);
+    transition: transform 0.4s var(--ease-out);
+    z-index: 1;
+}
+.node-label {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text);
+    white-space: nowrap;
+    padding: 5px 14px;
+    /* Opaque bg with hairline border — overrides any connector bleed */
+    background: linear-gradient(180deg, #161117 0%, #0d0b0e 100%);
+    border: 1px solid rgba(180,140,60,0.35);
+    border-radius: 2px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    z-index: 4;
+    transition: color 0.3s, background 0.3s, border-color 0.3s;
+    text-indent: 0.28em;
+}
+
+/* ---------- Hover ---------- */
+.node:hover:not(.locked):not(.done) { transform: translateY(-3px) scale(1.04); }
+.node:hover:not(.locked):not(.done) .node-icon { transform: translateY(-6px); }
+.node:hover:not(.locked):not(.done) .node-label { color: var(--gold); }
+.node:hover:not(.locked):not(.done)::before { filter: brightness(1.3); }
+
+/* ---------- State: DONE ---------- */
+.node.done {
+    --node-rim: rgba(92,184,92,0.5);
+    --node-rim-hi: rgba(140,220,140,0.85);
+    opacity: 0.82;
+}
+.node.done::after {
+    background:
+        radial-gradient(ellipse 60% 40% at 50% 12%, rgba(140,220,140,0.1) 0%, transparent 55%),
+        radial-gradient(circle at 35% 32%, rgba(40,60,40,0.7) 0%, rgba(12,18,12,0.98) 65%, rgba(6,10,6,1) 100%);
+}
+.node.done .node-icon { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)) saturate(0.75); }
+.node.done .done-check {
+    position: absolute; top: -4px; right: -2px;
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, #7bd07b, #5cb85c);
+    color: #052008; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; font-weight: 700;
+    box-shadow: 0 0 14px rgba(92,184,92,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    border: 2px solid #0d0b0e;
+    z-index: 4;
+}
+
+/* ---------- State: CURRENT ---------- */
+.node.current {
+    --node-rim: rgba(232,200,64,0.65);
+    --node-rim-hi: rgba(255,230,150,1);
+}
+.node.current .node-label {
+    color: var(--gold);
+    background: linear-gradient(180deg, #1a1510 0%, #0d0b0e 100%);
+    border-color: rgba(232,200,64,0.7);
+    letter-spacing: 0.3em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.7), 0 0 12px rgba(232,200,64,0.25);
+}
+.node.current::before {
+    animation: rim-shine 2.4s ease-in-out infinite;
+}
+@keyframes rim-shine {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.4) saturate(1.2); }
+}
+/* Halo rings expanding outward */
+.node.current .node-halo {
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(232,200,64,0.7);
+    opacity: 0;
+    animation: halo 2.4s ease-out infinite;
+    pointer-events: none;
+}
+.node.current .node-halo.delay { animation-delay: 0.8s; }
+.node.current .node-halo.delay2 { animation-delay: 1.6s; }
+@keyframes halo {
+    0%   { opacity: 0.7; transform: scale(1); }
+    80%  { opacity: 0; transform: scale(1.6); }
+    100% { opacity: 0; transform: scale(1.7); }
+}
+/* Soft ambient glow */
+.node.current { box-shadow: 0 10px 24px -6px rgba(0,0,0,0.7), 0 0 40px -8px rgba(232,200,64,0.55); }
+
+/* ---------- State: LOCKED ---------- */
+.node.locked {
+    opacity: 0.42;
+    cursor: not-allowed;
+    filter: grayscale(0.7);
+}
+.node.locked:hover { transform: none; }
+.node.locked .node-icon { transform: translateY(-4px) !important; }
+
+/* ---------- Variants ---------- */
+.node.duel    { --node-rim-hi: rgba(240,190,120,0.9); }
+.node.elite   { --node-rim-hi: rgba(255,120,100,0.95); --node-rim: rgba(224,80,64,0.55); }
+.node.elite:hover:not(.locked)::before { filter: brightness(1.4) hue-rotate(-8deg); }
+.node.mystery { --node-rim-hi: rgba(200,160,235,0.95); --node-rim: rgba(154,106,186,0.55); }
+.node.mystery:hover:not(.locked)::before { filter: brightness(1.3) hue-rotate(12deg); }
+.node.shop    { --node-rim-hi: rgba(255,230,130,1); }
+.node.rest    { --node-rim-hi: rgba(140,200,230,0.9); --node-rim: rgba(90,168,216,0.5); }
+
+/* ---------- BOSS — climactic ---------- */
+.path-row-boss {
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+}
+.boss-crown {
+    display: flex; align-items: center; gap: 18px;
+    font-family: var(--font-display);
+    font-size: 0.55rem;
+    letter-spacing: 0.5em;
+    color: rgba(224,80,64,0.7);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 16px rgba(224,80,64,0.4);
+    animation: boss-inscription 4s ease-in-out infinite;
+}
+.boss-crown::before, .boss-crown::after {
+    content: ''; display: block; width: 50px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(224,80,64,0.6), transparent);
+}
+@keyframes boss-inscription {
+    0%, 100% { opacity: 0.6; letter-spacing: 0.5em; }
+    50% { opacity: 1; letter-spacing: 0.6em; }
+}
+.node.boss {
+    width: 150px; height: 150px;
+    --node-rim: rgba(224,80,64,0.55);
+    --node-rim-hi: rgba(255,120,100,1);
+    box-shadow:
+        0 16px 40px -10px rgba(0,0,0,0.85),
+        0 0 50px rgba(224,80,64,0.35),
+        0 0 90px -20px rgba(224,80,64,0.5);
+}
+.node.boss::after {
+    background:
+        radial-gradient(ellipse 60% 40% at 50% 12%, rgba(255,180,180,0.12) 0%, transparent 55%),
+        radial-gradient(circle at 35% 32%, rgba(90,24,24,0.7) 0%, rgba(20,8,10,0.98) 55%, rgba(10,3,6,1) 100%);
+}
+.node.boss .node-icon { font-size: 2.8rem; transform: translateY(-2px); }
+.node.boss .node-label {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    color: var(--red);
+    top: calc(100% + 14px);
+    text-shadow: 0 0 18px rgba(224,80,64,0.5);
+    background: transparent;
+    padding: 0;
+    text-indent: 0.35em;
+}
+.node.boss .boss-subtitle {
+    position: absolute; top: calc(100% + 42px);
+    left: 50%; transform: translateX(-50%);
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    letter-spacing: 0.08em;
+}
+.node.boss .boss-subtitle::before, .node.boss .boss-subtitle::after {
+    content: '—'; color: rgba(224,80,64,0.5); padding: 0 6px;
+}
+/* Boss aura — radial red glow behind the row */
+.path-row-boss::before {
+    content: '';
+    position: absolute;
+    top: -40px; left: 50%; transform: translateX(-50%);
+    width: 520px; height: 360px;
+    background: radial-gradient(ellipse at center, rgba(224,80,64,0.2) 0%, rgba(224,80,64,0.05) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+    animation: boss-aura 5s ease-in-out infinite;
+}
+@keyframes boss-aura {
+    0%, 100% { opacity: 0.75; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+}
+/* Boss locked state treatment */
+.node.boss.locked {
+    opacity: 0.55;
+    filter: grayscale(0.4);
+}
+.node.boss.locked .node-label { color: rgba(224,80,64,0.65); }
+
+/* ==========================================================================
+   Tooltip — ornate floating scroll
+   ========================================================================== */
+.node .node-tooltip {
+    position: absolute;
+    bottom: calc(100% + 18px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background:
+        linear-gradient(180deg, rgba(22,18,14,0.98) 0%, rgba(13,11,14,0.98) 100%);
+    border: 1px solid var(--gold-border-strong);
+    color: var(--text);
+    padding: 10px 18px;
+    font-size: 0.8rem;
+    font-family: var(--font-accent);
+    font-style: italic;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s, transform 0.22s var(--ease-out);
+    z-index: 20;
+    box-shadow:
+        0 12px 24px -8px rgba(0,0,0,0.8),
+        0 0 20px -4px rgba(232,200,64,0.15),
+        inset 0 1px 0 rgba(232,200,64,0.12);
+}
+/* Ornamental corners */
+.node .node-tooltip::before,
+.node .node-tooltip::after {
+    content: ''; position: absolute;
+    width: 6px; height: 6px;
+    border: 1px solid var(--gold);
+}
+.node .node-tooltip::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.node .node-tooltip::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+/* Small arrow below */
+.node .tooltip-arrow {
+    position: absolute;
+    bottom: -6px; left: 50%;
+    width: 10px; height: 10px;
+    transform: translateX(-50%) rotate(45deg);
+    background: rgba(22,18,14,0.98);
+    border-right: 1px solid var(--gold-border-strong);
+    border-bottom: 1px solid var(--gold-border-strong);
+}
+.node:hover:not(.locked) .node-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   Act divider
+   ========================================================================== */
+.act-divider {
+    position: relative;
+    width: 100%;
+    height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.act-divider .row-connector { z-index: 0; }
+.act-divider-inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    background: var(--bg);
+    padding: 14px 32px;
+    border-top: 1px solid rgba(180,140,60,0.2);
+    border-bottom: 1px solid rgba(180,140,60,0.2);
+}
+.act-divider-inner::before {
+    content: ''; position: absolute;
+    top: -5px; bottom: -5px; left: 0; width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(180,140,60,0.5), transparent);
+}
+.act-divider-inner::after {
+    content: ''; position: absolute;
+    top: -5px; bottom: -5px; right: 0; width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(180,140,60,0.5), transparent);
+}
+.act-number {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.55rem;
+    letter-spacing: 0.55em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    text-indent: 0.55em;
+}
+.act-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    letter-spacing: 0.42em;
+    color: var(--gold);
+    font-weight: 500;
+    text-transform: uppercase;
+    text-indent: 0.42em;
+    text-shadow: 0 0 16px rgba(232,200,64,0.25);
+}
+.act-ornament {
+    display: flex; align-items: center; gap: 14px;
+    color: rgba(232,200,64,0.4);
+    font-size: 0.72rem;
+    letter-spacing: 0.4em;
+}
+.act-ornament::before, .act-ornament::after {
+    content: ''; display: block; width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180,140,60,0.4));
+}
+.act-ornament::after { background: linear-gradient(90deg, rgba(180,140,60,0.4), transparent); }
+
+/* ==========================================================================
+   Origin marker (bottom of path)
+   ========================================================================== */
+.path-origin {
+    position: relative;
+    width: 100%;
+    padding: 50px 0 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.origin-glyph {
+    font-family: var(--font-display);
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    text-indent: 0.5em;
+}
+.origin-sigil {
+    color: rgba(180,140,60,0.5);
+    font-size: 1.1rem;
+    letter-spacing: 0.8em;
+}
+
+/* ==========================================================================
+   Legend (sticky footer)
+   ========================================================================== */
+.legend {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 40;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(0deg, rgba(10,8,14,0.96) 0%, rgba(10,8,14,0.85) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--gold-border);
+    padding: 14px 20px;
+    box-shadow: 0 -12px 24px -12px rgba(0,0,0,0.8);
+}
+.legend::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(232,200,64,0.4) 50%, transparent 100%);
+}
+.legend-inner {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    align-items: center; gap: 4px 0;
+    font-family: var(--font-display);
+    font-size: 0.64rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+}
+.legend-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 3px 14px;
+    color: var(--text-dim);
+    transition: color 0.2s;
+}
+.legend-item:hover { color: var(--gold); }
+.legend-symbol { font-size: 0.95rem; letter-spacing: 0; }
+.legend-sep {
+    color: rgba(180,140,60,0.28);
+    font-size: 0.7rem;
+    letter-spacing: 0;
+    padding: 0 2px;
+}
+.legend-item.legend-duel    .legend-symbol { color: #e8a040; }
+.legend-item.legend-elite   .legend-symbol { color: var(--red); }
+.legend-item.legend-mystery .legend-symbol { color: var(--purple); }
+.legend-item.legend-shop    .legend-symbol { color: var(--gold); }
+.legend-item.legend-rest    .legend-symbol { color: var(--blue); }
+.legend-item.legend-boss    .legend-symbol { color: var(--red); }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 720px) {
+    .adv-header { padding: 10px 16px; grid-template-columns: auto 1fr auto; gap: 12px; }
+    .btn-back { padding: 7px 12px; font-size: 0.65rem; letter-spacing: 0.16em; }
+    .hdr-eyebrow { font-size: 0.52rem; }
+    .hdr-title { font-size: 0.88rem; letter-spacing: 0.24em; }
+    .hdr-stats { gap: 14px; font-size: 0.72rem; }
+    .stat-label { font-size: 0.5rem; letter-spacing: 0.22em; }
+    .stat-value { font-size: 0.82rem; }
+    .stat-item + .stat-item::before { left: -8px; }
+
+    .journey-intro { padding: 36px 20px 12px; }
+    .journey-quote { font-size: 0.95rem; }
+    .progress-bar { width: 130px; }
+
+    .path-scroll { padding: 24px 12px 160px; }
+    .path-row { height: 180px; gap: 80px; }
+    .path-row.terminus { height: 240px; }
+
+    .node { width: 78px; height: 78px; }
+    .node-icon { font-size: 1.45rem; }
+    .node-label { font-size: 0.55rem; letter-spacing: 0.22em; padding: 2px 8px; }
+    .node.boss { width: 120px; height: 120px; }
+    .node.boss .node-icon { font-size: 2.3rem; }
+    .node.boss .node-label { font-size: 0.72rem; }
+    .node.boss .boss-subtitle { font-size: 0.78rem; top: calc(100% + 38px); }
+
+    .path-row-boss::before { width: 400px; height: 280px; top: -24px; }
+
+    .act-divider { height: 90px; }
+    .act-name { font-size: 0.78rem; letter-spacing: 0.32em; }
+    .act-number { font-size: 0.5rem; letter-spacing: 0.42em; }
+
+    .node .node-tooltip { font-size: 0.72rem; padding: 8px 14px; }
+
+    .legend { padding: 10px 8px; }
+    .legend-inner { font-size: 0.56rem; letter-spacing: 0.18em; gap: 3px 0; }
+    .legend-item { gap: 5px; padding: 3px 8px; }
+    .legend-symbol { font-size: 0.82rem; }
+}
+
+@media (max-width: 420px) {
+    .path-row { gap: 56px; }
+    .node { width: 68px; height: 68px; }
+    .node-icon { font-size: 1.3rem; }
+    .hdr-stats .stat-item:nth-child(3) { display: none; }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001s !important;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================================================
+     Ambient backdrop layers
+     ========================================================================== -->
+<div class="backdrop"></div>
+<div class="backdrop-stars"></div>
+<div class="backdrop-embers" aria-hidden="true">
+    <div class="ember" style="left:8%;  animation-duration:18s; animation-delay: 0s;    --drift: 14px;"></div>
+    <div class="ember" style="left:17%; animation-duration:22s; animation-delay: -6s;   --drift: -8px;"></div>
+    <div class="ember" style="left:31%; animation-duration:26s; animation-delay: -3s;   --drift: 20px;"></div>
+    <div class="ember" style="left:44%; animation-duration:20s; animation-delay: -11s;  --drift: -14px;"></div>
+    <div class="ember" style="left:58%; animation-duration:24s; animation-delay: -1s;   --drift: 18px;"></div>
+    <div class="ember" style="left:67%; animation-duration:28s; animation-delay: -8s;   --drift: -10px;"></div>
+    <div class="ember" style="left:79%; animation-duration:19s; animation-delay: -15s;  --drift: 12px;"></div>
+    <div class="ember" style="left:88%; animation-duration:23s; animation-delay: -4s;   --drift: -16px;"></div>
+    <div class="ember" style="left:95%; animation-duration:27s; animation-delay: -12s;  --drift: 8px;"></div>
+</div>
+<div class="backdrop-grain" aria-hidden="true"></div>
+<div class="backdrop-vignette" aria-hidden="true"></div>
+
+<!-- Shared SVG defs for gradient strokes -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none">
+    <defs>
+        <linearGradient id="gradGold" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%"   stop-color="#c9a646" stop-opacity="0.8"/>
+            <stop offset="50%"  stop-color="#ffe78a" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#c9a646" stop-opacity="0.8"/>
+        </linearGradient>
+    </defs>
+</svg>
+
+<!-- ==========================================================================
+     Header
+     ========================================================================== -->
+<header class="adv-header">
+    <button class="btn-back">‹ Maceralar</button>
+    <div class="hdr-title-wrap">
+        <span class="hdr-eyebrow">Roguelike Patika</span>
+        <h1 class="hdr-title">Düello Adası</h1>
+    </div>
+    <div class="hdr-stats">
+        <div class="stat-item"><span class="stat-label">LP</span><span class="stat-value">8000</span></div>
+        <div class="stat-item"><span class="stat-label">Toz</span><span class="stat-value">120</span></div>
+        <div class="stat-item"><span class="stat-label">Kart</span><span class="stat-value">40</span></div>
+    </div>
+</header>
+
+<!-- ==========================================================================
+     Journey intro
+     ========================================================================== -->
+<section class="journey-intro">
+    <div class="ornament" aria-hidden="true"><span>◈ ⟠ ◈</span></div>
+    <h2 class="journey-title">Sahilden <em>Kaleye</em></h2>
+    <p class="journey-quote">Kimse diri olarak kaleye varmadı. Sen ilk olmak ister misin, duelist?</p>
+    <div class="progress-wrap">
+        <span>İlerleyiş</span>
+        <div class="progress-bar"><div class="progress-fill" style="width: 22%"></div></div>
+        <span class="progress-count">2 / 9</span>
+    </div>
+</section>
+
+<!-- ==========================================================================
+     The Path — DOM order bottom-to-top (column-reverse)
+     9 zorunlu düğüm + 2 act divider
+     Duelistler: Rex → Weevil → Mai → Joey → Pegasus
+     ========================================================================== -->
+<main class="path-scroll">
+
+    <!-- Origin marker (DOM first ⇒ visually at BOTTOM with column-reverse) -->
+    <div class="path-origin" aria-hidden="true">
+        <div class="origin-sigil">◈ ◆ ◈</div>
+        <div class="origin-glyph">Başlangıç</div>
+    </div>
+
+    <!-- ROW 1 — Rex Raptor (done) — visually near bottom -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <!-- No down segment (terminus at bottom). Up segment to Row 2 = DONE -->
+            <path class="connector-line done" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node duel done">
+            <span class="node-icon">&#x1F996;</span>
+            <span class="node-label">Rex</span>
+            <span class="done-check" aria-hidden="true">✓</span>
+            <span class="node-tooltip">Rex Raptor · Ejderhayı yendin<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ROW 2 — Gizem (done) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line done" d="M 50 200 L 50 150"/>
+            <path class="connector-line active" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node mystery done">
+            <span class="node-icon">&#x2753;</span>
+            <span class="node-label">Gizem</span>
+            <span class="done-check" aria-hidden="true">✓</span>
+            <span class="node-tooltip">3 kart sunulur · birini koleksiyonuna kat<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ROW 3 — Weevil (current) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line active" d="M 50 200 L 50 150"/>
+            <path class="connector-line upcoming" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node duel current">
+            <span class="node-halo"></span>
+            <span class="node-halo delay"></span>
+            <span class="node-halo delay2"></span>
+            <span class="node-icon">&#x1FAB2;</span>
+            <span class="node-label">Weevil</span>
+            <span class="node-tooltip">Weevil Underwood · Böcek ordusu<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ROW 4 — Dükkân (locked) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line upcoming" d="M 50 200 L 50 150"/>
+            <path class="connector-line locked" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node shop locked">
+            <span class="node-icon">&#x1F4B0;</span>
+            <span class="node-label">Dükkân</span>
+            <span class="node-tooltip">5 kart · %50 toz indirimiyle al<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ACT DIVIDER I → II -->
+    <div class="act-divider">
+        <svg class="row-connector" viewBox="0 0 100 110" preserveAspectRatio="none">
+            <path class="connector-line locked" d="M 50 110 L 50 0"/>
+        </svg>
+        <div class="act-ornament"><span>◆</span></div>
+        <div class="act-divider-inner">
+            <span class="act-number">Bölüm II</span>
+            <span class="act-name">Orman</span>
+        </div>
+        <div class="act-ornament"><span>◆</span></div>
+    </div>
+
+    <!-- ROW 5 — Mai (locked) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line locked" d="M 50 200 L 50 150"/>
+            <path class="connector-line locked" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node duel locked">
+            <span class="node-icon">&#x1F985;</span>
+            <span class="node-label">Mai</span>
+            <span class="node-tooltip">Mai Valentine · Harpie ordusu<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ROW 6 — Gizem (locked) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line locked" d="M 50 200 L 50 150"/>
+            <path class="connector-line locked" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node mystery locked">
+            <span class="node-icon">&#x2753;</span>
+            <span class="node-label">Gizem</span>
+            <span class="node-tooltip">3 kart sunulur · birini koleksiyonuna kat<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ROW 7 — Joey (locked) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line locked" d="M 50 200 L 50 150"/>
+            <path class="connector-line locked" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node duel locked">
+            <span class="node-icon">&#x1F3B2;</span>
+            <span class="node-label">Joey</span>
+            <span class="node-tooltip">Joey Wheeler · Şanslı savaşçı<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ROW 8 — Dükkân (locked) -->
+    <div class="path-row">
+        <svg class="row-connector" viewBox="0 0 100 200" preserveAspectRatio="none">
+            <path class="connector-line locked" d="M 50 200 L 50 150"/>
+            <path class="connector-line locked" d="M 50 50 L 50 0"/>
+        </svg>
+        <button class="node shop locked">
+            <span class="node-icon">&#x1F4B0;</span>
+            <span class="node-label">Dükkân</span>
+            <span class="node-tooltip">5 kart · %50 toz indirimiyle al<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+    <!-- ACT DIVIDER II → III -->
+    <div class="act-divider">
+        <svg class="row-connector" viewBox="0 0 100 110" preserveAspectRatio="none">
+            <path class="connector-line locked" d="M 50 110 L 50 0"/>
+        </svg>
+        <div class="act-ornament"><span>◆</span></div>
+        <div class="act-divider-inner">
+            <span class="act-number">Bölüm III</span>
+            <span class="act-name">Kale</span>
+        </div>
+        <div class="act-ornament"><span>◆</span></div>
+    </div>
+
+    <!-- ROW 9 — BOSS (Pegasus) — terminus at top -->
+    <div class="path-row terminus path-row-boss">
+        <svg class="row-connector" viewBox="0 0 100 260" preserveAspectRatio="none">
+            <!-- Only down segment to Row 8 = LOCKED -->
+            <path class="connector-line locked" d="M 50 260 L 50 205"/>
+        </svg>
+        <div class="boss-crown">◈ · Final · ◈</div>
+        <button class="node boss locked">
+            <span class="node-icon">&#x1F441;</span>
+            <span class="node-label">Pegasus</span>
+            <span class="boss-subtitle">Kale Efendisi</span>
+            <span class="node-tooltip">Maximillion Pegasus · Millennium Gözü<span class="tooltip-arrow"></span></span>
+        </button>
+    </div>
+
+</main>
+
+<!-- ==========================================================================
+     Legend (sticky footer)
+     ========================================================================== -->
+<footer class="legend">
+    <div class="legend-inner">
+        <span class="legend-item legend-duel">    <span class="legend-symbol">⚔</span> Düello </span>
+        <span class="legend-sep">◆</span>
+        <span class="legend-item legend-mystery"> <span class="legend-symbol">❖</span> Gizem </span>
+        <span class="legend-sep">◆</span>
+        <span class="legend-item legend-shop">    <span class="legend-symbol">✦</span> Dükkân </span>
+        <span class="legend-sep">◆</span>
+        <span class="legend-item legend-boss">    <span class="legend-symbol">♛</span> Boss </span>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -248,53 +248,48 @@
         UI.showScreen("result");
     });
 
-    // Turnuva ilerlemesi — harita uzerinde butonlar
+    // Macera yolu renderer — 9 dugumlu roguelike patika
     WS.on("adventures",(d)=>{
-        const map=document.getElementById("island-map");
         const adv=d.adventures?.duel_island;
         if(!adv) return;
-        // Maceralar hub'da Düello Adası tile'ının ilerleme çubuğu
+        const nodes=adv.nodes||[];
         const completed=adv.completed||[];
-        const totalStages=adv.stages?.length||5;
+        renderIslandPath(nodes, completed);
+        // Hub tile ilerleme cubugu
+        const hubLbl=document.getElementById("island-progress-label");
+        const hubFill=document.getElementById("island-progress-fill");
+        const total=nodes.length||9;
         const doneCount=completed.length;
-        const pct=Math.round((doneCount/totalStages)*100);
-        const lbl=document.getElementById("island-progress-label");
-        const fill=document.getElementById("island-progress-fill");
-        if(lbl) lbl.textContent = doneCount>=totalStages?"Tamamlandı":`Aşama ${doneCount}/${totalStages}`;
-        if(fill) fill.style.width = pct+"%";
-        // Eski butonlari temizle (img haric)
-        map.querySelectorAll(".stage").forEach(el=>el.remove());
-        const icons=["&#x1F996;","&#x1FAB2;","&#x1F985;","&#x1F3B2;","&#x1F441;"];
-        const labels=["1. Tur","2. Tur","3. Tur","4. Tur","Final"];
-        // Harita uzerinde konumlar (% cinsinden — sahilden kaleye yol)
-        const positions=[
-            {top:82, left:72},  // Rex — sahil (sag alt)
-            {top:65, left:28},  // Weevil — orman/bataklik (sol)
-            {top:48, left:62},  // Mai — orta sag
-            {top:35, left:38},  // Joey — arena/daglara yakin
-            {top:14, left:50},  // Kaiba — kale (ust orta)
-        ];
-        adv.stages.forEach((st,i)=>{
-            const done=completed.includes(i);
-            const unlocked=i===0||completed.includes(i-1);
-            const cls=done?"stage done":unlocked?"stage unlocked":"stage locked";
-            const el=document.createElement("div");
-            el.className=cls;
-            el.dataset.stage=i;
-            el.style.top=positions[i].top+"%";
-            el.style.left=positions[i].left+"%";
-            el.innerHTML=`<div class="stage-icon">${icons[i]}</div>`
-                +`<div class="stage-label">${labels[i]}</div>`
-                +`<div class="stage-name">${st.bot_name}</div>`
-                +`<div class="stage-reward">${st.dust} toz + ${st.cards} kart</div>`
-                +(done?`<div class="stage-check">&#x2713;</div>`:"");
-            if(unlocked||done){
-                el.addEventListener("click",async()=>{
-                    try{await ensureConnected();WS.playAdventure("duel_island",i);}catch(e){}
-                });
-            }
-            map.appendChild(el);
-        });
+        const pct=Math.round((doneCount/total)*100);
+        if(hubLbl) hubLbl.textContent = doneCount>=total?"Tamamlandı":`Aşama ${doneCount}/${total}`;
+        if(hubFill) hubFill.style.width = pct+"%";
+    });
+
+    // Gizem teklifi geldi — modal'i doldur
+    WS.on("mystery_offer",(d)=>{
+        openGizemModal(d.adventure, d.node, d.cards||[]);
+    });
+    WS.on("mystery_claimed",(d)=>{
+        UI.log(`Gizem kart alindi!`);
+        closeGizemModal();
+        try { WS.getAdventures(); } catch(e) {}
+    });
+
+    // Dükkân teklifi geldi
+    WS.on("shop_offer",(d)=>{
+        openDukkanModal(d.adventure, d.node, d.cards||[], d.purchased||[], d.dust||0);
+    });
+    WS.on("shop_bought",(d)=>{
+        // Bakiyeyi guncelle, kart sold durumuna gec
+        const wallet=document.getElementById("dukkan-wallet");
+        if (wallet) { wallet.textContent = d.dust; wallet.classList.add("pulse"); setTimeout(()=>wallet.classList.remove("pulse"), 600); }
+        const el=document.querySelector(`#dukkan-cards .shop-item[data-code="${d.code}"]`);
+        if (el) el.classList.add("sold");
+        dukkanRefreshAffordability();
+    });
+    WS.on("shop_left",(d)=>{
+        closeDukkanModal();
+        try { WS.getAdventures(); } catch(e) {}
     });
 
     WS.on("error",(d)=>{UI.setStatus(d.message)});
@@ -381,6 +376,236 @@
         else if(name==="MSG_TOSS_COIN"){const r=(msg.results||[]).map(v=>v?"Yazi":"Tura").join(", ");UI.log(`Yazi/Tura: ${r}`)}
         else if(name==="MSG_TOSS_DICE")UI.log(`Zar: ${(msg.results||[]).join(", ")}`);
     }
+
+    // ===== MACERA PATİKA RENDERER =====
+    // 9 düğümlü roguelike yolu dinamik olarak oluşturur.
+    // DOM sırası bottom-to-top (column-reverse), yani index 0 = alttaki ilk kart.
+    const NODE_ICONS = {
+        "Rex": "&#x1F996;",
+        "Weevil": "&#x1FAB2;",
+        "Mai": "&#x1F985;",
+        "Joey": "&#x1F3B2;",
+        "Pegasus": "&#x1F441;",
+    };
+    const NODE_TOOLTIPS = {
+        "mystery": "3 kart sunulur · birini koleksiyonuna kat",
+        "shop": "5 kart · %50 toz indirimiyle al",
+    };
+    function nodeIcon(node){
+        if (node.type==="duel"||node.type==="boss") return NODE_ICONS[node.bot] || "&#x2694;";
+        if (node.type==="mystery") return "&#x2753;";
+        if (node.type==="shop") return "&#x1F4B0;";
+        return "&#x25CF;";
+    }
+    function nodeLabel(node){
+        if (node.type==="mystery") return "Gizem";
+        if (node.type==="shop") return "Dükkân";
+        if (node.type==="boss") return node.bot_name || "Boss";
+        return node.bot || "";
+    }
+    function nodeTooltip(node){
+        if (node.type==="mystery" || node.type==="shop") return NODE_TOOLTIPS[node.type];
+        return (node.bot_name||"") + (node.dust?` · ${node.dust} toz`:"");
+    }
+    function segmentState(a, b){
+        if (a==="done" && b==="done") return "done";
+        if (a==="done" && b==="current") return "active";
+        if (a==="current" && b==="locked") return "upcoming";
+        return "locked";
+    }
+    function renderIslandPath(nodes, completed){
+        const host=document.getElementById("path-scroll");
+        if (!host) return;
+        // SVG gradient definition (bir kez)
+        let defs=document.getElementById("pathGradDefs");
+        if (!defs){
+            host.insertAdjacentHTML("afterbegin",
+                `<svg id="pathGradDefs" width="0" height="0" style="position:absolute;pointer-events:none"><defs>`+
+                `<linearGradient id="gradGold" x1="0%" y1="100%" x2="0%" y2="0%">`+
+                `<stop offset="0%" stop-color="#c9a646" stop-opacity="0.8"/>`+
+                `<stop offset="50%" stop-color="#ffe78a" stop-opacity="1"/>`+
+                `<stop offset="100%" stop-color="#c9a646" stop-opacity="0.8"/>`+
+                `</linearGradient></defs></svg>`);
+        }
+        // Once tum row'lari sil
+        host.querySelectorAll(".path-row").forEach(el=>el.remove());
+        // Durum hesapla
+        const states = nodes.map((_,i)=>{
+            if (completed.includes(i)) return "done";
+            // Current: ilk "locked" olmayan ve "done" olmayan — yani completed.length == i
+            if (i === completed.length) return "current";
+            return "locked";
+        });
+        // DOM: index 0 ilk gelir (visual alt), son index en sonda (visual üst)
+        nodes.forEach((node,i)=>{
+            const st = states[i];
+            // up segment = i to i+1; down = i-1 to i
+            const stAbove = i+1 < states.length ? states[i+1] : null;
+            const stBelow = i-1 >= 0 ? states[i-1] : null;
+            const upClass = stAbove ? segmentState(st, stAbove) : "none";
+            const downClass = stBelow ? segmentState(stBelow, st) : "none";
+            const isBoss = node.type === "boss";
+            const rowClass = "path-row" + (isBoss ? " terminus" : "");
+            const vbH = isBoss ? 260 : 200;
+            const upY = isBoss ? null : 50;
+            const downYTop = isBoss ? (260-55) : 150;
+            // SVG connector
+            let svgInner = "";
+            if (downClass !== "none") svgInner += `<path class="connector-line ${downClass}" d="M 50 ${vbH} L 50 ${downYTop}"/>`;
+            if (upClass !== "none" && upY !== null) svgInner += `<path class="connector-line ${upClass}" d="M 50 50 L 50 0"/>`;
+            // Node HTML
+            const halos = st==="current" ? `<span class="path-node-halo"></span><span class="path-node-halo d1"></span><span class="path-node-halo d2"></span>` : "";
+            const check = st==="done" ? `<span class="path-node-check">&#10003;</span>` : "";
+            const nodeClass = `path-node type-${node.type} ${st}`;
+            const tip = nodeTooltip(node);
+            const label = nodeLabel(node);
+            const bossCrown = isBoss ? `<div class="boss-crown">◈ · Final · ◈</div>` : "";
+            const bossSubtitle = isBoss ? `<span class="boss-subtitle">Kale Efendisi</span>` : "";
+            const html = `<div class="${rowClass}" data-node="${i}" data-type="${node.type}" data-state="${st}">`+
+                `<svg class="row-connector" viewBox="0 0 100 ${vbH}" preserveAspectRatio="none">${svgInner}</svg>`+
+                bossCrown +
+                `<button class="${nodeClass}"${(st==="locked"||st==="done")?" disabled":""}>`+
+                    halos +
+                    `<span class="path-node-icon">${nodeIcon(node)}</span>`+
+                    `<span class="path-node-label">${label}</span>`+
+                    bossSubtitle +
+                    check +
+                    `<span class="path-node-tooltip">${tip}</span>`+
+                `</button>`+
+                `</div>`;
+            host.insertAdjacentHTML("beforeend", html);
+        });
+        // Click handler: aktif (current) olanlara
+        host.querySelectorAll(".path-row").forEach(row=>{
+            const idx = parseInt(row.dataset.node, 10);
+            const type = row.dataset.type;
+            const state = row.dataset.state;
+            if (state === "locked") return;
+            if (state === "done") return; // tekrar girme yasak
+            const btn = row.querySelector(".path-node");
+            if (!btn) return;
+            btn.addEventListener("click", async () => {
+                try { await ensureConnected(); } catch(e) { return; }
+                if (type === "duel" || type === "boss") {
+                    WS.playAdventure("duel_island", idx);
+                } else if (type === "mystery") {
+                    WS.mysteryOffer("duel_island", idx);
+                } else if (type === "shop") {
+                    WS.shopOffer("duel_island", idx);
+                }
+            });
+        });
+        // Üst ilerleme göstergesi
+        const fill=document.getElementById("island-progress-fill");
+        const cnt=document.getElementById("island-progress-count");
+        const pct=Math.round((completed.length/nodes.length)*100);
+        if (fill) fill.style.width = pct+"%";
+        if (cnt) cnt.textContent = `${completed.length} / ${nodes.length}`;
+    }
+
+    // ===== GİZEM MODAL =====
+    let _gizemState = { adventure: "", node: 0, selected: null };
+    function openGizemModal(adventure, node, cards) {
+        _gizemState = { adventure, node, selected: null };
+        const host = document.getElementById("gizem-cards");
+        host.innerHTML = "";
+        cards.forEach(c => {
+            const el = document.createElement("button");
+            el.className = "choice-card";
+            el.dataset.code = c.code;
+            el.innerHTML =
+                `<div class="choice-card-art"><img src="https://images.ygoprodeck.com/images/cards/${c.code}.jpg" alt=""></div>`+
+                `<div class="choice-card-name">${c.card_name||""}</div>`;
+            el.addEventListener("click", () => {
+                host.querySelectorAll(".choice-card").forEach(x=>x.classList.remove("selected"));
+                el.classList.add("selected");
+                host.classList.add("has-selected");
+                _gizemState.selected = c.code;
+                const btn = document.getElementById("gizem-take");
+                const hint = document.getElementById("gizem-hint");
+                btn.disabled = false;
+                hint.style.display = "none";
+            });
+            host.appendChild(el);
+        });
+        // Reset state
+        document.getElementById("gizem-take").disabled = true;
+        document.getElementById("gizem-hint").style.display = "";
+        host.classList.remove("has-selected");
+        document.getElementById("gizem-overlay").classList.add("active");
+    }
+    function closeGizemModal() {
+        document.getElementById("gizem-overlay").classList.remove("active");
+    }
+
+    // ===== DÜKKÂN MODAL =====
+    let _dukkanState = { adventure: "", node: 0 };
+    function openDukkanModal(adventure, node, cards, purchased, dust) {
+        _dukkanState = { adventure, node };
+        document.getElementById("dukkan-wallet").textContent = dust;
+        const host = document.getElementById("dukkan-cards");
+        host.innerHTML = "";
+        cards.forEach(c => {
+            const isSold = purchased.includes(c.code);
+            const el = document.createElement("div");
+            el.className = "shop-item" + (isSold ? " sold" : "");
+            el.dataset.code = c.code;
+            el.dataset.price = c.price;
+            el.innerHTML =
+                `<div class="shop-item-art"><img src="https://images.ygoprodeck.com/images/cards/${c.code}.jpg" alt=""></div>`+
+                `<div class="shop-item-name">${c.card_name||""}</div>`+
+                `<div class="shop-item-price">`+
+                    `<span class="price-old">${c.price_original} toz</span>`+
+                    `<span class="price-new">${c.price}<span class="currency">toz</span></span>`+
+                `</div>`+
+                `<button class="btn-buy">${isSold?"Alındı":"Al"}</button>`;
+            if (!isSold) {
+                el.querySelector(".btn-buy").addEventListener("click", () => {
+                    WS.shopBuy(adventure, node, c.code);
+                });
+            }
+            host.appendChild(el);
+        });
+        dukkanRefreshAffordability();
+        document.getElementById("dukkan-overlay").classList.add("active");
+    }
+    function closeDukkanModal() {
+        document.getElementById("dukkan-overlay").classList.remove("active");
+    }
+    function dukkanRefreshAffordability() {
+        const wallet = parseInt(document.getElementById("dukkan-wallet").textContent, 10) || 0;
+        document.querySelectorAll("#dukkan-cards .shop-item").forEach(el => {
+            if (el.classList.contains("sold")) {
+                el.querySelector(".btn-buy").disabled = true;
+                el.querySelector(".btn-buy").textContent = "Alındı";
+                return;
+            }
+            const price = parseInt(el.dataset.price, 10);
+            const btn = el.querySelector(".btn-buy");
+            if (wallet < price) {
+                el.classList.add("too-expensive");
+                btn.disabled = true;
+                btn.textContent = "Yetersiz";
+            } else {
+                el.classList.remove("too-expensive");
+                btn.disabled = false;
+                btn.textContent = "Al";
+            }
+        });
+    }
+    // Modal butonlari
+    document.getElementById("gizem-leave")?.addEventListener("click", () => closeGizemModal());
+    document.getElementById("gizem-take")?.addEventListener("click", () => {
+        if (_gizemState.selected == null) return;
+        WS.mysteryClaim(_gizemState.adventure, _gizemState.node, _gizemState.selected);
+    });
+    document.getElementById("dukkan-leave")?.addEventListener("click", () => {
+        // Sadece ayrıl — node henuz tamamlanmadi (tekrar girilebilir)
+        closeDukkanModal();
+    });
+    document.getElementById("dukkan-continue")?.addEventListener("click", () => {
+        WS.shopLeave(_dukkanState.adventure, _dukkanState.node);
+    });
 
     // ===== OTOMATIK GİRİŞ =====
     // Sayfa açılınca localStorage'da token varsa otomatik doğrula

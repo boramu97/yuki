@@ -71,6 +71,17 @@ class UserDatabase:
                 UNIQUE(user_id, adventure, stage)
             )
         """)
+        # Gizem/dukkan node'u icin rollanmis kartlar — refresh'te reroll olmasin
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS adventure_pending (
+                user_id INTEGER NOT NULL,
+                adventure TEXT NOT NULL,
+                node_index INTEGER NOT NULL,
+                data TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                UNIQUE(user_id, adventure, node_index)
+            )
+        """)
         # Mevcut tabloya yeni kolon ekle (migration)
         try:
             self._conn.execute(
@@ -479,3 +490,62 @@ class UserDatabase:
             "dust": dust_reward,
             "cards": granted,
         }
+
+    # --- Gizem/Dukkan Pending Offers ---
+
+    def get_pending_offer(self, user_id: int, adventure: str, node_index: int) -> dict | None:
+        """Bir node icin saklanmis rastgele kart teklifini dondurur (yoksa None)."""
+        row = self._conn.execute(
+            "SELECT data FROM adventure_pending WHERE user_id=? AND adventure=? AND node_index=?",
+            (user_id, adventure, node_index),
+        ).fetchone()
+        if not row:
+            return None
+        try:
+            return json.loads(row["data"])
+        except Exception:
+            return None
+
+    def save_pending_offer(self, user_id: int, adventure: str, node_index: int, data: dict):
+        """Gizem/dukkan node'u icin rollanmis kartlari kaydeder (upsert)."""
+        self._conn.execute(
+            "INSERT OR REPLACE INTO adventure_pending (user_id, adventure, node_index, data) "
+            "VALUES (?, ?, ?, ?)",
+            (user_id, adventure, node_index, json.dumps(data)),
+        )
+        self._conn.commit()
+
+    def clear_pending_offer(self, user_id: int, adventure: str, node_index: int):
+        """Node tamamlaninca pending teklifini sil."""
+        self._conn.execute(
+            "DELETE FROM adventure_pending WHERE user_id=? AND adventure=? AND node_index=?",
+            (user_id, adventure, node_index),
+        )
+        self._conn.commit()
+
+    def add_card(self, user_id: int, code: int) -> bool:
+        """Kartı koleksiyona ekler (varsa pas). Başarılı ekleme döner."""
+        try:
+            self._conn.execute(
+                "INSERT INTO collections (user_id, card_code) VALUES (?, ?)",
+                (user_id, code),
+            )
+            self._conn.commit()
+            return True
+        except Exception:
+            return False
+
+    def spend_dust(self, user_id: int, amount: int) -> bool:
+        """Kullanıcıdan toz düşer (yetersizse False)."""
+        if amount <= 0:
+            return True
+        row = self._conn.execute(
+            "SELECT dust FROM users WHERE id=?", (user_id,)
+        ).fetchone()
+        if not row or row["dust"] < amount:
+            return False
+        self._conn.execute(
+            "UPDATE users SET dust = dust - ? WHERE id = ?", (amount, user_id)
+        )
+        self._conn.commit()
+        return True

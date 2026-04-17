@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maceralar — Seçim Zemini</title>
+<style>
+:root {
+    --bg: #0d0b0e;
+    --bg-hud: #1a1520;
+    --gold: #e8c840;
+    --gold-warm: #c9a646;
+    --gold-border: rgba(180,140,60,0.18);
+    --gold-glow: rgba(232,200,64,0.28);
+    --purple: #9a6aba;
+    --text: #d4c8a0;
+    --text-dim: #776a50;
+    --text-muted: #5a5040;
+    --panel-bg: rgba(13,11,14,0.94);
+    --blue: #5aa8d8;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ===== AMBIENT BACKDROP ===== */
+.backdrop {
+    position: fixed; inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 100%, rgba(154,106,186,0.08), transparent 70%),
+        radial-gradient(ellipse 100% 70% at 50% 0%, rgba(200,160,40,0.05), transparent 60%),
+        radial-gradient(circle at 20% 40%, rgba(90,168,216,0.04), transparent 50%),
+        var(--bg);
+    z-index: -2;
+}
+.backdrop::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 50% 50%, rgba(232,200,64,0.4) 0.5px, transparent 1px);
+    background-size: 140px 140px;
+    opacity: 0.08;
+    animation: drift 60s linear infinite;
+}
+@keyframes drift {
+    0% { background-position: 0 0; }
+    100% { background-position: 140px 140px; }
+}
+
+/* ===== HEADER ===== */
+.adv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 48px;
+    border-bottom: 1px solid var(--gold-border);
+}
+.btn-back {
+    background: transparent;
+    border: 1px solid var(--gold-border);
+    color: var(--text);
+    font-family: inherit;
+    padding: 10px 18px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+}
+.btn-back:hover {
+    border-color: rgba(200,170,60,0.5);
+    background: rgba(180,140,60,0.06);
+}
+.adv-title {
+    color: var(--gold);
+    font-weight: 300;
+    letter-spacing: 0.4em;
+    font-size: 1.8rem;
+    text-transform: uppercase;
+}
+.adv-player {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+}
+
+/* ===== TAGLINE ===== */
+.tagline {
+    text-align: center;
+    padding: 48px 20px 8px;
+}
+.tagline-main {
+    font-size: 2.2rem;
+    color: var(--text);
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+}
+.tagline-main em {
+    color: var(--gold);
+    font-style: normal;
+}
+.tagline-sub {
+    font-size: 1rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* ===== MODE GRID ===== */
+.mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 28px;
+    max-width: 1280px;
+    margin: 48px auto 32px;
+    padding: 0 48px;
+}
+
+.mode-tile {
+    position: relative;
+    height: 280px;
+    border: 1px solid var(--gold-border);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #0a080b;
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1),
+                border-color 0.3s,
+                box-shadow 0.3s;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
+    padding: 0;
+}
+.mode-tile:hover {
+    transform: translateY(-6px);
+    border-color: rgba(232,200,64,0.5);
+    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.8),
+                0 0 48px -8px var(--gold-glow);
+}
+
+/* Art layer (scales on hover) */
+.tile-art {
+    position: absolute; inset: 0;
+    transition: transform 0.6s cubic-bezier(.2,.8,.3,1);
+}
+.mode-tile:hover .tile-art { transform: scale(1.06); }
+
+/* Gradient overlay for readability */
+.tile-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(10,8,11,0.96) 0%,
+        rgba(10,8,11,0.70) 35%,
+        rgba(10,8,11,0.15) 70%,
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+/* Shine sweep */
+.tile-shine {
+    position: absolute; top: 0; left: -40%;
+    width: 30%; height: 100%;
+    background: linear-gradient(
+        100deg,
+        transparent 0%,
+        rgba(255,230,140,0.08) 40%,
+        rgba(255,230,140,0.18) 50%,
+        rgba(255,230,140,0.08) 60%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    pointer-events: none;
+    transition: left 0.8s cubic-bezier(.2,.8,.3,1);
+}
+.mode-tile:hover .tile-shine { left: 110%; }
+
+/* Content (text) */
+.tile-content {
+    position: absolute;
+    left: 32px; right: 32px; bottom: 28px;
+    z-index: 2;
+}
+.tile-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.72rem;
+    color: var(--gold);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.tile-meta::before, .tile-meta::after {
+    content: ''; height: 1px; background: var(--gold-border); flex: 1;
+    max-width: 40px;
+}
+.tile-name {
+    font-size: 1.9rem;
+    color: var(--text);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.9);
+}
+.tile-desc {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    max-width: 420px;
+    margin-bottom: 18px;
+}
+.tile-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+.tile-progress {
+    flex: 1;
+    max-width: 200px;
+}
+.progress-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.progress-bar {
+    height: 3px;
+    background: rgba(180,140,60,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+.progress-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--gold-warm), var(--gold));
+    box-shadow: 0 0 8px var(--gold-glow);
+    border-radius: 2px;
+}
+.tile-cta {
+    font-size: 0.85rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    transition: opacity 0.3s, gap 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.mode-tile:hover .tile-cta { opacity: 1; gap: 14px; }
+.tile-cta::after { content: '→'; font-size: 1.1rem; }
+
+/* ===== TILE VARIANTS ===== */
+/* Antrenman — dojo/training ground */
+.tile-training .tile-art {
+    background:
+        radial-gradient(ellipse at 65% 45%, rgba(200,160,40,0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 30% 80%, rgba(154,106,186,0.12) 0%, transparent 55%),
+        linear-gradient(135deg, #1a1318 0%, #0d0b0e 70%);
+}
+.tile-training .tile-art::before {
+    content: '';
+    position: absolute;
+    right: -40px; top: 50%;
+    transform: translateY(-50%) rotate(-8deg);
+    font-size: 14rem;
+    line-height: 1;
+    color: rgba(232,200,64,0.08);
+    font-family: serif;
+    text-shadow: 0 0 40px rgba(232,200,64,0.1);
+}
+.tile-training .tile-art::before { content: '⚔'; }
+
+/* Duello Adası — map/adventure */
+.tile-island .tile-art {
+    background:
+        url('../img/duel-island.png') right center / cover no-repeat,
+        #1a1318;
+}
+.tile-island .tile-art::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(10,8,11,0.9) 0%,
+        rgba(10,8,11,0.3) 50%,
+        rgba(10,8,11,0.1) 100%
+    );
+}
+
+/* ===== LOCKED TILES (Coming Soon) ===== */
+.mode-tile.locked {
+    cursor: not-allowed;
+    height: 220px;
+}
+.mode-tile.locked:hover {
+    transform: none;
+    border-color: var(--gold-border);
+    box-shadow: none;
+}
+.mode-tile.locked .tile-art { opacity: 0.35; }
+.mode-tile.locked .tile-content { opacity: 0.55; }
+.mode-tile.locked .tile-cta { display: none; }
+.mode-tile.locked::after {
+    content: '🔒 YAKINDA';
+    position: absolute;
+    top: 16px; right: 16px;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    background: rgba(10,8,11,0.8);
+    padding: 6px 12px;
+    border: 1px solid var(--gold-border);
+    z-index: 3;
+}
+.tile-shadow .tile-art {
+    background: radial-gradient(ellipse at center, #2a1838 0%, #0a0612 80%);
+}
+.tile-tourn .tile-art {
+    background: radial-gradient(ellipse at center, #1a2838 0%, #08101a 80%);
+}
+
+/* ===== SECONDARY GRID ===== */
+.secondary-label {
+    text-align: center;
+    margin: 40px 0 20px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+}
+.secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 20px;
+    max-width: 1280px;
+    margin: 0 auto 48px;
+    padding: 0 48px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .adv-header { padding: 16px 20px; }
+    .adv-title { font-size: 1.2rem; letter-spacing: 0.3em; }
+    .tagline-main { font-size: 1.5rem; }
+    .mode-grid, .secondary-grid { padding: 0 20px; gap: 16px; margin: 24px auto; }
+    .mode-tile { height: 220px; }
+    .mode-tile.locked { height: 180px; }
+    .tile-name { font-size: 1.4rem; }
+    .tile-content { left: 20px; right: 20px; bottom: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+
+<header class="adv-header">
+    <button class="btn-back">← Ana Sayfa</button>
+    <h1 class="adv-title">Maceralar</h1>
+    <span class="adv-player">Duelist · 2 400 toz</span>
+</header>
+
+<div class="tagline">
+    <div class="tagline-main">Yolunu <em>seç</em>, destiyi dene.</div>
+    <div class="tagline-sub">— Her mod, farklı bir sınav —</div>
+</div>
+
+<div class="mode-grid">
+
+    <button class="mode-tile tile-training">
+        <div class="tile-art"></div>
+        <div class="tile-overlay"></div>
+        <div class="tile-shine"></div>
+        <div class="tile-content">
+            <div class="tile-meta">Serbest Mod</div>
+            <div class="tile-name">Antrenman Salonu</div>
+            <div class="tile-desc">Seçtiğin rakibe karşı sınırsız pratik yap — risksiz, ödülsüz, deneyebildiğin kadar.</div>
+            <div class="tile-footer">
+                <div class="tile-progress">
+                    <div class="progress-label">18 Düello Yapıldı</div>
+                    <div class="progress-bar"></div>
+                </div>
+                <span class="tile-cta">Başla</span>
+            </div>
+        </div>
+    </button>
+
+    <button class="mode-tile tile-island">
+        <div class="tile-art"></div>
+        <div class="tile-overlay"></div>
+        <div class="tile-shine"></div>
+        <div class="tile-content">
+            <div class="tile-meta">Kampanya · 5 Aşama</div>
+            <div class="tile-name">Düello Adası</div>
+            <div class="tile-desc">Sahilden kaleye uzanan yolu tırmandın — her aşamada toz ve yeni kart kazan.</div>
+            <div class="tile-footer">
+                <div class="tile-progress">
+                    <div class="progress-label">Aşama 3 / 5</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+                </div>
+                <span class="tile-cta">Devam Et</span>
+            </div>
+        </div>
+    </button>
+
+</div>
+
+<div class="secondary-label">— Yakında Gelecek —</div>
+
+<div class="secondary-grid">
+
+    <div class="mode-tile locked tile-shadow">
+        <div class="tile-art"></div>
+        <div class="tile-overlay"></div>
+        <div class="tile-content">
+            <div class="tile-meta">Zorluk · Usta</div>
+            <div class="tile-name">Gölge Diyarı</div>
+            <div class="tile-desc">Kaybeden ruhunu verir. Kazanılan ödül: nadir kartlar, çok toz.</div>
+        </div>
+    </div>
+
+    <div class="mode-tile locked tile-tourn">
+        <div class="tile-art"></div>
+        <div class="tile-overlay"></div>
+        <div class="tile-content">
+            <div class="tile-meta">Rekabetçi · 8 Duelist</div>
+            <div class="tile-name">Kader Turnuvası</div>
+            <div class="tile-desc">Haftalık eleme. Final şampiyonuna efsane kart.</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

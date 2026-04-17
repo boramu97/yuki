@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Yuki — Duel</title>
-    <link rel="stylesheet" href="css/base.css?v=3">
-    <link rel="stylesheet" href="css/auth.css?v=3">
-    <link rel="stylesheet" href="css/home.css?v=3">
-    <link rel="stylesheet" href="css/lobby.css?v=3">
-    <link rel="stylesheet" href="css/duel.css?v=3">
-    <link rel="stylesheet" href="css/motor-panel.css?v=3">
-    <link rel="stylesheet" href="css/float-panels.css?v=3">
-    <link rel="stylesheet" href="css/card-popup.css?v=3">
-    <link rel="stylesheet" href="css/collection.css?v=3">
-    <link rel="stylesheet" href="css/adventures.css?v=3">
-    <link rel="stylesheet" href="css/result.css?v=3">
-    <link rel="stylesheet" href="css/responsive.css?v=3">
+    <link rel="stylesheet" href="css/base.css?v=4">
+    <link rel="stylesheet" href="css/auth.css?v=4">
+    <link rel="stylesheet" href="css/home.css?v=4">
+    <link rel="stylesheet" href="css/lobby.css?v=4">
+    <link rel="stylesheet" href="css/duel.css?v=4">
+    <link rel="stylesheet" href="css/motor-panel.css?v=4">
+    <link rel="stylesheet" href="css/float-panels.css?v=4">
+    <link rel="stylesheet" href="css/card-popup.css?v=4">
+    <link rel="stylesheet" href="css/collection.css?v=4">
+    <link rel="stylesheet" href="css/adventures.css?v=4">
+    <link rel="stylesheet" href="css/result.css?v=4">
+    <link rel="stylesheet" href="css/responsive.css?v=4">
 </head>
 <body>
     <!-- GİRİŞ / KAYIT -->
@@ -351,16 +351,79 @@
         </div>
     </div>
 
-    <!-- MACERALAR — Duello Adasi -->
-    <div id="duel-island-screen" class="screen">
+    <!-- MACERALAR — Duello Adasi (Roguelike Patika) -->
+    <div id="duel-island-screen" class="screen island-screen">
         <div class="adv-header">
             <button class="btn" id="btn-back-island">&larr; Maceralar</button>
             <h1 class="adv-title">Duello Adasi</h1>
+            <span class="island-progress">
+                <span class="island-progress-label">İlerleyiş</span>
+                <span class="island-progress-bar"><span class="island-progress-fill" id="island-progress-fill" style="width:0%"></span></span>
+                <span class="island-progress-count" id="island-progress-count">0 / 9</span>
+            </span>
         </div>
-        <div class="island-map-wrap">
-            <div class="island-map" id="island-map">
-                <img src="img/duel-island.png" alt="Duello Adasi" class="island-bg">
+        <div class="island-intro">
+            <div class="island-ornament" aria-hidden="true"><span>◈ ⟠ ◈</span></div>
+            <h2 class="island-title">Sahilden <em>Kaleye</em></h2>
+            <p class="island-quote">Kimse diri olarak kaleye varmadı. Sen ilk olmak ister misin, duelist?</p>
+        </div>
+        <div class="path-scroll" id="path-scroll">
+            <!-- Dinamik olarak JS tarafından doldurulur -->
+        </div>
+        <div class="path-legend">
+            <span class="leg-item leg-duel"><span class="leg-sym">⚔</span> Düello</span>
+            <span class="leg-sep">◆</span>
+            <span class="leg-item leg-mystery"><span class="leg-sym">❖</span> Gizem</span>
+            <span class="leg-sep">◆</span>
+            <span class="leg-item leg-shop"><span class="leg-sym">✦</span> Dükkân</span>
+            <span class="leg-sep">◆</span>
+            <span class="leg-item leg-boss"><span class="leg-sym">♛</span> Final</span>
+        </div>
+    </div>
+
+    <!-- Gizem Modal -->
+    <div id="gizem-overlay" class="adv-modal">
+        <div class="modal-backdrop"></div>
+        <header class="adv-modal-header">
+            <button class="btn-ghost" id="gizem-leave">‹ Ayrıl</button>
+            <span class="breadcrumb">Düello Adası · <em>Gizem Sandığı</em></span>
+            <span class="header-spacer"></span>
+        </header>
+        <section class="adv-modal-stage">
+            <div class="stage-ornament"><span>❖ ✦ ❖</span></div>
+            <h1 class="stage-title">Üç <em>Kart</em>, Bir Kader</h1>
+            <p class="stage-quote">Sandığı açtığında üç kart gördün. Üçü de senin olabilir, ama kaderin seçimi tek.</p>
+        </section>
+        <div class="cards-row" id="gizem-cards"></div>
+        <div class="action-bar">
+            <button class="btn-primary" id="gizem-take" disabled>Kartı Al</button>
+            <span class="btn-hint" id="gizem-hint">— önce bir kart seç —</span>
+        </div>
+    </div>
+
+    <!-- Dükkân Modal -->
+    <div id="dukkan-overlay" class="adv-modal">
+        <div class="modal-backdrop shop"></div>
+        <header class="adv-modal-header">
+            <button class="btn-ghost" id="dukkan-leave">‹ Yoluna Devam Et</button>
+            <span class="breadcrumb">Düello Adası · <em>Gezgin Tüccar</em></span>
+            <span class="wallet">
+                <span class="wallet-label">Toz</span>
+                <span class="wallet-amount" id="dukkan-wallet">0</span>
+            </span>
+        </header>
+        <section class="adv-modal-stage">
+            <div class="stage-ornament"><span>✦ ✧ ✦</span></div>
+            <h1 class="stage-title">Gezgin <em>Tüccar</em></h1>
+            <p class="stage-quote">Beş kart, hepsi yarı fiyatına. Dilediğini al — dilemezsen yoluna devam et.</p>
+            <div class="discount-banner">
+                <span>◆</span> <span>Hepsi %50 İndirimli</span> <span>◆</span>
             </div>
+        </section>
+        <div class="shop-grid" id="dukkan-cards"></div>
+        <div class="continue-bar">
+            <span class="continue-hint">İstediğin kadar al, dilersen hiç alma.</span>
+            <button class="btn-primary" id="dukkan-continue">Yoluna Devam Et →</button>
         </div>
     </div>
 

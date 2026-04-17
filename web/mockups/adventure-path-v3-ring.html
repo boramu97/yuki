@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Düello Adası — Halkalı Kader</title>
+<style>
+:root {
+    --bg: #0d0b0e;
+    --gold: #e8c840;
+    --gold-warm: #c9a646;
+    --gold-border: rgba(180,140,60,0.2);
+    --gold-glow: rgba(232,200,64,0.3);
+    --purple: #9a6aba;
+    --text: #d4c8a0;
+    --text-dim: #776a50;
+    --text-muted: #5a5040;
+    --red: #e05040;
+    --green: #5cb85c;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mystical backdrop */
+body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(232,200,64,0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(154,106,186,0.12) 20%, transparent 60%),
+        linear-gradient(180deg, #0a0612 0%, #0d0b0e 50%, #0a0612 100%);
+    z-index: -2;
+}
+body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle at 50% 50%, rgba(232,200,64,0.3) 0.5px, transparent 1.5px);
+    background-size: 200px 200px;
+    opacity: 0.4;
+    z-index: -1;
+    animation: rotate 200s linear infinite;
+}
+@keyframes rotate { to { transform: rotate(360deg); } }
+
+.adv-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--gold-border);
+    background: rgba(13,11,14,0.8);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+    flex-shrink: 0;
+}
+.btn-back { background: transparent; border: 1px solid var(--gold-border); color: var(--text);
+    font-family: inherit; padding: 9px 16px; cursor: pointer; letter-spacing: 1px; }
+.btn-back:hover { border-color: rgba(200,170,60,0.5); background: rgba(180,140,60,0.06); }
+.hdr-title { color: var(--gold); font-weight: 300; letter-spacing: 0.4em; font-size: 1.2rem; text-transform: uppercase; }
+.hdr-stats { display: flex; gap: 24px; font-size: 0.85rem; color: var(--text-dim); }
+.hdr-stats strong { color: var(--gold); }
+
+.ring-stage {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Ring container */
+.ring-wrap {
+    position: relative;
+    width: 720px;
+    height: 720px;
+    max-width: 90vw;
+    max-height: 90vh;
+    aspect-ratio: 1;
+}
+
+/* Concentric rings (visual guides) */
+.ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px dashed rgba(180,140,60,0.2);
+    pointer-events: none;
+}
+.ring-outer { width: 700px; height: 700px; max-width: 88vw; max-height: 88vh; }
+.ring-mid { width: 480px; height: 480px; max-width: 60vw; max-height: 60vh; }
+.ring-inner { width: 260px; height: 260px; max-width: 32vw; max-height: 32vh; }
+
+/* Sacred geometry — central glyph */
+.center-glyph {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px; height: 90px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    color: var(--red);
+    filter: drop-shadow(0 0 20px rgba(224,80,64,0.4));
+    animation: boss-pulse 3s ease-in-out infinite;
+    cursor: pointer;
+}
+@keyframes boss-pulse {
+    0%,100% { filter: drop-shadow(0 0 20px rgba(224,80,64,0.4)); transform: translate(-50%,-50%) scale(1); }
+    50% { filter: drop-shadow(0 0 36px rgba(224,80,64,0.7)); transform: translate(-50%,-50%) scale(1.05); }
+}
+.center-glyph .label {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 12px;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--red);
+    text-transform: uppercase;
+    white-space: nowrap;
+    font-family: 'Georgia', serif;
+}
+.center-glyph.locked {
+    color: var(--text-muted);
+    filter: grayscale(1) opacity(0.4);
+    animation: none;
+    cursor: not-allowed;
+}
+.center-glyph.locked .label { color: var(--text-muted); }
+
+/* Rotating runes around center */
+.runes {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 180px; height: 180px;
+    transform: translate(-50%, -50%);
+    animation: rotate 40s linear infinite;
+    pointer-events: none;
+}
+.runes::before {
+    content: '✦ ◈ ✦ ◈ ✦ ◈ ✦ ◈';
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    color: rgba(232,200,64,0.3);
+    letter-spacing: 8px;
+}
+
+/* Nodes positioned on rings via custom property --angle */
+.node {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 86px; height: 86px;
+    border-radius: 50%;
+    border: 2px solid rgba(180,140,60,0.4);
+    background: radial-gradient(circle at 30% 30%, #1a1418, #0a0812);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; font-family: inherit; color: inherit;
+    transition: all 0.3s cubic-bezier(.2,.8,.3,1);
+    /* translate to ring edge using --radius + rotate angle */
+    transform:
+        translate(-50%, -50%)
+        rotate(var(--angle))
+        translateY(calc(var(--radius) * -1))
+        rotate(calc(var(--angle) * -1));
+}
+.node-icon { font-size: 1.7rem; line-height: 1; }
+.node-label {
+    position: absolute;
+    top: 100%; left: 50%;
+    transform: translateX(-50%);
+    margin-top: 6px;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Node states */
+.node.done {
+    border-color: var(--green);
+    background: radial-gradient(circle at 30% 30%, #1a2a1a, #081408);
+    opacity: 0.8;
+}
+.node.done::after {
+    content: '✓';
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 22px; height: 22px;
+    background: var(--green);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 0 10px rgba(92,184,92,0.5);
+}
+.node.current {
+    border-color: var(--gold);
+    box-shadow: 0 0 28px var(--gold-glow), inset 0 0 16px rgba(232,200,64,0.12);
+    animation: node-pulse 2s ease-in-out infinite;
+}
+.node.current .node-label { color: var(--gold); }
+@keyframes node-pulse {
+    0%,100% { box-shadow: 0 0 28px var(--gold-glow), inset 0 0 16px rgba(232,200,64,0.12); }
+    50% { box-shadow: 0 0 48px rgba(232,200,64,0.6), inset 0 0 24px rgba(232,200,64,0.22); }
+}
+.node.locked { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.5); }
+.node:hover:not(.locked):not(.done) {
+    border-color: var(--gold);
+    box-shadow: 0 0 24px var(--gold-glow);
+    transform:
+        translate(-50%, -50%)
+        rotate(var(--angle))
+        translateY(calc(var(--radius) * -1))
+        rotate(calc(var(--angle) * -1))
+        scale(1.12);
+}
+
+/* Variant colors */
+.node.mystery { color: var(--purple); }
+.node.event { color: #5aa8d8; }
+.node.elite { color: var(--red); }
+
+/* Ring labels */
+.ring-title {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform-origin: center;
+    pointer-events: none;
+    font-size: 0.68rem;
+    letter-spacing: 0.4em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    text-align: center;
+    width: max-content;
+}
+.ring-title-outer {
+    transform: translate(-50%, -50%) translateY(-340px);
+}
+.ring-title-mid {
+    transform: translate(-50%, -50%) translateY(-230px);
+    color: var(--text-dim);
+}
+
+/* Foot hint */
+.ring-hint {
+    position: absolute;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+@media (max-width: 720px) {
+    .ring-wrap { width: 90vw; height: 90vw; }
+    .ring-outer { width: 88vw; height: 88vw; }
+    .ring-mid { width: 58vw; height: 58vw; }
+    .ring-inner { width: 30vw; height: 30vw; }
+    .node { width: 64px; height: 64px; }
+    .node-icon { font-size: 1.3rem; }
+    .hdr-stats { display: none; }
+    .ring-title { font-size: 0.55rem; }
+    .ring-title-outer { transform: translate(-50%, -50%) translateY(-44vw); }
+    .ring-title-mid { transform: translate(-50%, -50%) translateY(-29vw); }
+}
+</style>
+</head>
+<body>
+
+<header class="adv-header">
+    <button class="btn-back">← Maceralar</button>
+    <h1 class="hdr-title">Düello Adası</h1>
+    <div class="hdr-stats"><span>Aşama <strong>3/12</strong></span></div>
+</header>
+
+<div class="ring-stage">
+
+    <div class="ring-wrap">
+
+        <div class="ring ring-outer"></div>
+        <div class="ring ring-mid"></div>
+        <div class="ring ring-inner"></div>
+
+        <div class="ring-title ring-title-outer">— Dış Halka · Çıraklar —</div>
+        <div class="ring-title ring-title-mid">— Orta Halka · Ustalar —</div>
+
+        <!-- Center: Final Boss -->
+        <div class="runes"></div>
+        <button class="center-glyph locked">
+            &#x1F409;
+            <div class="label">Seto Kaiba</div>
+        </button>
+
+        <!-- Outer ring: 6 nodes (60° apart), radius 330 -->
+        <button class="node done" style="--angle: 0deg; --radius: 330px;">
+            <div class="node-icon">&#x1F996;</div>
+            <div class="node-label">Rex</div>
+        </button>
+        <button class="node mystery done" style="--angle: 60deg; --radius: 330px;">
+            <div class="node-icon">&#x2753;</div>
+            <div class="node-label">Harabe</div>
+        </button>
+        <button class="node current" style="--angle: 120deg; --radius: 330px;">
+            <div class="node-icon">&#x1FAB2;</div>
+            <div class="node-label">Weevil</div>
+        </button>
+        <button class="node event" style="--angle: 180deg; --radius: 330px;">
+            <div class="node-icon">&#x1F4B0;</div>
+            <div class="node-label">Dükkân</div>
+        </button>
+        <button class="node locked" style="--angle: 240deg; --radius: 330px;">
+            <div class="node-icon">&#x1F985;</div>
+            <div class="node-label">Mai</div>
+        </button>
+        <button class="node locked" style="--angle: 300deg; --radius: 330px;">
+            <div class="node-icon">&#x1F3B2;</div>
+            <div class="node-label">Joey</div>
+        </button>
+
+        <!-- Middle ring: 4 nodes (90° apart), radius 220 -->
+        <button class="node elite locked" style="--angle: 45deg; --radius: 220px;">
+            <div class="node-icon">&#x1F3B4;</div>
+            <div class="node-label">Paradox</div>
+        </button>
+        <button class="node mystery locked" style="--angle: 135deg; --radius: 220px;">
+            <div class="node-icon">&#x1F52E;</div>
+            <div class="node-label">Falcı</div>
+        </button>
+        <button class="node event locked" style="--angle: 225deg; --radius: 220px;">
+            <div class="node-icon">&#x1F525;</div>
+            <div class="node-label">Kamp</div>
+        </button>
+        <button class="node elite locked" style="--angle: 315deg; --radius: 220px;">
+            <div class="node-icon">&#x1F47B;</div>
+            <div class="node-label">Bakura</div>
+        </button>
+
+    </div>
+
+    <div class="ring-hint">Dıştan içe — her halkayı temizle, Kaleye yaklaş</div>
+</div>
+
+</body>
+</html>

@@ -93,15 +93,26 @@ BOT_DECKS = {
 }
 
 # --- Macera Tanımları ---
+# Node tipleri:
+#   duel   — rakiple duello. Galibiyet → dust + rastgele kartlar
+#   mystery — 3 rastgele kart sunulur, birini koleksiyona ekler
+#   shop   — 5 rastgele kart, %50 indirimli toz maliyetiyle alınabilir
+#   boss   — final duello, özel tema
+# Her macera lineer yol: node_index 0'dan başlar, sırayla ilerler.
+# Tamamlanan node'lar bir daha oynanamaz (adventure_progress tablosunda işaretlenir).
 ADVENTURES = {
     "duel_island": {
         "name": "Duello Adasi",
-        "stages": [
-            {"stage": 0, "bot": "Rex",    "bot_name": "Rex Raptor",  "dust": 50,  "cards": 2},
-            {"stage": 1, "bot": "Weevil", "bot_name": "Weevil Underwood", "dust": 75,  "cards": 2},
-            {"stage": 2, "bot": "Mai",    "bot_name": "Mai Valentine", "dust": 100, "cards": 3},
-            {"stage": 3, "bot": "Joey",   "bot_name": "Joey Wheeler", "dust": 125, "cards": 3},
-            {"stage": 4, "bot": "Pegasus", "bot_name": "Maximillion Pegasus", "dust": 200, "cards": 5},
+        "nodes": [
+            {"type": "duel",    "bot": "Rex",     "bot_name": "Rex Raptor",       "dust": 50,  "cards": 2},
+            {"type": "mystery"},
+            {"type": "duel",    "bot": "Weevil",  "bot_name": "Weevil Underwood", "dust": 75,  "cards": 2},
+            {"type": "shop"},
+            {"type": "duel",    "bot": "Mai",     "bot_name": "Mai Valentine",    "dust": 100, "cards": 3},
+            {"type": "mystery"},
+            {"type": "duel",    "bot": "Joey",    "bot_name": "Joey Wheeler",     "dust": 125, "cards": 3},
+            {"type": "shop"},
+            {"type": "boss",    "bot": "Pegasus", "bot_name": "Maximillion Pegasus", "dust": 200, "cards": 5},
         ],
     },
 }
@@ -109,6 +120,213 @@ ADVENTURES = {
 # Global yöneticiler
 room_manager = RoomManager()
 user_db = UserDatabase()
+
+
+# --- Macera Node Yardımcıları ---
+
+def _adv_node(adv_id: str, node_idx: int):
+    """ADVENTURES'tan node dondurur, gecersizse (None, hata_mesaji)."""
+    adv = ADVENTURES.get(adv_id)
+    if not adv:
+        return None, None, "Gecersiz macera"
+    nodes = adv.get("nodes", [])
+    if node_idx < 0 or node_idx >= len(nodes):
+        return None, None, "Gecersiz node"
+    return adv, nodes[node_idx], None
+
+
+def _check_node_available(user_id: int, adv_id: str, node_idx: int) -> str | None:
+    """Node oynanabilir mi? Hata varsa mesaj, yoksa None dondurur."""
+    progress = user_db.get_adventure_progress(user_id, adv_id)
+    if node_idx in progress:
+        return "Bu asama zaten tamamlandi"
+    if node_idx > 0 and (node_idx - 1) not in progress:
+        return "Onceki asamayi tamamla"
+    return None
+
+
+def _roll_random_cards(user_id: int, count: int, exclude_owned: bool = True) -> list[int]:
+    """Kart havuzundan rastgele kodlar dondurur (fusion haric — onlar zaten bedava)."""
+    monsters, spells, traps, _fusions = user_db._load_card_pool()
+    pool = monsters + spells + traps
+    if exclude_owned:
+        owned = set(user_db.get_collection(user_id))
+        pool = [c for c in pool if c not in owned]
+    if not pool:
+        # Her seyi sahipse fusion disindan tekrar havuz olustur
+        pool = monsters + spells + traps
+    random.shuffle(pool)
+    return pool[:count]
+
+
+def _card_meta(code: int) -> dict:
+    """Kart kodundan isim/ATK/DEF/tier meta bilgisi."""
+    from server.config import CARD_DB_PATH
+    import sqlite3 as _sq
+    meta = {"code": code, "card_name": "", "card_atk": 0, "card_def": 0, "card_type": 0, "tier": "B"}
+    try:
+        conn = _sq.connect(str(CARD_DB_PATH))
+        row = conn.execute(
+            "SELECT d.name, t.atk, t.def, t.type FROM datas t LEFT JOIN texts d ON d.id = t.id WHERE t.id=?",
+            (code,),
+        ).fetchone()
+        conn.close()
+        if row:
+            meta["card_name"] = row[0] or ""
+            meta["card_atk"] = row[1] or 0
+            meta["card_def"] = row[2] or 0
+            meta["card_type"] = row[3] or 0
+            meta["tier"] = user_db.card_tier(code)
+    except Exception:
+        pass
+    return meta
+
+
+def _shop_price(code: int) -> tuple[int, int]:
+    """(orijinal_fiyat, indirimli_fiyat) — %50 indirim."""
+    tier = user_db.card_tier(code)
+    original = user_db.DUST_TABLE[tier]["craft"]
+    return original, max(1, original // 2)
+
+
+def _handle_mystery_offer(user_id: int, adv_id: str, node_idx: int) -> dict:
+    adv, node, err = _adv_node(adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+    if node.get("type") != "mystery":
+        return {"action": "error", "message": "Bu node gizem degil"}
+    err = _check_node_available(user_id, adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+
+    pending = user_db.get_pending_offer(user_id, adv_id, node_idx)
+    if not pending:
+        codes = _roll_random_cards(user_id, 3)
+        pending = {"type": "mystery", "cards": [_card_meta(c) for c in codes]}
+        user_db.save_pending_offer(user_id, adv_id, node_idx, pending)
+    return {
+        "action": "mystery_offer",
+        "adventure": adv_id,
+        "node": node_idx,
+        "cards": pending["cards"],
+    }
+
+
+def _handle_mystery_claim(user_id: int, adv_id: str, node_idx: int, code: int) -> dict:
+    adv, node, err = _adv_node(adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+    if node.get("type") != "mystery":
+        return {"action": "error", "message": "Bu node gizem degil"}
+    err = _check_node_available(user_id, adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+
+    pending = user_db.get_pending_offer(user_id, adv_id, node_idx)
+    if not pending or code not in [c.get("code") for c in pending.get("cards", [])]:
+        return {"action": "error", "message": "Gecersiz kart secimi"}
+
+    user_db.add_card(user_id, code)
+    user_db.complete_adventure_stage(user_id, adv_id, node_idx, 0, [])
+    user_db.clear_pending_offer(user_id, adv_id, node_idx)
+    return {
+        "action": "mystery_claimed",
+        "adventure": adv_id,
+        "node": node_idx,
+        "code": code,
+    }
+
+
+def _handle_shop_offer(user_id: int, adv_id: str, node_idx: int) -> dict:
+    adv, node, err = _adv_node(adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+    if node.get("type") != "shop":
+        return {"action": "error", "message": "Bu node dukkan degil"}
+    err = _check_node_available(user_id, adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+
+    pending = user_db.get_pending_offer(user_id, adv_id, node_idx)
+    if not pending:
+        codes = _roll_random_cards(user_id, 5)
+        cards = []
+        for c in codes:
+            meta = _card_meta(c)
+            original, discounted = _shop_price(c)
+            meta["price_original"] = original
+            meta["price"] = discounted
+            cards.append(meta)
+        pending = {"type": "shop", "cards": cards, "purchased": []}
+        user_db.save_pending_offer(user_id, adv_id, node_idx, pending)
+    return {
+        "action": "shop_offer",
+        "adventure": adv_id,
+        "node": node_idx,
+        "cards": pending["cards"],
+        "purchased": pending.get("purchased", []),
+        "dust": user_db.get_dust(user_id),
+    }
+
+
+def _handle_shop_buy(user_id: int, adv_id: str, node_idx: int, code: int) -> dict:
+    adv, node, err = _adv_node(adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+    if node.get("type") != "shop":
+        return {"action": "error", "message": "Bu node dukkan degil"}
+    err = _check_node_available(user_id, adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+
+    pending = user_db.get_pending_offer(user_id, adv_id, node_idx)
+    if not pending:
+        return {"action": "error", "message": "Dukkan henuz acilmadi"}
+
+    # Kart tekliflerde mi?
+    card_entry = next((c for c in pending["cards"] if c.get("code") == code), None)
+    if not card_entry:
+        return {"action": "error", "message": "Gecersiz kart"}
+
+    purchased = set(pending.get("purchased", []))
+    if code in purchased:
+        return {"action": "error", "message": "Zaten alindi"}
+
+    price = int(card_entry.get("price", 0))
+    if not user_db.spend_dust(user_id, price):
+        return {"action": "error", "message": "Yetersiz toz"}
+
+    user_db.add_card(user_id, code)
+    purchased.add(code)
+    pending["purchased"] = list(purchased)
+    user_db.save_pending_offer(user_id, adv_id, node_idx, pending)
+    return {
+        "action": "shop_bought",
+        "adventure": adv_id,
+        "node": node_idx,
+        "code": code,
+        "dust": user_db.get_dust(user_id),
+        "purchased": pending["purchased"],
+    }
+
+
+def _handle_shop_leave(user_id: int, adv_id: str, node_idx: int) -> dict:
+    adv, node, err = _adv_node(adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+    if node.get("type") != "shop":
+        return {"action": "error", "message": "Bu node dukkan degil"}
+    err = _check_node_available(user_id, adv_id, node_idx)
+    if err:
+        return {"action": "error", "message": err}
+
+    user_db.complete_adventure_stage(user_id, adv_id, node_idx, 0, [])
+    user_db.clear_pending_offer(user_id, adv_id, node_idx)
+    return {
+        "action": "shop_left",
+        "adventure": adv_id,
+        "node": node_idx,
+    }
 
 # Oyuncu → Player eşleştirmesi (bağlantı bazlı)
 _connections: dict[object, Player] = {}
@@ -360,7 +578,7 @@ async def handle_connection(ws):
                     progress = user_db.get_adventure_progress(_user.user_id, adv_id)
                     result[adv_id] = {
                         "name": adv["name"],
-                        "stages": adv["stages"],
+                        "nodes": adv["nodes"],
                         "completed": progress,
                     }
                 await ws.send(json.dumps({
@@ -369,28 +587,36 @@ async def handle_connection(ws):
                 }))
                 continue
 
-            # --- Macera Düellosu ---
+            # --- Macera Düellosu (duel / boss node) ---
             if action == "play_adventure":
                 adv_id = data.get("adventure", "")
-                stage_num = data.get("stage", 0)
+                node_idx = data.get("stage", data.get("node", 0))
                 deck = _resolve_deck(data, _user.user_id)
 
                 adv = ADVENTURES.get(adv_id)
-                if not adv or stage_num < 0 or stage_num >= len(adv["stages"]):
+                if not adv or node_idx < 0 or node_idx >= len(adv["nodes"]):
                     await _send_error(ws, "Gecersiz macera")
                     continue
 
-                # Önceki aşama tamamlandı mı? (0. aşama her zaman açık)
-                if stage_num > 0:
-                    progress = user_db.get_adventure_progress(_user.user_id, adv_id)
-                    if (stage_num - 1) not in progress:
-                        await _send_error(ws, "Onceki asamayi tamamla")
-                        continue
+                node = adv["nodes"][node_idx]
+                if node.get("type") not in ("duel", "boss"):
+                    await _send_error(ws, "Bu node duello degil")
+                    continue
 
-                stage = adv["stages"][stage_num]
-                bot_key = stage["bot"]
+                progress = user_db.get_adventure_progress(_user.user_id, adv_id)
+                # Bu node zaten tamamlanmış mı?
+                if node_idx in progress:
+                    await _send_error(ws, "Bu asama zaten tamamlandi")
+                    continue
+                # Önceki node tamamlandı mı? (0. node her zaman açık)
+                if node_idx > 0 and (node_idx - 1) not in progress:
+                    await _send_error(ws, "Onceki asamayi tamamla")
+                    continue
+
+                bot_key = node["bot"]
                 bot_deck = BOT_DECKS.get(bot_key, DEFAULT_DECK)
-                bot_display = stage["bot_name"]
+                bot_display = node["bot_name"]
+                stage_num = node_idx  # duel_manager adventure_info için
 
                 room = room_manager.create_room()
                 player = Player(ws=ws, name=_username, deck=deck)
@@ -425,6 +651,45 @@ async def handle_connection(ws):
                     dm.duel_theme = "toon"
                 room.duel_manager = dm
                 asyncio.create_task(dm.start())
+                continue
+
+            # --- Macera: Gizem (3 kart sunulur, 1 seçilir) ---
+            if action == "mystery_offer":
+                adv_id = data.get("adventure", "")
+                node_idx = data.get("node", 0)
+                resp = _handle_mystery_offer(_user.user_id, adv_id, node_idx)
+                await ws.send(json.dumps(resp))
+                continue
+
+            if action == "mystery_claim":
+                adv_id = data.get("adventure", "")
+                node_idx = data.get("node", 0)
+                code = int(data.get("code", 0))
+                resp = _handle_mystery_claim(_user.user_id, adv_id, node_idx, code)
+                await ws.send(json.dumps(resp))
+                continue
+
+            # --- Macera: Dükkân (5 kart, %50 indirimli) ---
+            if action == "shop_offer":
+                adv_id = data.get("adventure", "")
+                node_idx = data.get("node", 0)
+                resp = _handle_shop_offer(_user.user_id, adv_id, node_idx)
+                await ws.send(json.dumps(resp))
+                continue
+
+            if action == "shop_buy":
+                adv_id = data.get("adventure", "")
+                node_idx = data.get("node", 0)
+                code = int(data.get("code", 0))
+                resp = _handle_shop_buy(_user.user_id, adv_id, node_idx, code)
+                await ws.send(json.dumps(resp))
+                continue
+
+            if action == "shop_leave":
+                adv_id = data.get("adventure", "")
+                node_idx = data.get("node", 0)
+                resp = _handle_shop_leave(_user.user_id, adv_id, node_idx)
+                await ws.send(json.dumps(resp))
                 continue
 
             # --- Bot ile Oyna (PvE) ---
