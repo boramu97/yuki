@@ -6,18 +6,19 @@
 .home-user{display:flex;align-items:center;gap:12px;color:var(--text-dim);font-size:0.95rem}
 #home-username{letter-spacing:1px}
 
-.home-nav{display:flex;gap:56px;margin-top:auto;margin-bottom:auto;padding:40px}
-.home-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
-    width:280px;height:340px;padding:24px 20px;
+.home-nav{display:flex;gap:48px;margin-top:auto;margin-bottom:auto;padding:40px;flex-wrap:wrap;justify-content:center}
+.home-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:20px;
+    width:340px;height:420px;padding:32px 24px;flex-shrink:0;
     border:1px solid var(--gold-border);border-radius:8px;
     background:rgba(180,140,60,0.03);
-    cursor:pointer;transition:all 0.25s;font-family:inherit;overflow:hidden}
+    cursor:pointer;transition:all 0.25s;font-family:inherit;overflow:hidden;box-sizing:border-box}
 .home-card:hover:not(:disabled){border-color:rgba(200,170,60,0.4);background:rgba(180,140,60,0.08);
     box-shadow:0 0 30px rgba(200,160,40,0.08);transform:translateY(-4px)}
 .home-card:disabled{opacity:0.4;cursor:not-allowed}
 .home-card-icon{font-size:3rem}
-img.home-card-icon{display:block;width:200px;height:140px;object-fit:contain;flex-shrink:0;
-    filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+img.home-card-icon{display:block;width:260px;max-width:100%;height:220px;max-height:220px;
+    object-fit:contain;flex-shrink:0;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));
     transition:transform 0.25s}
 .home-card:hover:not(:disabled) img.home-card-icon{transform:scale(1.06)}
 .home-card-title{font-size:1.1rem;color:var(--text);letter-spacing:1px;font-weight:700}
