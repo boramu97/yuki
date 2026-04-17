@@ -76,6 +76,24 @@
     .coll-slot-tab { font-size: 0.62rem; padding: 8px 2px; }
     .slot-active-badge { font-size: 0.42rem; padding: 1px 3px; }
 
+    /* Koleksiyon preview overlay — mobilde scrollable, buyuk tap targets */
+    .coll-preview-overlay {
+        align-items: flex-start; justify-content: center;
+        overflow-y: auto; overflow-x: hidden;
+        padding: 16px 12px; -webkit-overflow-scrolling: touch;
+    }
+    .coll-preview-inner { margin: auto 0; width: 100%; max-width: 360px; gap: 10px; }
+    .coll-preview-overlay img { max-height: 60vh; max-width: 100%; }
+    .coll-preview-actions { width: 100%; gap: 8px; padding: 4px 0 8px; }
+    .coll-prev-btn {
+        min-height: 48px; padding: 12px 18px; font-size: 0.92rem;
+        flex: 1 1 auto; min-width: 45%;
+    }
+    /* Bozdurma onay dialogu mobil */
+    .coll-confirm-box { max-width: 92%; padding: 22px 20px; }
+    .coll-confirm-buttons { gap: 10px; }
+    .coll-confirm-buttons .btn { min-height: 44px; padding: 10px 18px; flex: 1; }
+
     /* Koleksiyon mobil tab layout */
     .coll-mobile-tabs {
         display: flex; flex-shrink: 0;

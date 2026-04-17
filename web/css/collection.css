@@ -32,7 +32,8 @@
 .coll-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:12px}
 
 /* Kart items */
-.coll-card{position:relative;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;border:1px solid var(--gold-border);background:var(--bg-hud)}
+.coll-card{position:relative;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;border:1px solid var(--gold-border);background:var(--bg-hud);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.coll-card img{-webkit-touch-callout:none;-webkit-user-drag:none;pointer-events:none}
 .coll-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.4),0 0 12px var(--gold-glow);border-color:rgba(180,140,60,0.3)}
 .coll-card.in-deck{border-color:var(--gold);box-shadow:0 0 8px var(--gold-glow)}
 .coll-card.locked{border-color:rgba(60,50,70,0.3)}

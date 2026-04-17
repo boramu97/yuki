@@ -71,9 +71,11 @@
         }
     });
 
-    // Koleksiyon kartinda long-press olduysa click'i engelle
+    // Long-press sonrasi ilk click'i yut: aksi halde
+    // (a) quickAdd calisir ya da
+    // (b) overlay arka planina denk dusen click overlay'i aninda kapatir (iOS).
     document.addEventListener("click", (e) => {
-        if (longPressTriggered && e.target.closest(".coll-card")) {
+        if (longPressTriggered) {
             e.stopPropagation();
             e.preventDefault();
             longPressTriggered = false;
