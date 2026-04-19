@@ -299,10 +299,13 @@ def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
                     return True
         return False
 
-    # Olasi aksiyonlari oncelik sirasiyla topla — retry rotation icin
+    # Olasi aksiyonlari oncelik sirasiyla topla — retry rotation icin.
+    #
+    # ONEMLI: intihar saldirisi (other_attackers) SADECE forced battle
+    # senaryosunda (retry>=3) secilir. Normal durumda bot kendi zayif
+    # canavarini guclu rakibe carpistirmaz — "end" son care olur.
     actions: list[tuple[str, int]] = []
 
-    # 1-3: Attacker rotation (direct > can_win > rest)
     indexed = sorted(
         enumerate(attackable),
         key=lambda x: x[1].get("card_atk", 0) or 0,
@@ -319,20 +322,25 @@ def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
             win_attackers.append(i)
         else:
             other_attackers.append(i)
+
+    # 1-2: Guvenli saldirilar (direct + kazanilabilir hedef)
     for i in direct_attackers:
         actions.append(("attack", i))
     for i in win_attackers:
         actions.append(("attack", i))
-    # Diğerleri (intihar riski) — retry rotation'da son çare olarak
-    for i in other_attackers:
-        actions.append(("attack", i))
 
-    # 4: Activate fallback — her efekti dene
+    # 3: Activate fallback — her aktivatable efekt
     for i, _ in enumerate(activatable):
         actions.append(("activate", i))
 
-    # 5: End (son care)
+    # 4: End (guvenli saldiri yoksa tur bitir — intihar ETMEYELIM)
     actions.append(("end", 0))
+
+    # 5: Forced battle escape — motor "end"i reddederse (rare) son care
+    # olarak intihar saldirilari denenir. Seeker/Strings gibi stall
+    # bot'larda normal akista secilmez.
+    for i in other_attackers:
+        actions.append(("attack", i))
 
     idx = min(retry_attempt, len(actions) - 1)
     action, arg = actions[idx]
