@@ -44,6 +44,10 @@ import os
 import struct
 import random
 
+from server.ai_profiles import (
+    get_priority, get_profile, is_key_card, is_fodder, rank_tribute_candidates,
+)
+
 def _pack_i32(v): return struct.pack("<i", v)
 
 # Bot karar logu — YUKI_AI_TRACE=1 ile acilir. Debug amacli;
@@ -78,22 +82,23 @@ def _trace(msg_type: int, msg: dict, response: bytes, retry: int):
     print(f"[AI] {mname} retry={retry} {summary} => {resp_hex}", flush=True)
 
 
-def ai_respond(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes:
+def ai_respond(msg_type: int, msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
     """SELECT mesajına kural bazlı binary yanıt üretir.
 
     retry_attempt: motor kac kere RETRY istedi. Her retry'da farkli bir
     strateji denemek icin kullanilir — ayni cevabi tekrar gondermek
     sonsuz loop'a sebep olurdu.
+    bot_name: profile lookup icin ("Yugi", "Kaiba", ...); bos ise default.
     """
-    response = _ai_respond_inner(msg_type, msg, retry_attempt)
+    response = _ai_respond_inner(msg_type, msg, retry_attempt, bot_name)
     _trace(msg_type, msg, response, retry_attempt)
     return response
 
 
-def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes:
+def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
 
     if msg_type == MSG_SELECT_IDLECMD:
-        return _idle_cmd(msg, retry_attempt)
+        return _idle_cmd(msg, retry_attempt, bot_name)
 
     if msg_type == MSG_SELECT_BATTLECMD:
         return _battle_cmd(msg, retry_attempt)
@@ -115,7 +120,7 @@ def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes
         return build_option_response(min(retry_attempt, max_idx))
 
     if msg_type == MSG_SELECT_CARD:
-        return _select_card(msg, retry_attempt)
+        return _select_card(msg, retry_attempt, bot_name)
 
     if msg_type in (MSG_SELECT_PLACE, MSG_SELECT_DISFIELD):
         return _select_place(msg)
@@ -124,7 +129,7 @@ def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes
         return _select_position(msg)
 
     if msg_type == MSG_SELECT_TRIBUTE:
-        return _select_tribute(msg, retry_attempt)
+        return _select_tribute(msg, retry_attempt, bot_name)
 
     if msg_type == MSG_SELECT_COUNTER:
         return _select_counter(msg)
@@ -133,7 +138,7 @@ def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes
         return _select_sum(msg)
 
     if msg_type == MSG_SELECT_UNSELECT_CARD:
-        return _select_unselect(msg, retry_attempt)
+        return _select_unselect(msg, retry_attempt, bot_name)
 
     if msg_type == MSG_ANNOUNCE_RACE:
         races = msg.get("available", 0)
@@ -167,10 +172,9 @@ def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes
     return _pack_i32(-1)
 
 
-def _idle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
-    """Ana Faz kararları — öncelik sırası ile.
+def _idle_cmd(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
+    """Ana Faz kararları — bot stiline göre priority + retry rotasyonu.
 
-    retry_attempt >= 1: normal secim reddedildi, alternatif dene.
     retry_attempt >= 2: "end" gonder — sonsuz loop'a girmeyelim.
     """
 
@@ -181,54 +185,65 @@ def _idle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
     monster_setable = msg.get("monster_setable", [])
     can_battle = msg.get("can_battle_phase", False)
 
-    # 2+ retry → "end" ile kurtul. Motor end kabul etmezse duel_manager
-    # deadlock mekanizmasi devreye girer.
+    # 2+ retry → "end" ile kurtul.
     if retry_attempt >= 2:
         return build_idle_cmd_response("end")
 
-    # 1. deneme — normal oncelik: spell → summon → spsummon → field spell → set → battle → end
-    # retry=1 → listedeki sirayi atla, bir sonraki strateji
-    priorities = []
+    # Bot stiline gore priority listesi
+    style_order = get_priority(bot_name)
 
-    # 1) Eldeki spell/trap aktifle
+    # Mevcut secenekleri (action, arg) pair'leri olarak hazirla, key'le
+    options: dict[str, list[tuple[str, int]]] = {
+        "hand_activate": [],
+        "field_activate": [],
+        "summon": [],
+        "spsummon": [],
+        "sset": [],
+        "mset": [],
+        "battle": [],
+        "end": [("end", 0)],
+    }
+
+    # Eldeki spell/trap aktivasyon (location=0x02=HAND)
     for i, card in enumerate(activatable):
         if card.get("location", 0) == 0x02:
-            priorities.append(("activate", i))
-            break
+            options["hand_activate"].append(("activate", i))
 
-    # 2) Canavar cagir
-    if summonable:
-        priorities.append(("summon", _best_atk_index(summonable)))
-
-    # 3) Ozel cagri
-    if special:
-        priorities.append(("spsummon", _best_atk_index(special)))
-
-    # 4) Sahadan efekt aktifle
+    # Sahadan (mzone/szone) aktivasyon
     for i, card in enumerate(activatable):
         if card.get("location", 0) in (0x04, 0x08):
-            priorities.append(("activate", i))
-            break
+            options["field_activate"].append(("activate", i))
 
-    # 5) Spell/trap set
+    # Canavar cagri — en yuksek ATK once
+    if summonable:
+        options["summon"].append(("summon", _best_atk_index(summonable)))
+
+    # Ozel cagri — en yuksek ATK once
+    if special:
+        options["spsummon"].append(("spsummon", _best_atk_index(special)))
+
+    # Set (spell/trap)
     if spell_setable:
-        priorities.append(("sset", 0))
+        options["sset"].append(("sset", 0))
 
-    # 6) Canavar set
+    # Set (monster face-down)
     if monster_setable:
-        priorities.append(("mset", 0))
+        options["mset"].append(("mset", 0))
 
-    # 7) Savaş faz
+    # Savas fazi
     if can_battle:
-        priorities.append(("battle", 0))
+        options["battle"].append(("battle", 0))
 
-    # 8) End — her zaman mumkun
-    priorities.append(("end", 0))
+    # Stile gore siralanmis mevcut secenek akisi
+    flat: list[tuple[str, int]] = []
+    for key in style_order:
+        flat.extend(options.get(key, []))
 
-    # Retry'a gore offset — ayni cevabi tekrarlama
-    idx = min(retry_attempt, len(priorities) - 1)
-    action, arg = priorities[idx]
-    if action == "battle" or action == "end":
+    # Retry offset ile rotasyon
+    idx = min(retry_attempt, len(flat) - 1)
+    action, arg = flat[idx] if flat else ("end", 0)
+
+    if action in ("battle", "end"):
         return build_idle_cmd_response(action)
     return build_idle_cmd_response(action, arg)
 
@@ -314,7 +329,7 @@ def _chain(msg: dict, retry_attempt: int = 0) -> bytes:
     return build_chain_response(-1)
 
 
-def _select_card(msg: dict, retry_attempt: int = 0) -> bytes:
+def _select_card(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
     """Kart seçimi — min-max bounds ile en guclu kartlari sec.
 
     retry'da max_count'a dogru artir, alternatif kartlar dene.
@@ -393,8 +408,11 @@ def _select_position(msg: dict) -> bytes:
     return build_position_response(positions & 0xF)
 
 
-def _select_tribute(msg: dict, retry_attempt: int = 0) -> bytes:
-    """Kurban seçimi — en düşük ATK'lıları seç."""
+def _select_tribute(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
+    """Kurban seçimi — profile key/fodder sirasina gore (fodder once, key en sonda).
+
+    Retry'da kademeli olarak daha fazla kart (max'a kadar).
+    """
     cards = msg.get("cards", [])
     min_count = max(1, msg.get("min", 1))
     max_count = max(min_count, msg.get("max", min_count))
@@ -402,12 +420,12 @@ def _select_tribute(msg: dict, retry_attempt: int = 0) -> bytes:
     if not cards:
         return build_tribute_response([], cancel=True)
 
-    indexed = list(enumerate(cards))
-    indexed.sort(key=lambda x: x[1].get("card_atk", 0) or 0)
+    profile = get_profile(bot_name)
+    ordered = rank_tribute_candidates(cards, profile)
 
     target = min(min_count + retry_attempt, max_count, len(cards))
     target = max(target, 1)
-    indices = [idx for idx, _ in indexed[:target]]
+    indices = ordered[:target]
     return build_tribute_response(indices)
 
 
@@ -446,7 +464,7 @@ def _select_sum(msg: dict) -> bytes:
     return build_sum_response(list(range(count)))
 
 
-def _select_unselect(msg: dict, retry_attempt: int = 0) -> bytes:
+def _select_unselect(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
     """Seç/kaldır — ilk seçilebilir kartı seç veya bitir."""
     selectable = msg.get("selectable", []) or msg.get("selectable_cards", [])
     finishable = msg.get("finishable", False)

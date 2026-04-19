@@ -329,6 +329,7 @@ class DuelManager:
                                     self._last_select_type,
                                     self._last_select_msg,
                                     retry_attempt=self._bot_retry_count,
+                                    bot_name=self._bot_name(),
                                 )
                             except Exception as e:
                                 print(f"[BOT RETRY ERROR] {e}")
@@ -385,7 +386,7 @@ class DuelManager:
                     self._bot_retry_count = 0
                     self._bot_total_stuck = 0
                     try:
-                        response = ai_respond(msg_type, msg, retry_attempt=0)
+                        response = ai_respond(msg_type, msg, retry_attempt=0, bot_name=self._bot_name())
                     except Exception as e:
                         print(f"[BOT AI ERROR] {mname}: {e}")
                         import traceback; traceback.print_exc()
@@ -517,6 +518,15 @@ class DuelManager:
         for team in (0, 1):
             for seq in range(7):
                 await self._send_card_stat_update(team, LOCATION_MZONE, seq)
+
+    def _bot_name(self) -> str:
+        """Bot oyuncusunun adini dondurur (ai_profiles lookup icin)."""
+        if self.bot_team < 0:
+            return ""
+        for p in self.room.players:
+            if p.team == self.bot_team:
+                return p.name or ""
+        return ""
 
     def _query_hand(self, team: int) -> list[int]:
         """LOCATION_HAND sorgulayip kart kodlarinin sirali listesini dondurur (motor otoritesi)."""
