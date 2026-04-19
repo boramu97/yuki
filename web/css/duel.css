@@ -157,7 +157,7 @@
 .card-menu button:hover{background:rgba(180,80,30,0.3);border-color:var(--gold);color:var(--gold)}
 .card-menu button.primary{background:rgba(180,80,30,0.25);border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
 
-/* MEZARLIK ZONE */
+/* MEZARLIK ZONE (button) */
 .grave-zone{
     width:5vw;height:10.2vw;border-radius:4px;position:relative;cursor:pointer;
     background:rgba(40,10,50,0.5);
@@ -165,6 +165,7 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     transition:border-color 0.3s,box-shadow 0.3s;
     margin-left:1.2vw;flex-shrink:0;
+    padding:0;font:inherit;color:inherit;touch-action:manipulation;
 }
 .grave-zone:hover{
     border-color:rgba(154,106,186,0.5);
@@ -179,7 +180,7 @@
 /* MEZARLIK GORUNTULEYICI */
 #grave-viewer-overlay{
     display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:190;
-    align-items:center;justify-content:center;
+    align-items:center;justify-content:center;overscroll-behavior:contain;
 }
 #grave-viewer-overlay.active{display:flex}
 .grave-viewer{
@@ -217,7 +218,7 @@
 
 /* EL KARTLARI */
 .hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none}
-.hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto}
+.hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto;touch-action:manipulation}
 .hand-card:first-child{margin-left:0}
 .hand-card:hover{transform:translateY(-1.8vw) scale(1.18) rotate(0deg)!important;border-color:rgba(154,106,186,0.55);box-shadow:0 0 20px rgba(154,106,186,0.35),0 10px 28px rgba(0,0,0,0.6);z-index:30}
 .hand-card img{width:100%;height:100%;object-fit:cover;display:block;border-radius:3px}
@@ -232,7 +233,7 @@
 .hand-card.mp-highlight{box-shadow:0 0 20px rgba(232,200,64,0.2);border-color:rgba(232,200,64,0.4)!important}
 
 /* SAG TIK ONIZLEME */
-#card-preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:center;justify-content:center;cursor:pointer}
+#card-preview-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:center;justify-content:center;cursor:pointer;overscroll-behavior:contain}
 #card-preview-overlay.active{display:flex}
 .preview-content{display:flex;flex-direction:column;align-items:center;gap:12px}
 #preview-img{max-height:80vh;max-width:90vw;border-radius:8px;box-shadow:0 0 40px var(--gold-glow)}

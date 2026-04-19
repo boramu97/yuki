@@ -5,7 +5,7 @@
 .subtitle{color:var(--text-dim);font-style:italic;margin:1rem 0 3rem;letter-spacing:2px;font-size:clamp(0.9rem,1.2vw,1.2rem)}
 .lobby-form{display:flex;flex-direction:column;gap:1.2rem;width:clamp(340px,30vw,500px)}
 .lobby-form input{padding:clamp(0.8rem,1.2vw,1.2rem) clamp(1rem,1.5vw,1.5rem);border:1px solid var(--gold-border);border-radius:4px;background:rgba(180,140,60,0.04);color:var(--text);font-family:inherit;font-size:clamp(1rem,1.2vw,1.3rem);outline:none}
-.lobby-form input:focus{border-color:var(--gold)}
+.lobby-form input:focus-visible{border-color:var(--gold)}
 .lobby-form input::placeholder{color:var(--text-muted)}
 .lobby-buttons{display:flex;gap:0.8rem}
 .join-section{display:flex;gap:0.8rem}

@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0810">
     <title>Yuki — Duel</title>
-    <link rel="stylesheet" href="css/base.css?v=8">
-    <link rel="stylesheet" href="css/auth.css?v=8">
-    <link rel="stylesheet" href="css/home.css?v=8">
-    <link rel="stylesheet" href="css/lobby.css?v=8">
-    <link rel="stylesheet" href="css/duel.css?v=8">
-    <link rel="stylesheet" href="css/motor-panel.css?v=8">
-    <link rel="stylesheet" href="css/float-panels.css?v=8">
-    <link rel="stylesheet" href="css/card-popup.css?v=8">
-    <link rel="stylesheet" href="css/collection.css?v=9">
-    <link rel="stylesheet" href="css/adventures.css?v=8">
-    <link rel="stylesheet" href="css/result.css?v=8">
-    <link rel="stylesheet" href="css/responsive.css?v=9">
+    <link rel="stylesheet" href="css/base.css?v=11">
+    <link rel="stylesheet" href="css/auth.css?v=11">
+    <link rel="stylesheet" href="css/home.css?v=11">
+    <link rel="stylesheet" href="css/lobby.css?v=11">
+    <link rel="stylesheet" href="css/duel.css?v=11">
+    <link rel="stylesheet" href="css/motor-panel.css?v=11">
+    <link rel="stylesheet" href="css/float-panels.css?v=11">
+    <link rel="stylesheet" href="css/card-popup.css?v=11">
+    <link rel="stylesheet" href="css/collection.css?v=11">
+    <link rel="stylesheet" href="css/adventures.css?v=11">
+    <link rel="stylesheet" href="css/result.css?v=11">
+    <link rel="stylesheet" href="css/responsive.css?v=11">
 </head>
 <body>
     <!-- GİRİŞ / KAYIT -->
@@ -23,9 +25,11 @@
         <h1>Yuki</h1>
         <p class="subtitle">Browser-Based Duel Game</p>
         <div class="auth-form">
-            <input type="text" id="auth-username" placeholder="Kullanici adi..." maxlength="20">
-            <input type="password" id="auth-password" placeholder="Sifre..." maxlength="50">
-            <div id="auth-status" class="status"></div>
+            <label class="sr-only" for="auth-username">Kullanıcı adı</label>
+            <input type="text" id="auth-username" placeholder="Kullanıcı adı…" maxlength="20" autocomplete="username" spellcheck="false">
+            <label class="sr-only" for="auth-password">Şifre</label>
+            <input type="password" id="auth-password" placeholder="Şifre…" maxlength="50" autocomplete="current-password">
+            <div id="auth-status" class="status" aria-live="polite"></div>
             <div class="lobby-buttons">
                 <button id="btn-login" class="btn primary">Giris Yap</button>
                 <button id="btn-register" class="btn">Kayit Ol</button>
@@ -79,18 +83,19 @@
                 <button id="btn-create-room" class="btn">Oda Olustur</button>
             </div>
             <div class="join-section">
-                <input type="text" id="room-code" placeholder="Oda kodu..." maxlength="8">
+                <label class="sr-only" for="room-code">Oda kodu</label>
+                <input type="text" id="room-code" placeholder="Oda kodu…" maxlength="8" autocomplete="off" spellcheck="false">
                 <button id="btn-join-room" class="btn">Katil</button>
             </div>
             <button id="btn-back-home" class="btn" style="margin-top:1rem;width:100%">← Ana Sayfa</button>
         </div>
-        <div id="lobby-status" class="status"></div>
+        <div id="lobby-status" class="status" aria-live="polite"></div>
     </div>
 
     <!-- BEKLEME -->
     <div id="waiting" class="screen">
         <h2>Oda: <span id="waiting-room-id"></span></h2>
-        <p style="color:#776a50;font-style:italic;font-size:1.1rem">Rakip bekleniyor...</p>
+        <p style="color:#776a50;font-style:italic;font-size:1.1rem">Rakip bekleniyor…</p>
         <div class="loader"></div>
     </div>
 
@@ -137,11 +142,11 @@
 
             <!-- Motor Iletisim Paneli (sol) -->
             <div id="motor-panel" class="motor-panel">
-                <div class="mp-swipe-handle" id="mp-swipe-handle"><div class="mp-handle-bar"></div></div>
-                <button class="mp-minimize-btn" id="mp-minimize-btn">&#x25BC;</button>
+                <div class="mp-swipe-handle" id="mp-swipe-handle" aria-hidden="true"><div class="mp-handle-bar"></div></div>
+                <button class="mp-minimize-btn" id="mp-minimize-btn" aria-label="Motor panelini gizle">&#x25BC;</button>
                 <div class="mp-header">
                     <div class="mp-phase-badge" id="mp-phase"></div>
-                    <div class="mp-question" id="mp-question">Motor yanit bekliyor...</div>
+                    <div class="mp-question" id="mp-question" aria-live="polite">Motor yanıt bekliyor…</div>
                 </div>
                 <div class="mp-actions" id="mp-actions"></div>
                 <div class="mp-footer" id="mp-footer">
@@ -160,10 +165,10 @@
             <div class="field">
                 <div class="field-row" id="opp-szone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
-                    <div class="grave-zone" id="opp-grave" title="Rakip Mezarlık">
-                        <div class="grave-icon">&#x1F480;</div>
-                        <div class="grave-count" id="opp-grave-count">0</div>
-                    </div>
+                    <button type="button" class="grave-zone" id="opp-grave" aria-label="Rakip mezarlığı" title="Rakip Mezarlık">
+                        <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
+                        <span class="grave-count" id="opp-grave-count">0</span>
+                    </button>
                 </div>
                 <div class="field-row" id="opp-mzone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
@@ -172,7 +177,7 @@
                 <!-- Durum cubugu -->
                 <div class="status-strip">
                     <div class="line"></div>
-                    <div id="status-text">Duello baslamadi</div>
+                    <div id="status-text" aria-live="polite">Duello başlamadı</div>
                     <div class="line"></div>
                 </div>
 
@@ -181,10 +186,10 @@
                 </div>
                 <div class="field-row" id="self-szone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
-                    <div class="grave-zone" id="self-grave" title="Mezarlığın">
-                        <div class="grave-icon">&#x1F480;</div>
-                        <div class="grave-count" id="self-grave-count">0</div>
-                    </div>
+                    <button type="button" class="grave-zone" id="self-grave" aria-label="Senin mezarlığın" title="Mezarlığın">
+                        <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
+                        <span class="grave-count" id="self-grave-count">0</span>
+                    </button>
                 </div>
             </div>
 
@@ -193,7 +198,7 @@
                 <div class="grave-viewer">
                     <div class="grave-viewer-header">
                         <span id="grave-viewer-title">Mezarlık</span>
-                        <button class="grave-viewer-close" id="grave-viewer-close">&times;</button>
+                        <button class="grave-viewer-close" id="grave-viewer-close" aria-label="Kapat">&times;</button>
                     </div>
                     <div class="grave-viewer-cards" id="grave-viewer-cards"></div>
                 </div>
@@ -439,7 +444,8 @@
         </div>
         <div class="coll-toolbar">
             <div class="coll-search">
-                <input type="text" id="coll-search" placeholder="Kart ara...">
+                <label class="sr-only" for="coll-search">Kart ara</label>
+                <input type="text" id="coll-search" placeholder="Kart ara…" autocomplete="off" spellcheck="false">
             </div>
             <div class="coll-filters">
                 <button class="coll-filter active" data-filter="all">Tumu <span class="coll-filter-count" id="cnt-all"></span></button>
@@ -466,7 +472,8 @@
             <div class="coll-sidebar">
                 <div class="coll-slots" id="coll-slots"></div>
                 <div class="coll-deck-header">
-                    <input class="coll-deck-name" id="coll-deck-name" value="Deste 1" maxlength="20" spellcheck="false">
+                    <label class="sr-only" for="coll-deck-name">Deste adı</label>
+                    <input class="coll-deck-name" id="coll-deck-name" value="Deste 1" maxlength="20" spellcheck="false" autocomplete="off">
                     <span class="coll-deck-count"><span id="coll-deck-num">0</span>/40</span>
                 </div>
                 <div class="coll-deck-list" id="coll-deck-list"></div>
@@ -507,11 +514,11 @@
         <button id="btn-back-home-result" class="btn primary" style="font-size:1.1rem;padding:12px 32px">Ana Sayfaya Don</button>
     </div>
 
-    <script src="js/websocket.js?v=8"></script>
-    <script src="js/field.js?v=8"></script>
-    <script src="js/ui.js?v=8"></script>
-    <script src="js/collection.js?v=9"></script>
-    <script src="js/touch.js?v=9"></script>
-    <script src="js/app.js?v=8"></script>
+    <script src="js/websocket.js?v=11"></script>
+    <script src="js/field.js?v=11"></script>
+    <script src="js/ui.js?v=11"></script>
+    <script src="js/collection.js?v=11"></script>
+    <script src="js/touch.js?v=11"></script>
+    <script src="js/app.js?v=11"></script>
 </body>
 </html>

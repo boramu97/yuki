@@ -40,10 +40,42 @@ from server.ocg_binding import (
     LOCATION_MZONE, LOCATION_SZONE,
 )
 
+import os
 import struct
 import random
 
 def _pack_i32(v): return struct.pack("<i", v)
+
+# Bot karar logu — YUKI_AI_TRACE=1 ile acilir. Debug amacli;
+# production'da kapali tutulmali (ama log satir sayisi kucuk).
+_AI_TRACE = os.environ.get("YUKI_AI_TRACE", "0") == "1"
+
+
+def _trace(msg_type: int, msg: dict, response: bytes, retry: int):
+    """Karar trace (journalctl'e duser)."""
+    if not _AI_TRACE:
+        return
+    name_map = {
+        0x0A: "BATTLECMD", 0x0B: "IDLECMD", 0x0C: "EFFECTYN", 0x0D: "YESNO",
+        0x0E: "OPTION", 0x0F: "CARD", 0x10: "CHAIN", 0x11: "PLACE",
+        0x12: "POSITION", 0x13: "TRIBUTE", 0x14: "COUNTER", 0x15: "SUM",
+        0x1A: "UNSELECT_CARD", 0x16: "DISFIELD",
+    }
+    mname = name_map.get(msg_type, f"0x{msg_type:02X}")
+    resp_hex = response[:16].hex() if response else ""
+    # Onemli field'lari ozetle
+    summary_parts = []
+    for k in ("forced", "cancelable", "min", "max", "count"):
+        if k in msg:
+            summary_parts.append(f"{k}={msg[k]}")
+    if "chains" in msg:
+        summary_parts.append(f"chains={len(msg['chains'])}")
+    if "cards" in msg:
+        summary_parts.append(f"cards={len(msg['cards'])}")
+    if "attackable" in msg:
+        summary_parts.append(f"attackable={len(msg['attackable'])}")
+    summary = " ".join(summary_parts)
+    print(f"[AI] {mname} retry={retry} {summary} => {resp_hex}", flush=True)
 
 
 def ai_respond(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes:
@@ -53,6 +85,12 @@ def ai_respond(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes:
     strateji denemek icin kullanilir — ayni cevabi tekrar gondermek
     sonsuz loop'a sebep olurdu.
     """
+    response = _ai_respond_inner(msg_type, msg, retry_attempt)
+    _trace(msg_type, msg, response, retry_attempt)
+    return response
+
+
+def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0) -> bytes:
 
     if msg_type == MSG_SELECT_IDLECMD:
         return _idle_cmd(msg, retry_attempt)
@@ -196,7 +234,11 @@ def _idle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
 
 
 def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
-    """Savaş Fazı kararları — rakip sahası kontrol edilerek."""
+    """Savaş Fazı kararları — rakip sahası kontrol edilerek.
+
+    Attacker-first policy: en yuksek ATK'li saldirgan + direct saldiri > guvenli hedef.
+    Zayif canavar guclu rakibe intihar ettirilmez.
+    """
     attackable = msg.get("attackable", [])
     activatable = msg.get("activatable", [])
     opp_monsters = msg.get("opponent_monsters", [])
@@ -205,36 +247,36 @@ def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
     if retry_attempt >= 1:
         return build_battle_cmd_response("end")
 
+    def _can_win(my_atk: int) -> bool:
+        """my_atk bu attacker ile yenilebilir en az bir hedef var mi?"""
+        for m in opp_monsters:
+            pos = m.get("position", 0)
+            if pos & 0x1:  # Yuz yukari ATK — ATK karsilastir
+                if my_atk > (m.get("atk", 0) or 0):
+                    return True
+            elif pos & 0x4:  # Yuz yukari DEF
+                if my_atk > (m.get("def", 0) or 0):
+                    return True
+            elif pos & 0x8:  # Yuz asagi — makul ATK ile dene
+                if my_atk >= 1500:
+                    return True
+        return False
+
     if attackable:
-        for i, card in enumerate(attackable):
+        # En yuksek ATK'li attacker'dan basla — zayif canavar intihar etmesin
+        indexed = sorted(
+            enumerate(attackable),
+            key=lambda x: x[1].get("card_atk", 0) or 0,
+            reverse=True,
+        )
+        for i, card in indexed:
             my_atk = card.get("card_atk", 0) or 0
             direct = card.get("direct_attackable", False)
-
-            # Direkt saldırı (rakipte canavar yok) — her zaman saldır
             if direct:
                 return build_battle_cmd_response("attack", i)
-
             if my_atk <= 0:
                 continue
-
-            # Rakipte yenebileceğim bir canavar var mı?
-            can_win = False
-            for m in opp_monsters:
-                pos = m.get("position", 0)
-                if pos & 0x1:  # Yüz yukarı saldırı — ATK karşılaştır
-                    if my_atk > (m.get("atk", 0) or 0):
-                        can_win = True
-                        break
-                elif pos & 0x4:  # Yüz yukarı savunma — DEF karşılaştır
-                    if my_atk > (m.get("def", 0) or 0):
-                        can_win = True
-                        break
-                elif pos & 0x8:  # Yüz aşağı savunma — stat bilinmiyor, makul ATK'yla dene
-                    if my_atk >= 1500:
-                        can_win = True
-                        break
-
-            if can_win:
+            if _can_win(my_atk):
                 return build_battle_cmd_response("attack", i)
 
     # Efekt aktifleştir
@@ -246,7 +288,11 @@ def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
 
 
 def _chain(msg: dict, retry_attempt: int = 0) -> bytes:
-    """Zincir fırsatı — trap/spell aktifle veya pas."""
+    """Zincir fırsatı — trap/spell/monster efekt aktifle veya pas.
+
+    Oncelik: SZONE (trap/continuous spell) > MZONE (monster trigger) >
+    HAND (Kuriboh tipi) > GRAVE (dark world vs).
+    """
     chains = msg.get("chains", [])
     forced = msg.get("forced", False)
 
@@ -258,17 +304,11 @@ def _chain(msg: dict, retry_attempt: int = 0) -> bytes:
     if retry_attempt >= 1:
         return build_chain_response(-1)
 
-    # Trap varsa aktifle (SZONE'dan)
-    for i, ch in enumerate(chains):
-        loc = ch.get("location", 0)
-        if loc == 0x08:  # SZONE — muhtemelen trap
-            return build_chain_response(i)
-
-    # Elden aktivasyon (Kuriboh gibi)
-    for i, ch in enumerate(chains):
-        loc = ch.get("location", 0)
-        if loc == 0x02:  # El
-            return build_chain_response(i)
+    # Lokasyon onceligi ile ara (SZONE > MZONE > HAND > GRAVE)
+    for priority_loc in (0x08, 0x04, 0x02, 0x10):
+        for i, ch in enumerate(chains):
+            if ch.get("location", 0) == priority_loc:
+                return build_chain_response(i)
 
     # Pas
     return build_chain_response(-1)

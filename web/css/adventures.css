@@ -350,6 +350,7 @@
     position: fixed; inset: 0;
     z-index: 300;
     overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--bg);
 }
 .adv-modal.active { display: block; }

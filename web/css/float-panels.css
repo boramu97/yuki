@@ -30,5 +30,17 @@
 .log-banner.spell .lb-text{color:#4fc3f7}
 .log-banner.trap .lb-text{color:#ce93d8}
 
+/* Structured log (iki satirli aktor/eylem + kart/yon) */
+.log-banner.structured .lb-text{flex-direction:column;align-items:flex-start;gap:2px}
+.log-banner .lb-head{font-size:0.82rem;color:var(--text);letter-spacing:0.3px;display:flex;align-items:center;gap:6px}
+.log-banner .lb-sub{font-size:0.72rem;color:var(--text-muted);font-style:italic}
+.log-banner .lb-chain{font-size:0.62rem;padding:1px 6px;border-radius:8px;background:rgba(232,200,64,0.1);color:var(--gold);letter-spacing:0.5px}
+.log-banner.structured.important .lb-head{color:var(--gold)}
+.log-banner.structured.damage .lb-head{color:var(--danger)}
+.log-banner.structured.spell .lb-head{color:#4fc3f7}
+.log-banner.structured.summon .lb-head{color:#8bc34a}
+.log-banner.structured.trap .lb-head{color:#ce93d8}
+.log-banner.structured.move .lb-head{color:var(--text-dim)}
+
 /* Mobile drawer — desktop'ta gizli */
 .mobile-drawer{display:none}

@@ -4,6 +4,7 @@
 #
 # config.py — Proje ayarları ve dosya yolları
 
+import os
 from pathlib import Path
 
 # Proje kök dizini (bu dosyanın iki üst klasörü)
@@ -15,8 +16,8 @@ CORE_LIB_PATH = PROJECT_ROOT / "bin" / "ocgcore.dll"
 # Kart veritabanı
 CARD_DB_PATH = PROJECT_ROOT / "data" / "cards.cdb"
 
-# Kullanıcı veritabanı
-USER_DB_PATH = PROJECT_ROOT / "data" / "users.db"
+# Kullanıcı veritabanı — ENV ile override edilebilir (e2e testlerde izole DB kullanmak icin)
+USER_DB_PATH = Path(os.environ.get("YUKI_USER_DB", str(PROJECT_ROOT / "data" / "users.db")))
 
 # Lua script dizini
 SCRIPT_DIR = PROJECT_ROOT / "data" / "script"

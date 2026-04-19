@@ -3,7 +3,7 @@
 #auth-screen{align-items:center;justify-content:center}
 .auth-form{display:flex;flex-direction:column;gap:1rem;width:clamp(300px,26vw,420px)}
 .auth-form input{padding:clamp(0.8rem,1.2vw,1.2rem) clamp(1rem,1.5vw,1.5rem);border:1px solid var(--gold-border);border-radius:4px;background:rgba(180,140,60,0.04);color:var(--text);font-family:inherit;font-size:clamp(1rem,1.2vw,1.3rem);outline:none}
-.auth-form input:focus{border-color:var(--gold)}
+.auth-form input:focus-visible{border-color:var(--gold)}
 .auth-form input::placeholder{color:var(--text-muted)}
 #auth-status{min-height:1.2rem;font-size:0.9rem;font-style:italic;text-align:center}
 #auth-status.error{color:var(--danger)}

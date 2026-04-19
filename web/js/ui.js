@@ -6,6 +6,14 @@ const UI = {
     selectedIndices: [],
     autoPassChain: true,
 
+    // Zincir baglami — hangi kart/efekt aktif sorguyu tetikledi
+    // MSG_CHAINING: push, MSG_CHAIN_SOLVED: pop, MSG_CHAIN_END: clear
+    chainContext: [],
+    pushChainContext(entry) { this.chainContext.push(entry); },
+    popChainContext() { this.chainContext.pop(); },
+    clearChainContext() { this.chainContext = []; },
+    currentChainSource() { return this.chainContext[this.chainContext.length - 1] || null; },
+
     // --- Ekran yonetimi ---
     showScreen(id) {
         document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -14,7 +22,7 @@ const UI = {
     setStatus(t) { const el = document.getElementById("lobby-status"); if (el) el.textContent = t; },
     setGameStatus(t) { document.getElementById("status-text").textContent = t; },
 
-    // --- LOG ---
+    // --- LOG (legacy: tek satir serbest metin) ---
     log(text, cls, cardCode) {
         const log = document.getElementById("duel-log"); if (!log) return;
         const entry = document.createElement("div");
@@ -30,6 +38,63 @@ const UI = {
         log.insertBefore(entry, log.firstChild);
         while (log.children.length > 100) log.removeChild(log.lastChild);
         // Mobil drawer senkronizasyonu
+        const drawerLog = document.getElementById("drawer-log");
+        if (drawerLog) {
+            const clone = entry.cloneNode(true);
+            drawerLog.insertBefore(clone, drawerLog.firstChild);
+            while (drawerLog.children.length > 60) drawerLog.removeChild(drawerLog.lastChild);
+        }
+    },
+
+    // --- LOG (structured) ---
+    // Tek ari metin yerine {actor, verb, card, from, to, chain} alarak
+    // "Yugi — Cagirdi" / "[Monster Reborn] El -> Saha" gibi 2-satirli log uretir.
+    // opts: {actor, verb, card: {name, code}, from, to, chainIdx, cls}
+    _locName: {
+        0x01: "Deste", 0x02: "El", 0x04: "Canavar", 0x08: "Buyu/Tuzak",
+        0x10: "Mezarlik", 0x20: "Surgun", 0x40: "Ekstra"
+    },
+    _locLabel(loc) { return this._locName[loc] || ""; },
+    logAction(opts) {
+        const log = document.getElementById("duel-log"); if (!log || !opts) return;
+        const entry = document.createElement("div");
+        entry.className = "log-banner structured" + (opts.cls ? ` ${opts.cls}` : "");
+        const cardCode = opts.card && opts.card.code;
+        if (cardCode) {
+            const img = document.createElement("img");
+            img.src = `https://images.ygoprodeck.com/images/cards_small/${cardCode}.jpg`;
+            img.onerror = function () { this.style.display = "none"; };
+            entry.appendChild(img);
+        }
+        const text = document.createElement("div");
+        text.className = "lb-text structured-text";
+        // Ust satir: aktor — eylem [zincir #N]
+        const head = document.createElement("div");
+        head.className = "lb-head";
+        const parts = [];
+        if (opts.actor) parts.push(opts.actor);
+        if (opts.verb) parts.push(opts.verb);
+        head.textContent = parts.join(" — ");
+        if (opts.chainIdx) {
+            const chip = document.createElement("span");
+            chip.className = "lb-chain";
+            chip.textContent = `#${opts.chainIdx}`;
+            head.appendChild(chip);
+        }
+        text.appendChild(head);
+        // Alt satir: [kart] from -> to
+        const sub = document.createElement("div");
+        sub.className = "lb-sub";
+        const subParts = [];
+        if (opts.card && opts.card.name) subParts.push(`[${opts.card.name}]`);
+        const fromL = this._locLabel(opts.from);
+        const toL = this._locLabel(opts.to);
+        if (fromL || toL) subParts.push(`${fromL || "?"} → ${toL || "?"}`);
+        sub.textContent = subParts.join(" ");
+        if (sub.textContent) text.appendChild(sub);
+        entry.appendChild(text);
+        log.insertBefore(entry, log.firstChild);
+        while (log.children.length > 100) log.removeChild(log.lastChild);
         const drawerLog = document.getElementById("drawer-log");
         if (drawerLog) {
             const clone = entry.cloneNode(true);
@@ -419,7 +484,11 @@ const UI = {
 
     // --- EVET/HAYIR ---
     _yesNo(msg) {
-        this.showMotorPanel("Karar ver", "Karar");
+        const src = this.currentChainSource();
+        const header = src && src.card_name
+            ? `[${src.card_name}] — Karar ver`
+            : "Karar ver";
+        this.showMotorPanel(header, "Karar");
         this._addButtonRow([
             { label: "Evet", primary: true, callback: () => WS.sendResponse(13, { yes: true }) },
             { label: "Hayir", callback: () => WS.sendResponse(13, { yes: false }) },
@@ -438,9 +507,11 @@ const UI = {
     // --- KART SECIMI ---
     _selectCard(msg) {
         const min = msg.min || 1, max = msg.max || 1, cards = msg.cards || [];
+        const src = this.currentChainSource();
+        const srcPrefix = src && src.card_name ? `[${src.card_name}] — ` : "";
 
         if (min === 1 && max === 1) {
-            this.showMotorPanel("Bir kart sec", "Kart Secimi");
+            this.showMotorPanel(srcPrefix + "Bir kart sec", "Kart Secimi");
             cards.forEach((c, i) => {
                 this._addCardAction(c, [{
                     label: "Sec", primary: true,
@@ -456,7 +527,7 @@ const UI = {
             const self = this;
 
             function update() {
-                self.showMotorPanel(`${min} kart sec (${self.selectedIndices.length}/${min})`, "Kart Secimi");
+                self.showMotorPanel(`${srcPrefix}${min} kart sec (${self.selectedIndices.length}/${min})`, "Kart Secimi");
                 cards.forEach((c, i) => {
                     const sel = self.selectedIndices.includes(i);
                     self._addCardAction(c, [{

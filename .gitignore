@@ -53,3 +53,6 @@ duel_engine_architecture_classic.md
 
 # Additional card data
 data/cards.db
+
+# E2E test artefacts
+tests/e2e/*.png

@@ -329,42 +329,63 @@
             UI.log(`━━ Tur ${turnCount} (${p(msg.player)}) ━━`,"important");
             UI.setGameStatus("Rakibin hamlesini bekle...");
             UI.hideMotorPanel();
+            UI.clearChainContext();
         }
         else if(name==="MSG_NEW_PHASE") Field.setPhase(msg.phase);
         else if(name==="MSG_DRAW"){
             Field.addToHand(msg.player,msg.cards||[]);
-            if(msg.player===myTeam)(msg.cards||[]).forEach(c=>{if(c.card_name)UI.log(`Cektin: ${c.card_name}`,"",c.code)});
-            else UI.log(`${oppName} ${(msg.cards||[]).length} kart cekti`);
+            if(msg.player===myTeam){
+                (msg.cards||[]).forEach(c=>{
+                    if(c.card_name)UI.logAction({actor:p(msg.player),verb:"Kart çekti",card:{name:c.card_name,code:c.code},to:0x02,cls:"move"});
+                });
+            } else {
+                UI.logAction({actor:p(msg.player),verb:`${(msg.cards||[]).length} kart çekti`,to:0x02,cls:"move"});
+            }
         }
         else if(name==="MSG_MOVE"){
             Field.moveCard(code,msg.from||{},msg.to||{},{card_name:cname,card_atk:msg.card_atk,card_def:msg.card_def,card_type:msg.card_type});
-            const to=msg.to?.location||0;
-            if(cname&&to===0x10)UI.log(`${cname} → Mezarlik`,"move",code);
-            else if(cname&&to===0x20)UI.log(`${cname} → Surgun`,"move",code);
+            const to=msg.to?.location||0, from=msg.from?.location||0;
+            if(cname && (to===0x10 || to===0x20)){
+                const con = msg.to?.controller ?? msg.from?.controller ?? 0;
+                UI.logAction({actor:p(con),verb:to===0x10?"Mezarlığa gönderdi":"Sürgün etti",card:{name:cname,code},from,to,cls:"move"});
+            }
         }
         else if(name==="MSG_SUMMONING"||name==="MSG_SPSUMMONING"){
             Field.summonCard(msg, name==="MSG_SUMMONING");
-            UI.log(`${name==="MSG_SUMMONING"?"Cagrildi":"Ozel Cagri"}: ${cname}`,"summon",code);
+            UI.logAction({
+                actor:p(msg.controller),
+                verb:name==="MSG_SUMMONING"?"Çağırdı":"Özel Çağrı yaptı",
+                card:{name:cname,code},
+                from:0x02,to:0x04,cls:"summon"
+            });
         }
         else if(name==="MSG_SET"){
             const z=(msg.location||0x04)===0x04?"mzone":"szone";
             Field.cards[msg.controller][z][msg.sequence]={code,position:msg.position||0x8,card_name:cname,card_type:msg.card_type||0};
             const h=Field.cards[msg.controller].hand;const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);
-            Field.render(); UI.log(`${p(msg.controller)} kart set etti`,"move");
+            Field.render();
+            UI.logAction({actor:p(msg.controller),verb:"Set etti",card:cname?{name:cname,code}:null,from:0x02,to:msg.location||0x04,cls:"move"});
         }
         else if(name==="MSG_POS_CHANGE"){
             const loc=msg.location||0x04;
             const zone=loc===0x04?"mzone":loc===0x08?"szone":null;
             if(zone){const z=Field.cards[msg.controller]?.[zone];if(z&&z[msg.sequence]){z[msg.sequence].position=msg.position;Field.render();}}
         }
-        else if(name==="MSG_DAMAGE"){Field.damageLP(msg.player,msg.amount);UI.log(`${p(msg.player)} -${msg.amount} LP`,"damage")}
-        else if(name==="MSG_RECOVER"){Field.recoverLP(msg.player,msg.amount);UI.log(`${p(msg.player)} +${msg.amount} LP`)}
-        else if(name==="MSG_PAY_LPCOST"){Field.damageLP(msg.player,msg.amount);UI.log(`${p(msg.player)} ${msg.amount} LP odedi`,"damage")}
-        else if(name==="MSG_ATTACK")UI.log(`${p(msg.attacker_controller)} saldiriyor!`,"important");
-        else if(name==="MSG_BATTLE")UI.log(`ATK ${msg.attacker_atk} vs ${msg.target_atk}`);
+        else if(name==="MSG_DAMAGE"){Field.damageLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP kaybetti`,cls:"damage"})}
+        else if(name==="MSG_RECOVER"){Field.recoverLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP kazandı`,cls:"summon"})}
+        else if(name==="MSG_PAY_LPCOST"){Field.damageLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP ödedi (maliyet)`,cls:"damage"})}
+        else if(name==="MSG_ATTACK")UI.logAction({actor:p(msg.attacker_controller),verb:"Saldırı başlattı",cls:"important"});
+        else if(name==="MSG_BATTLE")UI.logAction({actor:"Savaş",verb:`ATK ${msg.attacker_atk} vs ${msg.target_atk}`,cls:"important"});
         else if(name==="MSG_CHAINING"){
-            UI.log(`Aktiflestirildi: ${cname}`,"spell",code);
             const con=msg.controller;
+            // Zincir baglami: sonraki SELECT_YESNO / SELECT_CARD'larda "hangi kart sorguluyor" gostermek icin
+            UI.pushChainContext({code, card_name: cname, controller: con});
+            UI.logAction({
+                actor:p(con),verb:"Aktifleştirdi",
+                card:{name:cname,code},
+                from:msg.triggering_location,to:0x08,
+                chainIdx:UI.chainContext.length,cls:"spell"
+            });
             // Kartın su anki konumu (location) szone olabilir — motor dahili olarak tasir
             if(msg.location===0x08){
                 const ex=Field.cards[con]?.szone[msg.sequence];
@@ -379,6 +400,13 @@
             }
             Field.render();
         }
+        else if(name==="MSG_CHAIN_SOLVED")UI.popChainContext();
+        else if(name==="MSG_CHAIN_END"){
+            if(UI.chainContext.length>0){
+                UI.logAction({verb:"Zincir çözüldü",cls:"move"});
+            }
+            UI.clearChainContext();
+        }
         else if(name==="MSG_SHUFFLE_HAND"){
             // Motor eli yeniden gonderdi — el state'ini tamamen yenile
             // Motor dogruluk kaynagidir, verisine guveniriz
@@ -391,7 +419,7 @@
             }
             Field.render();
         }
-        else if(name==="MSG_FLIPSUMMONING"){Field.summonCard(msg, false);UI.log(`Flip: ${cname}`,"summon",code)}
+        else if(name==="MSG_FLIPSUMMONING"){Field.summonCard(msg, false);UI.logAction({actor:p(msg.controller),verb:"Flip Summon",card:{name:cname,code},cls:"summon"})}
         else if(name==="MSG_LPUPDATE")Field.updateLP(msg.player,msg.lp);
         else if(name==="MSG_STAT_UPDATE"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);if(c){c.card_atk=msg.card_atk;c.card_def=msg.card_def;Field.render();}}
         else if(name==="MSG_ADD_COUNTER"){Field.addCounter(msg.controller,msg.location,msg.sequence,msg.counter_type,msg.count);const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} +${msg.count} sayac`,"spell",c?.code)}
