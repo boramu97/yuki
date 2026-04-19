@@ -1,6 +1,9 @@
 /* Yuki — Duel screen: HUD, field, cards, hand */
 
-#duel{height:100vh}
+#duel{
+    height:100vh;
+    background:url('../img/duel-arena-bg.png') center center / cover no-repeat;
+}
 
 /* HUD */
 .duel-hud{display:flex;justify-content:space-between;align-items:center;height:54px;background:var(--bg-hud);border-bottom:1px solid var(--gold-border);padding:0 20px;flex-shrink:0}
@@ -38,34 +41,30 @@
 .mp-minimize-btn{display:none}
 #duel.theme-toon .field-wrap{background:url('../img/toon-world-bg.png') center/cover no-repeat}
 
-/* SAHA — Holographic Projection Surface */
+/* SAHA */
 .field{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8vw;gap:3px;
-    background:
-        radial-gradient(ellipse at 50% 30%,rgba(88,196,240,0.03),transparent 50%),
-        radial-gradient(ellipse at 50% 70%,rgba(154,106,186,0.04),transparent 50%),
-        radial-gradient(ellipse at 50% 50%,rgba(88,196,240,0.02),transparent 70%);
     position:relative;
     perspective:1200px;
 }
-/* Holographic scan-line overlay */
+/* Holographic scan-line overlay (hafif, atmosfer icin) */
 .field::before{
     content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
     background:repeating-linear-gradient(0deg,
         transparent 0px,transparent 3px,
-        rgba(88,196,240,0.015) 3px,rgba(88,196,240,0.015) 4px);
+        rgba(88,196,240,0.008) 3px,rgba(88,196,240,0.008) 4px);
     animation:holo-scan 8s linear infinite;
 }
 @keyframes holo-scan{
     0%{background-position:0 0}
     100%{background-position:0 200px}
 }
-/* Faint grid underlay */
+/* Faint grid underlay (cok hafif — gorselin gridlerini gizleme) */
 .field::after{
     content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
     background:
-        repeating-linear-gradient(90deg,rgba(88,196,240,0.02) 0px,rgba(88,196,240,0.02) 1px,transparent 1px,transparent 7.5vw),
-        repeating-linear-gradient(0deg,rgba(154,106,186,0.015) 0px,rgba(154,106,186,0.015) 1px,transparent 1px,transparent 10.2vw);
-    opacity:0.6;
+        repeating-linear-gradient(90deg,rgba(88,196,240,0.008) 0px,rgba(88,196,240,0.008) 1px,transparent 1px,transparent 7.5vw),
+        repeating-linear-gradient(0deg,rgba(154,106,186,0.006) 0px,rgba(154,106,186,0.006) 1px,transparent 1px,transparent 10.2vw);
+    opacity:0.4;
 }
 .field-row{display:flex;gap:0.8vw;justify-content:center;position:relative;z-index:2}
 
@@ -94,11 +93,11 @@
     text-shadow:0 0 8px rgba(232,200,64,0.15);
 }
 
-/* KART SLOTU — Holographic projection zone */
+/* KART SLOTU — arka plan gorselinin slot cerceveleri uzerinde neredeyse saydam */
 .card-slot{
     width:7.5vw;height:10.2vw;border-radius:4px;position:relative;
-    background:rgba(16,12,24,0.4);
-    border:1px solid rgba(88,196,240,0.08);
+    background:transparent;
+    border:1px solid transparent;
     transition:border-color 0.3s,box-shadow 0.3s;
 }
 /* Rotating rune circle — outer */
