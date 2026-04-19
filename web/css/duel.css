@@ -2,7 +2,18 @@
 
 #duel{
     height:100vh;
-    background:url('../img/duel-arena-bg.png') center center / cover no-repeat;
+    position:relative;
+    /* Anime duel chamber — koyu orman/gece atmosferi */
+    background:
+        linear-gradient(90deg,
+            rgba(18,14,26,0.92) 0%, rgba(18,14,26,0.35) 7%,
+            transparent 14%, transparent 86%,
+            rgba(18,14,26,0.35) 93%, rgba(18,14,26,0.92) 100%),
+        radial-gradient(ellipse 70% 22% at 50% 10%, rgba(60,80,150,0.22), transparent 70%),
+        radial-gradient(ellipse 70% 22% at 50% 90%, rgba(170,50,55,0.18), transparent 70%),
+        linear-gradient(180deg,
+            #1a1625 0%, #251d30 35%,
+            #1e1a2a 65%, #2a1e25 100%);
 }
 
 /* HUD */
@@ -32,7 +43,10 @@
 
 /* FIELD WRAP — full width */
 .field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
-.opp-hand-area{display:flex;justify-content:center;padding:0 8vw;height:3.4vw;overflow:hidden;flex-shrink:0}
+.opp-hand-area{display:flex;justify-content:center;padding:0 8vw;height:3.4vw;overflow:hidden;flex-shrink:0;
+    background:linear-gradient(180deg, rgba(42,56,105,0.78) 0%, rgba(55,72,125,0.85) 50%, rgba(48,62,108,0.88) 100%);
+    border-bottom:1px solid rgba(88,196,240,0.45);
+    box-shadow:0 2px 14px rgba(40,80,160,0.28), inset 0 1px 0 rgba(120,180,230,0.15)}
 .opp-hand-card{width:4vw;height:5.6vw;border-radius:2px;margin-left:-0.8vw;flex-shrink:0;overflow:hidden;background:#b8860b;border:1px solid #d4a820}
 .opp-hand-card:first-child{margin-left:0}
 .opp-hand-card .card-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
@@ -41,10 +55,33 @@
 .mp-minimize-btn{display:none}
 #duel.theme-toon .field-wrap{background:url('../img/toon-world-bg.png') center/cover no-repeat}
 
-/* SAHA */
+/* SAHA — anime duel platform yüzeyi (CSS-native) */
 .field{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8vw;gap:3px;
     position:relative;
     perspective:1200px;
+    /* Metalik gri-mavi platform + diagonal cyan tech pattern + orta elektrik seam glow */
+    background:
+        radial-gradient(ellipse 70% 3% at 50% 50%, rgba(88,196,240,0.45), transparent 70%),
+        repeating-linear-gradient(135deg,
+            transparent 0px, transparent 80px,
+            rgba(88,196,240,0.07) 80px, rgba(88,196,240,0.07) 82px,
+            transparent 82px, transparent 164px),
+        repeating-linear-gradient(45deg,
+            transparent 0px, transparent 80px,
+            rgba(88,196,240,0.05) 80px, rgba(88,196,240,0.05) 82px,
+            transparent 82px, transparent 164px),
+        linear-gradient(180deg,
+            rgba(55,65,90,0.72) 0%,
+            rgba(72,82,105,0.82) 15%,
+            rgba(78,88,108,0.85) 50%,
+            rgba(72,82,105,0.82) 85%,
+            rgba(55,65,90,0.72) 100%);
+    box-shadow:
+        inset 0 0 100px rgba(0,0,0,0.42),
+        inset 0 3px 22px rgba(88,196,240,0.22),
+        inset 0 -3px 22px rgba(170,60,60,0.16);
+    border-top: 1px solid rgba(88,196,240,0.55);
+    border-bottom: 1px solid rgba(190,85,75,0.32);
 }
 /* Holographic scan-line overlay (hafif, atmosfer icin) */
 .field::before{
@@ -68,8 +105,27 @@
 }
 .field-row{display:flex;gap:0.8vw;justify-content:center;position:relative;z-index:2}
 
-/* Durum cubugu — Energy divider */
-.status-strip{display:flex;align-items:center;justify-content:center;padding:8px 6vw;gap:16px;position:relative;z-index:2}
+/* Durum cubugu — anime electric seam (cyan lightning divider) */
+.status-strip{display:flex;align-items:center;justify-content:center;padding:8px 6vw;gap:16px;position:relative;z-index:3}
+.status-strip::before{
+    content:'';position:absolute;left:3%;right:3%;top:50%;transform:translateY(-50%);
+    height:2px;pointer-events:none;z-index:0;
+    background:linear-gradient(90deg,
+        transparent 0%,
+        rgba(88,196,240,0.55) 12%,
+        rgba(140,230,255,1) 50%,
+        rgba(88,196,240,0.55) 88%,
+        transparent 100%);
+    box-shadow:
+        0 0 14px rgba(88,196,240,0.9),
+        0 0 28px rgba(88,196,240,0.55),
+        0 0 56px rgba(88,196,240,0.28);
+    animation:seam-crackle 2.8s ease-in-out infinite;
+}
+@keyframes seam-crackle{
+    0%,100%{opacity:0.82;filter:blur(0.4px)}
+    50%{opacity:1;filter:blur(0)}
+}
 .status-strip .line{
     flex:1;height:2px;position:relative;overflow:visible;
     background:linear-gradient(90deg,transparent,rgba(88,196,240,0.2),rgba(154,106,186,0.3),rgba(232,200,64,0.4));
@@ -216,7 +272,10 @@
 }
 
 /* EL KARTLARI */
-.hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none}
+.hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none;
+    background:linear-gradient(0deg, rgba(145,42,45,0.88) 0%, rgba(128,38,48,0.72) 50%, rgba(88,32,48,0.32) 85%, transparent 100%);
+    border-top:1px solid rgba(200,88,70,0.45);
+    box-shadow:0 -2px 14px rgba(200,60,50,0.22), inset 0 1px 0 rgba(255,130,100,0.12)}
 .hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto;touch-action:manipulation}
 .hand-card:first-child{margin-left:0}
 .hand-card:hover{transform:translateY(-1.8vw) scale(1.18) rotate(0deg)!important;border-color:rgba(154,106,186,0.55);box-shadow:0 0 20px rgba(154,106,186,0.35),0 10px 28px rgba(0,0,0,0.6);z-index:30}
