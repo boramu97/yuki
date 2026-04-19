@@ -624,8 +624,9 @@ JADEN_DECK = [
     33875961,   # Dark Catapulter
     42256406,   # Card Blocker
     57116033,   # Winged Kuriboh
+    98585345,   # Winged Kuriboh LV10
 
-    # Spell Cards (13)
+    # Spell Cards (17)
     24094653,   # Polymerization
     18511384,   # Fusion Recovery
     45906428,   # Miracle Fusion
@@ -639,6 +640,10 @@ JADEN_DECK = [
     53046408,   # Emergency Provisions
     14772491,   # Common Soul
     55144522,   # Pot of Greed
+    77565204,   # Future Fusion
+    37630732,   # Power Bond
+    25573054,   # Transcendent Wings (Quick-Play)
+    54283059,   # Parallel World Fusion
 
     # Trap Cards (7)
     22020907,   # Hero Signal
