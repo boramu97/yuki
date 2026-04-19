@@ -26,13 +26,64 @@
 .player-info.opponent .p-emblem{border-color:#6a3a8a;color:var(--purple);box-shadow:0 0 10px rgba(120,60,160,0.2)}
 .p-details{display:flex;flex-direction:column}
 .player-name{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--text-dim)}
-.player-lp{font-size:26px;font-weight:400;line-height:1;letter-spacing:2px}
-.player-info.self .player-lp{color:var(--gold)}
-.player-info.opponent .player-lp{color:var(--purple)}
-.lp-bar{width:100%;height:2px;background:var(--bg-hud);margin-top:3px;border-radius:1px}
-.lp-bar-fill{height:100%;border-radius:1px;transition:width 0.8s ease;width:100%}
-.player-info.self .lp-bar-fill{background:linear-gradient(90deg,#8a6a10,var(--gold))}
-.player-info.opponent .lp-bar-fill{background:linear-gradient(90deg,#4a2a6a,var(--purple))}
+/* LP dijital display — Kaiba-tech HUD ekrani */
+.player-lp{
+    font-size:26px;font-weight:700;line-height:1;letter-spacing:3px;
+    font-family:'Georgia','Segoe UI',serif;font-variant-numeric:tabular-nums;
+    padding:4px 14px;margin-top:2px;
+    background:linear-gradient(180deg, rgba(8,6,12,0.92) 0%, rgba(18,14,22,0.95) 100%);
+    border-radius:3px;
+    display:inline-block;
+    position:relative;
+}
+.player-info.self .player-lp{
+    color:#ffdc60;
+    border:1px solid rgba(232,200,64,0.45);
+    box-shadow:
+        inset 0 0 10px rgba(232,200,64,0.18),
+        0 0 14px rgba(232,200,64,0.22);
+    text-shadow:0 0 8px rgba(232,200,64,0.75), 0 0 16px rgba(232,200,64,0.35);
+}
+.player-info.opponent .player-lp{
+    color:#c8a0ec;
+    border:1px solid rgba(154,106,186,0.5);
+    box-shadow:
+        inset 0 0 10px rgba(154,106,186,0.22),
+        0 0 14px rgba(154,106,186,0.28);
+    text-shadow:0 0 8px rgba(154,106,186,0.8), 0 0 16px rgba(154,106,186,0.4);
+}
+.player-lp.lp-hit{animation:lp-hit-flash 0.6s ease-out}
+@keyframes lp-hit-flash{
+    0%,100%{filter:brightness(1)}
+    30%{filter:brightness(1.6) saturate(1.4)}
+}
+
+/* LP bar — dijital tub/health bar */
+.lp-bar{
+    width:100%;height:5px;margin-top:4px;border-radius:1px;
+    background:linear-gradient(180deg, rgba(5,4,8,0.95), rgba(12,10,16,0.95));
+    border:1px solid rgba(88,196,240,0.2);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,0.6);
+    overflow:hidden;position:relative;
+}
+.lp-bar-fill{
+    height:100%;border-radius:0;transition:width 0.8s ease;width:100%;
+    position:relative;
+}
+.lp-bar-fill::after{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,
+        transparent 0 4px,
+        rgba(255,255,255,0.12) 4px, rgba(255,255,255,0.12) 5px);
+}
+.player-info.self .lp-bar-fill{
+    background:linear-gradient(90deg,#b8860b,#ffdc60,#ffea80);
+    box-shadow:0 0 8px rgba(232,200,64,0.55);
+}
+.player-info.opponent .lp-bar-fill{
+    background:linear-gradient(90deg,#6a3a9a,#b088d8,#d4a8ec);
+    box-shadow:0 0 8px rgba(154,106,186,0.55);
+}
 .turn-info{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;border-left:1px solid var(--gold-border);border-right:1px solid var(--gold-border)}
 .btn-surrender{background:none;border:1px solid rgba(180,60,60,0.3);color:#c47070;font-size:0.75rem;padding:2px 8px;border-radius:4px;cursor:pointer;margin-top:2px;transition:all 0.15s}
 .btn-surrender:hover{border-color:#e06060;color:#e06060;background:rgba(180,60,60,0.1)}
@@ -43,10 +94,39 @@
 
 /* FIELD WRAP — full width */
 .field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
-.opp-hand-area{display:flex;justify-content:center;padding:0 8vw;height:3.4vw;overflow:hidden;flex-shrink:0;
-    background:linear-gradient(180deg, rgba(42,56,105,0.78) 0%, rgba(55,72,125,0.85) 50%, rgba(48,62,108,0.88) 100%);
-    border-bottom:1px solid rgba(88,196,240,0.45);
-    box-shadow:0 2px 14px rgba(40,80,160,0.28), inset 0 1px 0 rgba(120,180,230,0.15)}
+/* Rakip konsol — kavisli balkon, 3D derinlik, Kaiba tech paneli */
+.opp-hand-area{
+    display:flex;justify-content:center;padding:14px 8vw 4px;
+    height:auto;min-height:4.6vw;overflow:visible;flex-shrink:0;
+    position:relative;z-index:15;
+    /* Yarim daire alt kenar */
+    border-radius:0 0 50% 50% / 0 0 100% 100%;
+    /* Metalik mavi Kaiba-tech panel gradient */
+    background:
+        radial-gradient(ellipse 60% 100% at 50% 0%, rgba(85,120,180,0.4), transparent 70%),
+        linear-gradient(180deg,
+            rgba(26,38,78,0.95) 0%,
+            rgba(40,56,108,0.95) 25%,
+            rgba(52,72,132,0.92) 55%,
+            rgba(42,58,112,0.88) 85%,
+            rgba(25,38,78,0.7) 100%);
+    /* Cyan LED alt kenar + derinlik */
+    border-bottom:2px solid rgba(140,220,255,0.55);
+    box-shadow:
+        inset 0 2px 8px rgba(120,180,230,0.18),
+        inset 0 -4px 14px rgba(10,16,35,0.55),
+        0 4px 18px rgba(40,80,160,0.32),
+        0 0 24px rgba(88,196,240,0.14);
+}
+/* Mavi tech panel detaylari — minik LED'ler */
+.opp-hand-area::before{
+    content:'';position:absolute;left:8vw;right:8vw;bottom:4px;height:2px;pointer-events:none;
+    background:linear-gradient(90deg,
+        transparent, rgba(140,220,255,0.85) 20%,
+        rgba(200,240,255,1) 50%,
+        rgba(140,220,255,0.85) 80%, transparent);
+    box-shadow:0 0 6px rgba(88,196,240,0.9), 0 0 12px rgba(88,196,240,0.4);
+}
 .opp-hand-card{width:4vw;height:5.6vw;border-radius:2px;margin-left:-0.8vw;flex-shrink:0;overflow:hidden;background:#b8860b;border:1px solid #d4a820}
 .opp-hand-card:first-child{margin-left:0}
 .opp-hand-card .card-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
@@ -149,12 +229,15 @@
     text-shadow:0 0 8px rgba(232,200,64,0.15);
 }
 
-/* KART SLOTU — arka plan gorselinin slot cerceveleri uzerinde neredeyse saydam */
+/* KART SLOTU — Kaiba-tech cyan frame + kose bracketleri */
 .card-slot{
-    width:7.5vw;height:10.2vw;border-radius:4px;position:relative;
-    background:transparent;
-    border:1px solid transparent;
-    transition:border-color 0.3s,box-shadow 0.3s;
+    width:7.5vw;height:10.2vw;border-radius:3px;position:relative;
+    background:linear-gradient(180deg, rgba(18,26,45,0.42), rgba(12,18,32,0.52));
+    border:1px solid rgba(88,196,240,0.42);
+    transition:border-color 0.3s,box-shadow 0.3s,background 0.3s;
+    box-shadow:
+        inset 0 0 10px rgba(88,196,240,0.1),
+        0 0 6px rgba(88,196,240,0.08);
 }
 /* Rotating rune circle — outer */
 .card-slot::before{
@@ -212,19 +295,46 @@
 .card-menu button:hover{background:rgba(180,80,30,0.3);border-color:var(--gold);color:var(--gold)}
 .card-menu button.primary{background:rgba(180,80,30,0.25);border-color:rgba(200,100,40,0.5);color:#e8a040;font-weight:600}
 
-/* MEZARLIK ZONE (button) */
+/* MEZARLIK ZONE — Kaiba-tech kare frame, mor glow, digital */
 .grave-zone{
-    width:5vw;height:10.2vw;border-radius:4px;position:relative;cursor:pointer;
-    background:rgba(40,10,50,0.5);
-    border:1px solid rgba(154,106,186,0.2);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    transition:border-color 0.3s,box-shadow 0.3s;
+    width:5vw;height:10.2vw;border-radius:3px;position:relative;cursor:pointer;
+    background:linear-gradient(180deg,
+        rgba(48,14,62,0.78) 0%,
+        rgba(28,10,44,0.85) 40%,
+        rgba(40,12,56,0.82) 100%);
+    border:1px solid rgba(154,106,186,0.42);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    transition:border-color 0.3s,box-shadow 0.3s,background 0.3s;
     margin-left:1.2vw;flex-shrink:0;
     padding:0;font:inherit;color:inherit;touch-action:manipulation;
+    box-shadow:
+        inset 0 0 12px rgba(154,106,186,0.22),
+        inset 0 1px 0 rgba(200,150,220,0.2),
+        0 0 10px rgba(154,106,186,0.18);
+}
+/* Mezarlik ust kenar LED aksan */
+.grave-zone::before{
+    content:'';position:absolute;top:2px;left:10%;right:10%;height:1px;
+    background:linear-gradient(90deg, transparent, rgba(200,150,220,0.8), transparent);
+    box-shadow:0 0 4px rgba(154,106,186,0.7);
+    pointer-events:none;
+}
+/* Alt kenar LED */
+.grave-zone::after{
+    content:'';position:absolute;bottom:2px;left:10%;right:10%;height:1px;
+    background:linear-gradient(90deg, transparent, rgba(200,150,220,0.8), transparent);
+    box-shadow:0 0 4px rgba(154,106,186,0.7);
+    pointer-events:none;
 }
 .grave-zone:hover{
-    border-color:rgba(154,106,186,0.5);
-    box-shadow:0 0 16px rgba(154,106,186,0.15);
+    border-color:rgba(200,150,220,0.75);
+    background:linear-gradient(180deg,
+        rgba(65,22,80,0.88) 0%,
+        rgba(40,16,56,0.92) 40%,
+        rgba(55,18,70,0.88) 100%);
+    box-shadow:
+        inset 0 0 16px rgba(200,150,220,0.3),
+        0 0 22px rgba(154,106,186,0.4);
 }
 .grave-icon{font-size:1.6vw;opacity:0.6;filter:grayscale(0.3)}
 .grave-count{
@@ -272,10 +382,52 @@
 }
 
 /* EL KARTLARI */
-.hand-area{display:flex;justify-content:center;padding:0 10vw 4px;position:relative;z-index:20;pointer-events:none;
-    background:linear-gradient(0deg, rgba(145,42,45,0.88) 0%, rgba(128,38,48,0.72) 50%, rgba(88,32,48,0.32) 85%, transparent 100%);
-    border-top:1px solid rgba(200,88,70,0.45);
-    box-shadow:0 -2px 14px rgba(200,60,50,0.22), inset 0 1px 0 rgba(255,130,100,0.12)}
+/* Oyuncu konsolu — kavisli balkon, 3D kirmizi Kaiba-tech paneli */
+.hand-area{
+    display:flex;justify-content:center;align-items:flex-end;
+    padding:10px 10vw 20px;position:relative;z-index:20;pointer-events:none;
+    min-height:12vw;
+    /* Yarim daire ust kenar */
+    border-radius:50% 50% 0 0 / 22% 22% 0 0;
+    /* Derin metalik kirmizi konsol gradient */
+    background:
+        radial-gradient(ellipse 60% 100% at 50% 100%, rgba(200,80,75,0.4), transparent 70%),
+        linear-gradient(0deg,
+            rgba(95,22,28,1) 0%,
+            rgba(140,38,44,0.98) 22%,
+            rgba(175,55,55,0.95) 55%,
+            rgba(190,72,65,0.75) 85%,
+            rgba(175,60,55,0.3) 100%);
+    /* Cyan LED ust kenar + derinlik */
+    border-top:2px solid rgba(140,220,255,0.55);
+    box-shadow:
+        inset 0 -2px 8px rgba(255,140,110,0.22),
+        inset 0 4px 14px rgba(30,10,18,0.55),
+        0 -4px 18px rgba(200,70,55,0.3),
+        0 0 24px rgba(88,196,240,0.14);
+}
+/* Konsol LED detay bandi */
+.hand-area::before{
+    content:'';position:absolute;left:10vw;right:10vw;top:4px;height:2px;pointer-events:none;
+    background:linear-gradient(90deg,
+        transparent, rgba(140,220,255,0.85) 20%,
+        rgba(200,240,255,1) 50%,
+        rgba(140,220,255,0.85) 80%, transparent);
+    box-shadow:0 0 6px rgba(88,196,240,0.9), 0 0 12px rgba(88,196,240,0.4);
+    z-index:1;
+}
+/* Yan panel rombus dekorasyonu — Kaiba tech hissi */
+.hand-area::after{
+    content:'';position:absolute;inset:auto 0 0 0;height:30%;pointer-events:none;
+    background:
+        repeating-linear-gradient(45deg,
+            transparent 0 20px,
+            rgba(10,5,8,0.3) 20px, rgba(10,5,8,0.3) 21px,
+            transparent 21px 40px);
+    opacity:0.4;
+    mask:linear-gradient(90deg, rgba(0,0,0,0.8) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%);
+    z-index:0;
+}
 .hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto;touch-action:manipulation}
 .hand-card:first-child{margin-left:0}
 .hand-card:hover{transform:translateY(-1.8vw) scale(1.18) rotate(0deg)!important;border-color:rgba(154,106,186,0.55);box-shadow:0 0 20px rgba(154,106,186,0.35),0 10px 28px rgba(0,0,0,0.6);z-index:30}
