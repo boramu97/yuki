@@ -38,7 +38,10 @@ from server.ai_player import ai_respond
 
 
 # Sistem scriptleri — düello oluşturulduktan sonra yüklenmeli
-SYSTEM_SCRIPTS = ["constant.lua", "utility.lua"]
+# archetype_setcode_constants.lua: SET_ELEMENTAL_HERO vb. arketip setcode sabitleri.
+# Yuklenmezse Oversoul gibi `IsSetCard(SET_ELEMENTAL_HERO)` cagiran kartlar nil ile
+# filtreleyip hic target bulamaz → aktifletirilemez.
+SYSTEM_SCRIPTS = ["constant.lua", "utility.lua", "archetype_setcode_constants.lua"]
 
 # Global kaynaklar (sunucu başına bir tane)
 _core: OCGCore | None = None
@@ -117,7 +120,6 @@ class DuelManager:
         self._last_select_msg: dict | None = None  # RETRY icin son SELECT
         self._last_select_type: int = 0  # Son SELECT mesaj tipi (bot için)
         self._pending_summon: dict | None = None  # Çağrı tamamlanınca stat sorgusu için
-        self._last_hand_snapshot: dict[int, list[int]] = {0: [], 1: []}
         self._bot_retry_count: int = 0  # Ayni SELECT icin consecutive retry
         self._bot_total_stuck: int = 0  # Tum retry toplami (reset non-retry msg'de)
 
@@ -456,9 +458,10 @@ class DuelManager:
                 if msg_type in (MSG_EQUIP, MSG_UNEQUIP, MSG_CHAIN_END):
                     await self._refresh_all_mzone_stats()
 
-            # Her mesaj sonunda el snapshot'ini motordan sorgula ve degismisse client'lara esitle
-            # (event-driven takibin uretemedigi desync'leri otomatik duzeltir)
-            await self._sync_hands_if_changed()
+            # Her mesaj sonunda motor otoriteli el snapshot'ini broadcast et.
+            # Unconditional — client event-driven mutasyonlari driftleyebildigi icin
+            # degisim kontrolu yapmiyoruz; motor tek dogruluk kaynagi.
+            await self._sync_hands()
 
     async def _send_card_stat_update(self, controller, location, sequence):
         """Kartin guncel ATK/DEF degerini motordan sorgulayip istemcilere gonderir."""
@@ -549,19 +552,19 @@ class DuelManager:
             off += data_size
         return codes
 
-    async def _sync_hands_if_changed(self):
-        """Her iki oyuncunun elini motordan sorgula, degismisse client'lara gonder.
+    async def _sync_hands(self):
+        """Her iki oyuncunun elini motordan sorgulayip client'lara broadcast eder.
 
-        Bu, el state'ini event-driven takip yerine motor otoritesinden esitler.
-        Desync yaratan tum edge case'leri (elden aktivasyon, flip efektleri vs.)
-        otomatik duzeltir.
+        Motor tek dogruluk kaynagi. Her mesaj sonrasi cagrilir, kosulsuz gonderilir.
+        Client event-driven mutasyonlari (MSG_CHAINING elden silme, summonCard splice
+        vs.) drift yaratabilir; unconditional broadcast bu driftleri her tick'te
+        duzeltir — desync fiziksel olarak imkansiz.
+
+        Payload tiny (5-10 int/taraf); bandwidth ihmal edilebilir.
         """
         if not self._duel:
             return
         hands = {0: self._query_hand(0), 1: self._query_hand(1)}
-        if hands == self._last_hand_snapshot:
-            return
-        self._last_hand_snapshot = {0: list(hands[0]), 1: list(hands[1])}
 
         my_info = {
             0: [self._hand_card_info(c) for c in hands[0]],
