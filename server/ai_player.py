@@ -50,6 +50,27 @@ from server.ai_profiles import (
 
 def _pack_i32(v): return struct.pack("<i", v)
 
+# MSG_ANNOUNCE_CARD icin populer Yu-Gi-Oh kart kodlari.
+# Retry rotation ile denenir; filter DSL yorumlanmaz — motor reddederse
+# sonraki kart denenir, 15+ retry'da deadlock escape devreye girer.
+_ANNOUNCE_CARD_CANDIDATES = [
+    46986414,   # Dark Magician
+    89631139,   # Blue-Eyes White Dragon
+    74677422,   # Red-Eyes B. Dragon
+    40640057,   # Kuriboh
+    83764718,   # Monster Reborn
+    24094653,   # Polymerization
+    44095762,   # Mirror Force
+    55144522,   # Pot of Greed
+    5318639,    # Magic Cylinder
+    5405694,    # Dark Hole
+    12580477,   # Raigeki
+    21844576,   # Elemental HERO Avian
+    64788463,   # Jinzo
+    71413901,   # Summoned Skull
+    89943723,   # Elemental HERO Neos
+]
+
 # Bot karar logu — YUKI_AI_TRACE=1 ile acilir. Debug amacli;
 # production'da kapali tutulmali (ama log satir sayisi kucuk).
 _AI_TRACE = os.environ.get("YUKI_AI_TRACE", "0") == "1"
@@ -135,7 +156,7 @@ def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0, bot_name
         return _select_counter(msg)
 
     if msg_type == MSG_SELECT_SUM:
-        return _select_sum(msg)
+        return _select_sum(msg, retry_attempt)
 
     if msg_type == MSG_SELECT_UNSELECT_CARD:
         return _select_unselect(msg, retry_attempt, bot_name)
@@ -156,7 +177,10 @@ def _ai_respond_inner(msg_type: int, msg: dict, retry_attempt: int = 0, bot_name
         return build_announce_attrib_response(1)
 
     if msg_type == MSG_ANNOUNCE_CARD:
-        return build_announce_card_response(0)
+        # Motor filter DSL (opcodes) gonderir; filter VM karmasik, bypass edilir.
+        # Retry rotation ile populer kart kodlarini dene — birisi filter'a uyarsa kabul.
+        idx = min(retry_attempt, len(_ANNOUNCE_CARD_CANDIDATES) - 1)
+        return build_announce_card_response(_ANNOUNCE_CARD_CANDIDATES[idx])
 
     if msg_type == MSG_ANNOUNCE_NUMBER:
         return build_announce_number_response(0)
@@ -451,17 +475,57 @@ def _select_counter(msg: dict) -> bytes:
     return build_counter_response(counts)
 
 
-def _select_sum(msg: dict) -> bytes:
-    """Toplam seçimi — minimum kartla hedef toplamı tuttur."""
-    cards = msg.get("must_cards", []) + msg.get("selectable_cards", [])
-    min_count = msg.get("min", 1)
+def _select_sum(msg: dict, retry_attempt: int = 0) -> bytes:
+    """Toplam seçimi — Valkyrion / ritual gibi sum-based fusion icin.
 
-    if not cards:
-        return build_sum_response([0])
+    Param: her kartin "value" (genelde level).
+    mode=0: must + selected param'lari toplami == target_sum
+    mode=1: must + selected param'lari toplami >= target_sum
 
-    # Basit: minimum sayıda kart seç
-    count = min(min_count, len(cards))
-    return build_sum_response(list(range(count)))
+    Retry'da kademeli olarak farkli kombinasyonlar dene (n'inci match skip).
+    """
+    from itertools import combinations
+    must = msg.get("must_cards", []) or []
+    sel = msg.get("selectable_cards", []) or []
+    target = msg.get("target_sum", 0)
+    mode = msg.get("mode", 0)
+    min_c = max(0, msg.get("min", 1))
+    max_c = max(min_c, msg.get("max", len(sel)) or len(sel))
+
+    must_indices = list(range(len(must)))
+    must_sum = sum((c.get("param", 0) or 0) for c in must)
+
+    if not sel:
+        return build_sum_response(must_indices if must else [0])
+
+    # Target 0 ise min_c kadar kart sec (ritual'de ayni-seviye gereksinimi olmayabilir)
+    if target <= 0:
+        k = min(max(min_c, 1), len(sel))
+        return build_sum_response(must_indices + list(range(len(must), len(must) + k)))
+
+    # Subset-sum arama — target'i karsilayan tum kombinasyonlari topla
+    n = len(sel)
+    candidates: list[list[int]] = []
+    for k in range(max(min_c, 1), min(max_c, n) + 1):
+        for combo in combinations(range(n), k):
+            s = sum((sel[i].get("param", 0) or 0) for i in combo)
+            total = s + must_sum
+            if (mode == 0 and total == target) or (mode != 0 and total >= target):
+                candidates.append(list(combo))
+            if len(candidates) > 30:
+                break
+        if len(candidates) > 30:
+            break
+
+    if candidates:
+        # Retry offset ile farkli kombinasyon dene
+        pick = candidates[retry_attempt % len(candidates)]
+        indices = must_indices + [len(must) + i for i in pick]
+        return build_sum_response(indices)
+
+    # Eslestiren kombinasyon yok — fallback: must + minimum selectable
+    k = min(max(min_c, 1), n)
+    return build_sum_response(must_indices + list(range(len(must), len(must) + k)))
 
 
 def _select_unselect(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
