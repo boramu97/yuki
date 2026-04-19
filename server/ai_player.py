@@ -273,57 +273,72 @@ def _idle_cmd(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
 
 
 def _battle_cmd(msg: dict, retry_attempt: int = 0) -> bytes:
-    """Savaş Fazı kararları — rakip sahası kontrol edilerek.
+    """Savaş Fazı kararları — attacker rotation + activate fallback + end son care.
 
-    Attacker-first policy: en yuksek ATK'li saldirgan + direct saldiri > guvenli hedef.
-    Zayif canavar guclu rakibe intihar ettirilmez.
+    Retry'da motor reddettikce sirayla:
+      1. En guclu attacker (direct > can_win hedef)
+      2. 2., 3., ... attacker (bazi attack reddedilmis olabilir)
+      3. Activate (her aktivatable efekt)
+      4. End (son care — forced battle yoksa kabul edilir)
     """
     attackable = msg.get("attackable", [])
     activatable = msg.get("activatable", [])
     opp_monsters = msg.get("opponent_monsters", [])
 
-    # Retry — saldiri/aktivasyon reddedildi, end'e kac
-    if retry_attempt >= 1:
-        return build_battle_cmd_response("end")
-
     def _can_win(my_atk: int) -> bool:
-        """my_atk bu attacker ile yenilebilir en az bir hedef var mi?"""
         for m in opp_monsters:
             pos = m.get("position", 0)
-            if pos & 0x1:  # Yuz yukari ATK — ATK karsilastir
+            if pos & 0x1:
                 if my_atk > (m.get("atk", 0) or 0):
                     return True
-            elif pos & 0x4:  # Yuz yukari DEF
+            elif pos & 0x4:
                 if my_atk > (m.get("def", 0) or 0):
                     return True
-            elif pos & 0x8:  # Yuz asagi — makul ATK ile dene
+            elif pos & 0x8:
                 if my_atk >= 1500:
                     return True
         return False
 
-    if attackable:
-        # En yuksek ATK'li attacker'dan basla — zayif canavar intihar etmesin
-        indexed = sorted(
-            enumerate(attackable),
-            key=lambda x: x[1].get("card_atk", 0) or 0,
-            reverse=True,
-        )
-        for i, card in indexed:
-            my_atk = card.get("card_atk", 0) or 0
-            direct = card.get("direct_attackable", False)
-            if direct:
-                return build_battle_cmd_response("attack", i)
-            if my_atk <= 0:
-                continue
-            if _can_win(my_atk):
-                return build_battle_cmd_response("attack", i)
+    # Olasi aksiyonlari oncelik sirasiyla topla — retry rotation icin
+    actions: list[tuple[str, int]] = []
 
-    # Efekt aktifleştir
-    if activatable:
-        return build_battle_cmd_response("activate", 0)
+    # 1-3: Attacker rotation (direct > can_win > rest)
+    indexed = sorted(
+        enumerate(attackable),
+        key=lambda x: x[1].get("card_atk", 0) or 0,
+        reverse=True,
+    )
+    direct_attackers: list[int] = []
+    win_attackers: list[int] = []
+    other_attackers: list[int] = []
+    for i, card in indexed:
+        my_atk = card.get("card_atk", 0) or 0
+        if card.get("direct_attackable", False):
+            direct_attackers.append(i)
+        elif my_atk > 0 and _can_win(my_atk):
+            win_attackers.append(i)
+        else:
+            other_attackers.append(i)
+    for i in direct_attackers:
+        actions.append(("attack", i))
+    for i in win_attackers:
+        actions.append(("attack", i))
+    # Diğerleri (intihar riski) — retry rotation'da son çare olarak
+    for i in other_attackers:
+        actions.append(("attack", i))
 
-    # Saldırmaya değmez — savaşı bitir
-    return build_battle_cmd_response("end")
+    # 4: Activate fallback — her efekti dene
+    for i, _ in enumerate(activatable):
+        actions.append(("activate", i))
+
+    # 5: End (son care)
+    actions.append(("end", 0))
+
+    idx = min(retry_attempt, len(actions) - 1)
+    action, arg = actions[idx]
+    if action == "end":
+        return build_battle_cmd_response("end")
+    return build_battle_cmd_response(action, arg)
 
 
 def _chain(msg: dict, retry_attempt: int = 0) -> bytes:
