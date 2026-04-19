@@ -16,81 +16,124 @@
             #1e1a2a 65%, #2a1e25 100%);
 }
 
-/* HUD */
-.duel-hud{display:flex;justify-content:space-between;align-items:center;height:54px;background:var(--bg-hud);border-bottom:1px solid var(--gold-border);padding:0 20px;flex-shrink:0}
-.player-info{display:flex;align-items:center;gap:14px;flex:1}
-.player-info.self{justify-content:flex-end}
-.p-emblem{width:38px;height:38px;border:2px solid;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;transform:rotate(45deg);flex-shrink:0}
-.p-emblem>span{transform:rotate(-45deg)}
-.player-info.self .p-emblem{border-color:#b8960a;color:var(--gold);box-shadow:0 0 10px var(--gold-glow)}
-.player-info.opponent .p-emblem{border-color:#6a3a8a;color:var(--purple);box-shadow:0 0 10px rgba(120,60,160,0.2)}
-.p-details{display:flex;flex-direction:column}
-.player-name{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--text-dim)}
-/* LP dijital display — Kaiba-tech HUD ekrani */
-.player-lp{
-    font-size:26px;font-weight:700;line-height:1;letter-spacing:3px;
-    font-family:'Georgia','Segoe UI',serif;font-variant-numeric:tabular-nums;
-    padding:4px 14px;margin-top:2px;
-    background:linear-gradient(180deg, rgba(8,6,12,0.92) 0%, rgba(18,14,22,0.95) 100%);
+/* Konsol icin HUD bilgi panelleri — balkonlarda (eski .duel-hud yerine) */
+.console-info{
+    position:absolute;top:50%;transform:translateY(-50%);
+    padding:6px 12px;min-width:120px;z-index:6;pointer-events:auto;
+    background:linear-gradient(180deg, rgba(6,5,10,0.88) 0%, rgba(16,12,20,0.92) 100%);
     border-radius:3px;
-    display:inline-block;
-    position:relative;
-}
-.player-info.self .player-lp{
-    color:#ffdc60;
-    border:1px solid rgba(232,200,64,0.45);
     box-shadow:
-        inset 0 0 10px rgba(232,200,64,0.18),
-        0 0 14px rgba(232,200,64,0.22);
-    text-shadow:0 0 8px rgba(232,200,64,0.75), 0 0 16px rgba(232,200,64,0.35);
+        inset 0 0 10px rgba(88,196,240,0.1),
+        inset 0 1px 0 rgba(200,220,255,0.08),
+        0 3px 10px rgba(0,0,0,0.55);
 }
-.player-info.opponent .player-lp{
-    color:#c8a0ec;
-    border:1px solid rgba(154,106,186,0.5);
+.console-info-left{left:1.5vw}
+.console-info-right{right:1.5vw;text-align:right}
+
+/* Oyuncu tarafi altin tema */
+.console-info.self{
+    border:1px solid rgba(232,200,64,0.42);
     box-shadow:
-        inset 0 0 10px rgba(154,106,186,0.22),
-        0 0 14px rgba(154,106,186,0.28);
-    text-shadow:0 0 8px rgba(154,106,186,0.8), 0 0 16px rgba(154,106,186,0.4);
+        inset 0 0 10px rgba(232,200,64,0.14),
+        inset 0 1px 0 rgba(255,220,130,0.1),
+        0 3px 10px rgba(0,0,0,0.55),
+        0 0 14px rgba(232,200,64,0.18);
 }
-.player-lp.lp-hit{animation:lp-hit-flash 0.6s ease-out}
-@keyframes lp-hit-flash{
-    0%,100%{filter:brightness(1)}
-    30%{filter:brightness(1.6) saturate(1.4)}
+/* Rakip tarafi mor tema */
+.console-info.opp{
+    border:1px solid rgba(154,106,186,0.48);
+    box-shadow:
+        inset 0 0 10px rgba(154,106,186,0.2),
+        inset 0 1px 0 rgba(220,180,240,0.12),
+        0 3px 10px rgba(0,0,0,0.55),
+        0 0 14px rgba(154,106,186,0.24);
 }
 
-/* LP bar — dijital tub/health bar */
-.lp-bar{
-    width:100%;height:5px;margin-top:4px;border-radius:1px;
+/* Kullanıcı adı */
+.console-name{
+    font-size:0.62rem;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--text-dim);margin-bottom:2px;
+    font-family:'Segoe UI',sans-serif;
+}
+.console-info.self .console-name{color:rgba(232,200,64,0.85)}
+.console-info.opp .console-name{color:rgba(200,150,220,0.85)}
+
+/* LP dijital display */
+.console-lp{
+    font-size:1.35rem;font-weight:700;line-height:1;letter-spacing:2.5px;
+    font-family:'Georgia','Segoe UI',serif;font-variant-numeric:tabular-nums;
+}
+.console-info.self .console-lp{
+    color:#ffdc60;
+    text-shadow:0 0 8px rgba(232,200,64,0.8), 0 0 14px rgba(232,200,64,0.4);
+}
+.console-info.opp .console-lp{
+    color:#c8a0ec;
+    text-shadow:0 0 8px rgba(154,106,186,0.85), 0 0 14px rgba(154,106,186,0.4);
+}
+.console-lp.lp-hit{animation:lp-hit-flash 0.6s ease-out}
+@keyframes lp-hit-flash{
+    0%,100%{filter:brightness(1)}
+    30%{filter:brightness(1.7) saturate(1.45)}
+}
+
+/* LP bar — scanline fill */
+.console-lp-bar{
+    width:110px;height:4px;margin-top:4px;border-radius:1px;
     background:linear-gradient(180deg, rgba(5,4,8,0.95), rgba(12,10,16,0.95));
-    border:1px solid rgba(88,196,240,0.2);
-    box-shadow:inset 0 1px 3px rgba(0,0,0,0.6);
+    border:1px solid rgba(88,196,240,0.22);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.65);
     overflow:hidden;position:relative;
 }
-.lp-bar-fill{
-    height:100%;border-radius:0;transition:width 0.8s ease;width:100%;
-    position:relative;
+.console-lp-fill{
+    height:100%;width:100%;transition:width 0.8s ease;position:relative;
 }
-.lp-bar-fill::after{
+.console-lp-fill::after{
     content:'';position:absolute;inset:0;
     background:repeating-linear-gradient(90deg,
         transparent 0 4px,
-        rgba(255,255,255,0.12) 4px, rgba(255,255,255,0.12) 5px);
+        rgba(255,255,255,0.14) 4px, rgba(255,255,255,0.14) 5px);
 }
-.player-info.self .lp-bar-fill{
+.console-info.self .console-lp-fill{
     background:linear-gradient(90deg,#b8860b,#ffdc60,#ffea80);
-    box-shadow:0 0 8px rgba(232,200,64,0.55);
+    box-shadow:0 0 8px rgba(232,200,64,0.6);
 }
-.player-info.opponent .lp-bar-fill{
+.console-info.opp .console-lp-fill{
     background:linear-gradient(90deg,#6a3a9a,#b088d8,#d4a8ec);
-    box-shadow:0 0 8px rgba(154,106,186,0.55);
+    box-shadow:0 0 8px rgba(154,106,186,0.6);
 }
-.turn-info{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;border-left:1px solid var(--gold-border);border-right:1px solid var(--gold-border)}
-.btn-surrender{background:none;border:1px solid rgba(180,60,60,0.3);color:#c47070;font-size:0.75rem;padding:2px 8px;border-radius:4px;cursor:pointer;margin-top:2px;transition:all 0.15s}
-.btn-surrender:hover{border-color:#e06060;color:#e06060;background:rgba(180,60,60,0.1)}
-#turn-counter{font-size:20px;color:var(--gold);letter-spacing:4px}
-#phase-name{font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
-.lp-hit{animation:lp-flash 0.6s ease-out}
-@keyframes lp-flash{0%{filter:brightness(2);transform:scale(1.15)}100%{filter:brightness(1);transform:scale(1)}}
+
+/* Tur + faz göstergesi (opp taraf sag) */
+.console-turn{
+    font-size:0.62rem;letter-spacing:3px;color:var(--text-dim);
+    text-transform:uppercase;
+}
+.console-turn span{
+    color:var(--gold);font-size:1rem;margin-left:5px;
+    font-family:'Georgia',serif;letter-spacing:2px;
+    text-shadow:0 0 6px rgba(232,200,64,0.5);
+}
+.console-phase{
+    font-size:0.7rem;letter-spacing:1.5px;color:var(--gold);
+    font-style:italic;margin-top:3px;text-transform:uppercase;
+}
+
+/* Pes Et butonu (self taraf sag) */
+.btn-surrender{
+    font-size:0.62rem;padding:6px 12px;letter-spacing:2.5px;
+    background:linear-gradient(180deg, rgba(120,30,30,0.82) 0%, rgba(80,20,20,0.9) 100%);
+    color:#ffb8a0;border:1px solid rgba(220,100,80,0.55);
+    border-radius:3px;cursor:pointer;
+    box-shadow:inset 0 0 8px rgba(220,100,80,0.22), 0 2px 6px rgba(0,0,0,0.55);
+    font-family:'Segoe UI',sans-serif;font-weight:700;
+    transition:background 0.2s,border-color 0.2s,box-shadow 0.2s;
+    touch-action:manipulation;
+}
+.btn-surrender:hover{
+    background:linear-gradient(180deg, rgba(180,50,50,0.92) 0%, rgba(120,30,30,0.95) 100%);
+    border-color:rgba(255,140,110,0.85);
+    box-shadow:inset 0 0 10px rgba(220,100,80,0.35), 0 0 12px rgba(220,80,60,0.3);
+}
 
 /* FIELD WRAP — full width */
 .field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}

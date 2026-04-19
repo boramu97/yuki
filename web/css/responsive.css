@@ -113,15 +113,17 @@
     .coll-main[data-active-tab="deck"] .coll-sidebar { display: flex; }
 
     /* --- DUELLO HUD --- */
-    .duel-hud { height: 42px; padding: 0 8px; gap: 4px; }
-    .player-info { gap: 6px; }
-    .p-emblem { width: 28px; height: 28px; font-size: 12px; }
-    .player-name { font-size: 9px; letter-spacing: 1px; }
-    .player-lp { font-size: 18px; letter-spacing: 1px; }
-    .turn-info { padding: 0 10px; }
-    #turn-counter { font-size: 14px; letter-spacing: 2px; }
-    #phase-name { font-size: 8px; }
-    .btn-surrender { font-size: 0.6rem; padding: 1px 5px; }
+    /* Konsol HUD bilgi panelleri — mobil portrait */
+    .console-info { padding: 4px 8px; min-width: 90px; }
+    .console-info-left { left: 2vw; }
+    .console-info-right { right: 2vw; }
+    .console-name { font-size: 0.52rem; letter-spacing: 1.5px; }
+    .console-lp { font-size: 1.05rem; letter-spacing: 1.5px; }
+    .console-lp-bar { width: 75px; height: 3px; }
+    .console-turn { font-size: 0.52rem; letter-spacing: 1.5px; }
+    .console-turn span { font-size: 0.85rem; }
+    .console-phase { font-size: 0.58rem; letter-spacing: 1px; }
+    .btn-surrender { font-size: 0.55rem; padding: 4px 8px; letter-spacing: 1.5px; }
 
     /* --- DUELLO SAHA --- */
     .field { padding: 2px 2px; gap: 2px; }
@@ -253,9 +255,9 @@
 @media (max-width: 400px) {
     .card-slot { width: 17vw; height: 23.2vw; }
     .hand-card { width: 14vw; height: 19.2vw; margin-left: -2.5vw; }
-    .duel-hud { height: 38px; }
-    .player-lp { font-size: 15px; }
-    .p-emblem { width: 24px; height: 24px; font-size: 10px; }
+    .console-info { padding: 3px 6px; min-width: 78px; }
+    .console-lp { font-size: 0.95rem; }
+    .console-lp-bar { width: 60px; }
     .stage { padding: 4px 6px; min-width: 60px; }
     .stage-name { font-size: 0.55rem; }
     .adv-grid { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
@@ -265,13 +267,17 @@
 /* --- Yatay telefon (landscape) --- */
 @media (max-height: 500px) and (orientation: landscape) {
     /* HUD: ultra-kompakt */
-    .duel-hud { height: 30px; padding: 0 8px; }
-    .player-lp { font-size: 13px; }
-    .player-name { font-size: 7px; }
-    .p-emblem { display: none; }
-    .turn-info { padding: 0 8px; }
-    #turn-counter { font-size: 11px; }
-    .btn-surrender { display: none; }
+    /* Landscape mobil — konsol HUD ultra kompakt */
+    .console-info { padding: 2px 6px; min-width: 72px; }
+    .console-info-left { left: 0.8vh; }
+    .console-info-right { right: 0.8vh; }
+    .console-name { font-size: 0.48rem; }
+    .console-lp { font-size: 0.88rem; }
+    .console-lp-bar { width: 55px; height: 3px; }
+    .console-turn { font-size: 0.48rem; }
+    .console-turn span { font-size: 0.72rem; }
+    .console-phase { font-size: 0.52rem; }
+    .btn-surrender { font-size: 0.48rem; padding: 2px 6px; }
 
     /* Saha: vh birimleri (yukseklik kisitli) */
     .field { padding: 1px 8vw; gap: 1px; }

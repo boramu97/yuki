@@ -6,19 +6,19 @@
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#0a0810">
     <title>Yuki — Duel</title>
-    <link rel="stylesheet" href="css/base.css?v=16">
-    <link rel="stylesheet" href="css/auth.css?v=16">
-    <link rel="stylesheet" href="css/home.css?v=16">
-    <link rel="stylesheet" href="css/lobby.css?v=16">
-    <link rel="stylesheet" href="css/duel.css?v=16">
-    <link rel="stylesheet" href="css/motor-panel.css?v=16">
-    <link rel="stylesheet" href="css/float-panels.css?v=16">
-    <link rel="stylesheet" href="css/card-popup.css?v=16">
-    <link rel="stylesheet" href="css/collection.css?v=16">
-    <link rel="stylesheet" href="css/adventures.css?v=16">
-    <link rel="stylesheet" href="css/battle-city.css?v=16">
-    <link rel="stylesheet" href="css/result.css?v=16">
-    <link rel="stylesheet" href="css/responsive.css?v=16">
+    <link rel="stylesheet" href="css/base.css?v=17">
+    <link rel="stylesheet" href="css/auth.css?v=17">
+    <link rel="stylesheet" href="css/home.css?v=17">
+    <link rel="stylesheet" href="css/lobby.css?v=17">
+    <link rel="stylesheet" href="css/duel.css?v=17">
+    <link rel="stylesheet" href="css/motor-panel.css?v=17">
+    <link rel="stylesheet" href="css/float-panels.css?v=17">
+    <link rel="stylesheet" href="css/card-popup.css?v=17">
+    <link rel="stylesheet" href="css/collection.css?v=17">
+    <link rel="stylesheet" href="css/adventures.css?v=17">
+    <link rel="stylesheet" href="css/battle-city.css?v=17">
+    <link rel="stylesheet" href="css/result.css?v=17">
+    <link rel="stylesheet" href="css/responsive.css?v=17">
 </head>
 <body>
     <!-- GİRİŞ / KAYIT -->
@@ -100,33 +100,8 @@
         <div class="loader"></div>
     </div>
 
-    <!-- DUELLO — Full width + floating panels -->
+    <!-- DUELLO — Full width + floating panels, HUD yok (konsollarda goruntulenir) -->
     <div id="duel" class="screen">
-        <!-- HUD -->
-        <div class="duel-hud">
-            <div class="player-info opponent">
-                <div class="p-emblem"><span id="opp-initial">R</span></div>
-                <div class="p-details">
-                    <span class="player-name" id="opp-name">Rakip</span>
-                    <span class="player-lp" id="opp-lp">8000</span>
-                    <div class="lp-bar"><div class="lp-bar-fill" id="opp-lp-bar"></div></div>
-                </div>
-            </div>
-            <div class="turn-info">
-                <span id="turn-counter">I</span>
-                <span id="phase-name">-</span>
-                <button id="btn-surrender" class="btn-surrender">Pes Et</button>
-            </div>
-            <div class="player-info self">
-                <div class="p-details" style="text-align:right">
-                    <span class="player-name" id="self-name">Sen</span>
-                    <span class="player-lp" id="self-lp">8000</span>
-                    <div class="lp-bar"><div class="lp-bar-fill" id="self-lp-bar"></div></div>
-                </div>
-                <div class="p-emblem"><span id="self-initial">S</span></div>
-            </div>
-        </div>
-
         <!-- Full width field wrap -->
         <div class="field-wrap">
             <!-- Floating: Aktif Efektler (sol) -->
@@ -159,8 +134,18 @@
                 </div>
             </div>
 
-            <!-- Rakip El (kapali kartlar) -->
-            <div class="opp-hand-area" id="opp-hand"></div>
+            <!-- Rakip El + konsol bilgi panelleri -->
+            <div class="opp-hand-area" id="opp-hand">
+                <div class="console-info console-info-left opp" aria-label="Rakip bilgisi">
+                    <div class="console-name" id="opp-name">Rakip</div>
+                    <div class="console-lp" id="opp-lp">8000</div>
+                    <div class="console-lp-bar"><div class="console-lp-fill" id="opp-lp-bar"></div></div>
+                </div>
+                <div class="console-info console-info-right opp" aria-label="Tur durumu">
+                    <div class="console-turn">TUR <span id="turn-counter">I</span></div>
+                    <div class="console-phase" id="phase-name" aria-live="polite">-</div>
+                </div>
+            </div>
 
             <!-- SAHA -->
             <div class="field">
@@ -213,8 +198,17 @@
                 </div>
             </div>
 
-            <!-- El -->
-            <div class="hand-area" id="hand"></div>
+            <!-- El + oyuncu konsol bilgi panelleri -->
+            <div class="hand-area" id="hand">
+                <div class="console-info console-info-left self" aria-label="Oyuncu bilgisi">
+                    <div class="console-name" id="self-name">Sen</div>
+                    <div class="console-lp" id="self-lp">8000</div>
+                    <div class="console-lp-bar"><div class="console-lp-fill" id="self-lp-bar"></div></div>
+                </div>
+                <div class="console-info console-info-right self" aria-label="Eylem paneli">
+                    <button id="btn-surrender" class="btn-surrender" type="button">PES ET</button>
+                </div>
+            </div>
 
             <!-- Mobil drawer — log/efekt tab sistemi -->
             <div class="mobile-drawer" id="mobile-drawer">
@@ -586,11 +580,11 @@
         <button id="btn-back-home-result" class="btn primary" style="font-size:1.1rem;padding:12px 32px">Ana Sayfaya Don</button>
     </div>
 
-    <script src="js/websocket.js?v=16"></script>
-    <script src="js/field.js?v=16"></script>
-    <script src="js/ui.js?v=16"></script>
-    <script src="js/collection.js?v=16"></script>
-    <script src="js/touch.js?v=16"></script>
-    <script src="js/app.js?v=16"></script>
+    <script src="js/websocket.js?v=17"></script>
+    <script src="js/field.js?v=17"></script>
+    <script src="js/ui.js?v=17"></script>
+    <script src="js/collection.js?v=17"></script>
+    <script src="js/touch.js?v=17"></script>
+    <script src="js/app.js?v=17"></script>
 </body>
 </html>

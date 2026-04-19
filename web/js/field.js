@@ -154,7 +154,8 @@ const Field = {
     _renderOppHand() {
         const el=document.getElementById("opp-hand"); if(!el) return;
         const hand=this.cards[this.oppTeam()]?.hand||[];
-        el.innerHTML="";
+        // Sadece kart elementlerini sil — console-info panel'leri koru
+        el.querySelectorAll(".opp-hand-card").forEach(c=>c.remove());
         hand.forEach(()=>{
             const div=document.createElement("div");
             div.className="opp-hand-card";
@@ -209,7 +210,9 @@ const Field = {
     },
 
     _renderHand() {
-        const el=document.getElementById("hand"); if(!el) return; el.innerHTML="";
+        const el=document.getElementById("hand"); if(!el) return;
+        // Sadece kart elementlerini sil — console-info panel'leri koru
+        el.querySelectorAll(".hand-card").forEach(c=>c.remove());
         this.cards[this.myTeam].hand.forEach((card,i) => {
             const div=document.createElement("div");
             div.className="hand-card"; div.dataset.index=i; div.dataset.code=card.code;
