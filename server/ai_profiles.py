@@ -75,6 +75,44 @@ PROFILES: dict[str, dict] = {
     # Elemental HERO Neos + Polymerization
     "Syrus":    {"style": "combo",      "key_cards": [], "fodder_cards": []},
     "Ancient Gear": {"style": "control", "key_cards": [], "fodder_cards": []},
+
+    # --- Battle City macerasi ---
+    "Seeker": {
+        "style": "stall",
+        # Exodia parcalari key — asla tribute/discard etme
+        "key_cards": [33396948, 70903634, 7902349, 8124921, 44519536, 58604027],
+        "fodder_cards": [13039848, 31812496],  # Giant Soldier of Stone, Stone Statue
+    },
+    "Strings": {
+        "style": "combo",
+        "key_cards": [10000020, 31709826],  # Slifer, Revival Jam
+        "fodder_cards": [46821314, 73216412],  # Humanoid Slime, Worm Drake (Norm)
+    },
+    "Arkana": {
+        "style": "tactical",
+        "key_cards": [46986414, 12686296],  # Dark Magician, Chaos Ruler
+        "fodder_cards": [83011277, 97534104],  # Mystic Tomato/Potato
+    },
+    "UmbraLumis": {
+        "style": "combo",
+        "key_cards": [48948935, 49064413],  # Des Gardius, The Masked Beast
+        "fodder_cards": [13676474, 86569121, 11761845, 14531242],
+    },
+    "YamiBakura": {
+        "style": "stall",
+        "key_cards": [31829185, 94212438, 16625614],  # Necrofear, Destiny Board, Dark Sanctuary
+        "fodder_cards": [5434080, 32541773, 68049471, 17358176, 4920010, 99030164],
+    },
+    "KaibaBC": {
+        "style": "aggressive",
+        "key_cards": [89631139, 10000000, 17444133],  # BEWD, Obelisk, Kaiser Sea Horse
+        "fodder_cards": [30113682, 86281779, 14898066, 24611934],
+    },
+    "YamiMarik": {
+        "style": "control",
+        "key_cards": [10000010, 102380, 48948935],  # Ra, Lava Golem, Des Gardius
+        "fodder_cards": [13676474, 86569121, 38445524, 59546797],
+    },
 }
 
 

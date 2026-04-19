@@ -6,18 +6,19 @@
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#0a0810">
     <title>Yuki — Duel</title>
-    <link rel="stylesheet" href="css/base.css?v=11">
-    <link rel="stylesheet" href="css/auth.css?v=11">
-    <link rel="stylesheet" href="css/home.css?v=11">
-    <link rel="stylesheet" href="css/lobby.css?v=11">
-    <link rel="stylesheet" href="css/duel.css?v=11">
-    <link rel="stylesheet" href="css/motor-panel.css?v=11">
-    <link rel="stylesheet" href="css/float-panels.css?v=11">
-    <link rel="stylesheet" href="css/card-popup.css?v=11">
-    <link rel="stylesheet" href="css/collection.css?v=11">
-    <link rel="stylesheet" href="css/adventures.css?v=11">
-    <link rel="stylesheet" href="css/result.css?v=11">
-    <link rel="stylesheet" href="css/responsive.css?v=11">
+    <link rel="stylesheet" href="css/base.css?v=12">
+    <link rel="stylesheet" href="css/auth.css?v=12">
+    <link rel="stylesheet" href="css/home.css?v=12">
+    <link rel="stylesheet" href="css/lobby.css?v=12">
+    <link rel="stylesheet" href="css/duel.css?v=12">
+    <link rel="stylesheet" href="css/motor-panel.css?v=12">
+    <link rel="stylesheet" href="css/float-panels.css?v=12">
+    <link rel="stylesheet" href="css/card-popup.css?v=12">
+    <link rel="stylesheet" href="css/collection.css?v=12">
+    <link rel="stylesheet" href="css/adventures.css?v=12">
+    <link rel="stylesheet" href="css/battle-city.css?v=12">
+    <link rel="stylesheet" href="css/result.css?v=12">
+    <link rel="stylesheet" href="css/responsive.css?v=12">
 </head>
 <body>
     <!-- GİRİŞ / KAYIT -->
@@ -275,6 +276,24 @@
                     </div>
                 </div>
             </button>
+
+            <button class="mode-tile tile-battlecity" id="banner-battle-city">
+                <div class="tile-art"></div>
+                <div class="tile-overlay"></div>
+                <div class="tile-shine"></div>
+                <div class="tile-content">
+                    <div class="tile-meta">Turnuva · 4 + 3 Aşama</div>
+                    <div class="tile-name">Battle City</div>
+                    <div class="tile-desc">Domino sokaklarında Nadir Avcıları yen, 4 Locator topla — Kaiba'nın hava gemisinde finale çık.</div>
+                    <div class="tile-footer">
+                        <div class="tile-progress">
+                            <div class="progress-label" id="bc-progress-label">Locator</div>
+                            <div class="progress-bar"><div class="progress-fill" id="bc-progress-fill" style="width:0%"></div></div>
+                        </div>
+                        <span class="tile-cta">Gir</span>
+                    </div>
+                </div>
+            </button>
         </div>
 
         <div class="secondary-label">— Yakında Gelecek —</div>
@@ -383,6 +402,51 @@
             <span class="leg-item leg-shop"><span class="leg-sym">✦</span> Dükkân</span>
             <span class="leg-sep">◆</span>
             <span class="leg-item leg-boss"><span class="leg-sym">♛</span> Final</span>
+        </div>
+    </div>
+
+    <!-- MACERALAR — Battle City (4 serbest + 3 linear) -->
+    <div id="battle-city-screen" class="screen bc-screen">
+        <div class="adv-header">
+            <button class="btn" id="btn-back-battle-city">&larr; Maceralar</button>
+            <h1 class="adv-title">Battle City</h1>
+            <span class="bc-locator-badge" id="bc-locator-badge" aria-live="polite">
+                <span class="bc-locator-icon" aria-hidden="true">🔑</span>
+                <span class="bc-locator-text"><span id="bc-locator-count">0</span> / 4 Locator</span>
+            </span>
+        </div>
+
+        <div class="bc-layout">
+            <!-- Üst: Domino Sokakları (4 tile serbest sıra) -->
+            <section class="bc-phase bc-phase-streets">
+                <header class="bc-phase-header">
+                    <span class="bc-phase-tag">I. ETAP</span>
+                    <h2 class="bc-phase-title">Domino Sokakları</h2>
+                    <p class="bc-phase-sub">Dört Nadir Avcı — sıra senin, her zafer bir Locator.</p>
+                </header>
+                <div class="bc-street-grid" id="bc-street-grid">
+                    <!-- JS doldurur -->
+                </div>
+            </section>
+
+            <!-- Gate ayırıcı -->
+            <div class="bc-gate" id="bc-gate">
+                <span class="bc-gate-line"></span>
+                <span class="bc-gate-label" id="bc-gate-label">🔒 Battle Ship — 4/4 Locator gerekli</span>
+                <span class="bc-gate-line"></span>
+            </div>
+
+            <!-- Alt: Battle Ship (3 linear node) -->
+            <section class="bc-phase bc-phase-blimp" id="bc-phase-blimp">
+                <header class="bc-phase-header">
+                    <span class="bc-phase-tag">II. ETAP</span>
+                    <h2 class="bc-phase-title">Battle Ship</h2>
+                    <p class="bc-phase-sub">KaibaCorp hava gemisinde — zafer ya da yıkım.</p>
+                </header>
+                <div class="bc-blimp-path" id="bc-blimp-path">
+                    <!-- JS doldurur -->
+                </div>
+            </section>
         </div>
     </div>
 
@@ -514,11 +578,11 @@
         <button id="btn-back-home-result" class="btn primary" style="font-size:1.1rem;padding:12px 32px">Ana Sayfaya Don</button>
     </div>
 
-    <script src="js/websocket.js?v=11"></script>
-    <script src="js/field.js?v=11"></script>
-    <script src="js/ui.js?v=11"></script>
-    <script src="js/collection.js?v=11"></script>
-    <script src="js/touch.js?v=11"></script>
-    <script src="js/app.js?v=11"></script>
+    <script src="js/websocket.js?v=12"></script>
+    <script src="js/field.js?v=12"></script>
+    <script src="js/ui.js?v=12"></script>
+    <script src="js/collection.js?v=12"></script>
+    <script src="js/touch.js?v=12"></script>
+    <script src="js/app.js?v=12"></script>
 </body>
 </html>

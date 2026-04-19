@@ -1,0 +1,260 @@
+/* ==========================================================================
+   BATTLE CITY MACERASI — 4 serbest + 3 linear + locator counter
+   ========================================================================== */
+
+/* Ana menü tile (Maceralar ekrani) */
+.mode-tile.tile-battlecity .tile-art {
+    background:
+        radial-gradient(ellipse at 50% 40%, rgba(88,196,240,0.22), transparent 60%),
+        linear-gradient(180deg, rgba(26,16,40,0.75) 0%, rgba(12,8,18,0.9) 100%),
+        url('../img/battle-city-bg.png') center/cover no-repeat;
+    filter: saturate(1.1);
+}
+.mode-tile.tile-battlecity .tile-overlay {
+    background: linear-gradient(0deg, rgba(13,11,20,0.95) 0%, rgba(13,11,20,0.35) 45%, transparent 80%);
+}
+
+/* Full-screen Battle City ekrani */
+#battle-city-screen.bc-screen {
+    flex-direction: column; align-items: stretch; overflow-y: auto;
+    position: relative;
+    background:
+        linear-gradient(180deg, rgba(10,8,14,0.72) 0%, rgba(10,8,14,0.55) 50%, rgba(10,8,14,0.85) 100%),
+        url('../img/battle-city-bg.png') center top / cover no-repeat fixed;
+}
+#battle-city-screen::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(88,196,240,0.12), transparent 55%),
+        radial-gradient(ellipse at 50% 100%, rgba(154,106,186,0.18), transparent 55%);
+}
+#battle-city-screen > * { position: relative; z-index: 1; }
+
+/* Locator badge (header sag) */
+.bc-locator-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 999px;
+    background: linear-gradient(180deg, rgba(232,200,64,0.18), rgba(180,140,60,0.1));
+    border: 1px solid rgba(200,170,60,0.5);
+    color: var(--gold); font-size: 0.82rem; letter-spacing: 0.15em;
+    box-shadow: 0 0 20px rgba(232,200,64,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.bc-locator-icon { font-size: 1.15rem; filter: drop-shadow(0 0 6px rgba(232,200,64,0.5)); }
+
+/* Layout */
+.bc-layout {
+    display: flex; flex-direction: column; flex: 1;
+    padding: 24px 5vw 80px; gap: 28px;
+    max-width: 1400px; margin: 0 auto; width: 100%;
+}
+
+.bc-phase { display: flex; flex-direction: column; gap: 20px; }
+.bc-phase-header { text-align: center; margin-bottom: 8px; }
+.bc-phase-tag {
+    display: inline-block; padding: 3px 14px;
+    font-size: 0.58rem; letter-spacing: 0.42em; text-indent: 0.42em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid rgba(200,170,60,0.4); border-radius: 2px;
+    background: rgba(13,11,14,0.6); margin-bottom: 10px;
+}
+.bc-phase-title {
+    font-size: clamp(1.6rem, 3.2vw, 2.3rem); font-weight: 300;
+    letter-spacing: 0.12em; text-indent: 0.12em; color: var(--text);
+    text-shadow: 0 0 30px rgba(232,200,64,0.18);
+}
+.bc-phase-sub {
+    font-style: italic; font-size: 0.9rem; color: var(--text-dim);
+    margin-top: 6px; max-width: 540px; margin-inline: auto;
+}
+
+/* Domino Sokaklari — 2x2 tile grid */
+.bc-street-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+    max-width: 760px; width: 100%; margin: 0 auto;
+}
+.bc-street-tile {
+    position: relative; aspect-ratio: 7/5;
+    border-radius: 10px; cursor: pointer; overflow: hidden;
+    border: none; padding: 0; font-family: inherit; color: inherit;
+    background: linear-gradient(180deg, rgba(22,18,32,0.92), rgba(10,8,14,0.98));
+    box-shadow: 0 14px 32px -10px rgba(0,0,0,0.85);
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1), box-shadow 0.3s;
+    isolation: isolate; touch-action: manipulation;
+}
+.bc-street-tile::before {
+    content: ''; position: absolute; inset: -1px; border-radius: 11px; padding: 1px;
+    background: conic-gradient(from 140deg, rgba(232,200,64,0.85) 0deg, rgba(180,140,60,0.4) 90deg, rgba(60,45,25,0.4) 180deg, rgba(180,140,60,0.4) 270deg, rgba(232,200,64,0.85) 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0.75; pointer-events: none; transition: opacity 0.3s, filter 0.3s;
+}
+.bc-street-tile:hover:not(.done):not(.locked) {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 42px -10px rgba(0,0,0,0.9), 0 0 30px rgba(232,200,64,0.18);
+}
+.bc-street-tile:hover:not(.done):not(.locked)::before { opacity: 1; filter: brightness(1.2); }
+
+.bc-street-tile-art {
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(ellipse at 35% 40%, rgba(154,106,186,0.2), transparent 65%),
+        linear-gradient(180deg, rgba(26,16,40,0.5) 0%, rgba(10,8,14,0.95) 100%);
+}
+.bc-street-tile-content {
+    position: absolute; left: 16px; right: 16px; bottom: 14px;
+    display: flex; flex-direction: column; gap: 4px; text-align: left;
+}
+.bc-street-tile-tag {
+    font-size: 0.54rem; letter-spacing: 0.35em; text-indent: 0.35em;
+    text-transform: uppercase; color: rgba(232,200,64,0.75);
+}
+.bc-street-tile-name {
+    font-size: clamp(1.05rem, 2vw, 1.3rem); color: var(--text);
+    font-weight: 500; letter-spacing: 0.04em;
+}
+.bc-street-tile-sub {
+    font-style: italic; font-size: 0.72rem; color: var(--text-dim);
+    line-height: 1.4; max-height: 2.5em; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.bc-street-tile-reward {
+    margin-top: 6px; font-size: 0.62rem; letter-spacing: 0.2em;
+    color: var(--gold); text-transform: uppercase;
+}
+
+/* Tamamlanan tile */
+.bc-street-tile.done { opacity: 0.65; cursor: default; filter: saturate(0.55); }
+.bc-street-tile.done::before { background: conic-gradient(from 140deg, rgba(92,184,92,0.8) 0deg, rgba(60,140,60,0.4) 180deg, rgba(92,184,92,0.8) 360deg); }
+.bc-street-tile.done .bc-street-tile-name { color: rgba(140,220,140,0.75); }
+.bc-street-tile-badge {
+    position: absolute; top: 10px; right: 10px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #7bd07b, #5cb85c); color: #052008;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.05rem;
+    box-shadow: 0 0 16px rgba(92,184,92,0.5);
+    border: 2px solid #0d0b0e; z-index: 3;
+}
+
+/* Gate */
+.bc-gate {
+    display: flex; align-items: center; gap: 14px;
+    padding: 4px 20px; max-width: 1000px; margin: 0 auto;
+}
+.bc-gate-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,170,60,0.45), transparent); }
+.bc-gate-label {
+    font-size: 0.72rem; letter-spacing: 0.28em; text-indent: 0.28em;
+    text-transform: uppercase; color: var(--text-dim); font-style: italic;
+    padding: 4px 12px;
+}
+.bc-gate.open .bc-gate-label { color: var(--gold); }
+.bc-gate.open .bc-gate-line {
+    background: linear-gradient(90deg, transparent, rgba(232,200,64,0.8), transparent);
+}
+
+/* Battle Ship faz */
+.bc-phase-blimp.locked .bc-blimp-path {
+    filter: grayscale(0.9) blur(2px); opacity: 0.38; pointer-events: none;
+}
+
+.bc-blimp-path {
+    display: flex; justify-content: center; align-items: center;
+    gap: clamp(40px, 8vw, 90px); padding: 30px 20px 50px;
+    position: relative;
+}
+.bc-blimp-path::before {
+    content: ''; position: absolute; left: 20%; right: 20%; top: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(232,200,64,0) 0%, rgba(232,200,64,0.55) 20%, rgba(232,200,64,0.55) 80%, rgba(232,200,64,0) 100%);
+    transform: translateY(-30px);
+}
+
+.bc-blimp-node {
+    position: relative; width: 110px; height: 110px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; border: none; padding: 0; background: transparent;
+    color: inherit; font-family: inherit;
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1);
+    isolation: isolate; touch-action: manipulation;
+    --n-rim: rgba(180,140,60,0.55);
+    --n-rim-hi: rgba(232,200,64,0.95);
+}
+.bc-blimp-node::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; padding: 2px;
+    background: conic-gradient(from 140deg, var(--n-rim-hi) 0deg, var(--n-rim) 90deg, rgba(60,45,25,0.4) 180deg, var(--n-rim) 270deg, var(--n-rim-hi) 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+}
+.bc-blimp-node::after {
+    content: ''; position: absolute; inset: 3px; border-radius: 50%;
+    background:
+        radial-gradient(ellipse 60% 40% at 50% 12%, rgba(255,255,255,0.1), transparent 55%),
+        radial-gradient(circle at 35% 32%, rgba(40,30,45,0.95) 0%, rgba(14,10,18,0.98) 65%);
+    z-index: -1;
+}
+.bc-blimp-node:hover:not(.done):not(.locked) {
+    transform: translateY(-3px) scale(1.04);
+}
+
+.bc-blimp-node-icon { font-size: 2.1rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); transform: translateY(-3px); }
+.bc-blimp-node-label {
+    position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%);
+    font-size: 0.64rem; letter-spacing: 0.28em; text-indent: 0.28em;
+    color: var(--text); white-space: nowrap; padding: 5px 14px;
+    background: linear-gradient(180deg, #161117, #0d0b0e);
+    border: 1px solid rgba(180,140,60,0.35); border-radius: 2px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    text-transform: uppercase;
+}
+.bc-blimp-node-sub {
+    position: absolute; top: calc(100% + 40px); left: 50%; transform: translateX(-50%);
+    font-size: 0.68rem; font-style: italic; color: var(--text-muted);
+    white-space: nowrap;
+}
+.bc-blimp-node.done { --n-rim: rgba(92,184,92,0.5); --n-rim-hi: rgba(140,220,140,0.85); opacity: 0.78; cursor: default; }
+.bc-blimp-node.locked { opacity: 0.38; cursor: not-allowed; filter: grayscale(0.7); }
+.bc-blimp-node.current {
+    --n-rim: rgba(232,200,64,0.65); --n-rim-hi: rgba(255,230,150,1);
+    box-shadow: 0 12px 26px -6px rgba(0,0,0,0.75), 0 0 40px -6px rgba(232,200,64,0.55);
+}
+.bc-blimp-node.current::before { animation: rim-shine 2.4s ease-in-out infinite; }
+
+/* Boss (Marik) */
+.bc-blimp-node.boss {
+    width: 140px; height: 140px;
+    --n-rim: rgba(224,80,64,0.55); --n-rim-hi: rgba(255,120,100,1);
+    box-shadow: 0 16px 36px -10px rgba(0,0,0,0.85), 0 0 50px rgba(224,80,64,0.35);
+}
+.bc-blimp-node.boss .bc-blimp-node-icon { font-size: 2.8rem; }
+.bc-blimp-node.boss .bc-blimp-node-label {
+    font-size: 0.75rem; color: #e05040; border-color: rgba(224,80,64,0.55);
+    background: transparent; box-shadow: none;
+}
+
+.bc-blimp-node-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #7bd07b, #5cb85c); color: #052008;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem;
+    box-shadow: 0 0 14px rgba(92,184,92,0.55); border: 2px solid #0d0b0e; z-index: 3;
+}
+
+/* Mobil responsive */
+@media (max-width: 768px) {
+    .bc-layout { padding: 16px 12px 60px; gap: 20px; }
+    .bc-street-grid { gap: 14px; }
+    .bc-street-tile { aspect-ratio: 6/5; }
+    .bc-street-tile-name { font-size: 1rem; }
+    .bc-street-tile-sub { font-size: 0.66rem; -webkit-line-clamp: 2; }
+    .bc-blimp-path { gap: 20px; padding: 20px 10px 40px; flex-wrap: wrap; }
+    .bc-blimp-node { width: 88px; height: 88px; }
+    .bc-blimp-node-icon { font-size: 1.6rem; }
+    .bc-blimp-node-label { font-size: 0.54rem; padding: 4px 8px; }
+    .bc-blimp-node-sub { display: none; }
+    .bc-blimp-node.boss { width: 108px; height: 108px; }
+    .bc-blimp-node.boss .bc-blimp-node-icon { font-size: 2.1rem; }
+    .bc-locator-badge { font-size: 0.7rem; padding: 6px 10px; }
+    .bc-phase-title { font-size: 1.4rem; }
+    .bc-phase-sub { font-size: 0.78rem; }
+}

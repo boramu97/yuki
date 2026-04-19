@@ -62,6 +62,9 @@ from server.decks import (
     YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
     JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
     INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
+    # Battle City bot desteleri
+    SEEKER_DECK, STRINGS_DECK, ARKANA_DECK, UMBRA_LUMIS_DECK,
+    YAMI_BAKURA_DECK, KAIBA_BATTLECITY_DECK, YAMI_MARIK_DECK,
 )
 import random as _random
 from server.ocg_binding import (
@@ -90,6 +93,14 @@ BOT_DECKS = {
     "Rex": REX_RAPTOR_DECK,
     "Pegasus": PEGASUS_DECK,
     "Jaden": JADEN_DECK,
+    # Battle City
+    "Seeker": SEEKER_DECK,
+    "Strings": STRINGS_DECK,
+    "Arkana": ARKANA_DECK,
+    "UmbraLumis": UMBRA_LUMIS_DECK,
+    "YamiBakura": YAMI_BAKURA_DECK,
+    "KaibaBC": KAIBA_BATTLECITY_DECK,
+    "YamiMarik": YAMI_MARIK_DECK,
 }
 
 # --- Macera Tanımları ---
@@ -115,6 +126,34 @@ ADVENTURES = {
             {"type": "boss",    "bot": "Pegasus", "bot_name": "Maximillion Pegasus", "dust": 200, "cards": 5},
         ],
     },
+    "battle_city": {
+        "name": "Battle City",
+        "nodes": [
+            # 4 ön eleme — serbest sırada oynanır (gate=[])
+            {"type": "duel",  "bot": "Seeker",     "bot_name": "Rare Hunter (Seeker)",
+             "subtitle": "Sahte Exodia ile hile yapan Nadir Avcı",
+             "dust": 75, "cards": 1, "locator": 1, "gate": []},
+            {"type": "duel",  "bot": "Strings",    "bot_name": "Strings",
+             "subtitle": "Marik'in zihin kontrolündeki kukla",
+             "dust": 75, "cards": 1, "locator": 1, "gate": []},
+            {"type": "duel",  "bot": "Arkana",     "bot_name": "Arkana (Pandora)",
+             "subtitle": "Karanlık Büyücü ustası",
+             "dust": 75, "cards": 1, "locator": 1, "gate": []},
+            {"type": "duel",  "bot": "UmbraLumis", "bot_name": "Umbra & Lumis",
+             "subtitle": "Maskeli İkili",
+             "dust": 75, "cards": 1, "locator": 1, "gate": []},
+            # Final etabı — 4 locator ile Battle Ship açılır, sonra linear
+            {"type": "duel",  "bot": "YamiBakura", "bot_name": "Yami Bakura",
+             "subtitle": "Binyıl Yüzüğü'nün kara ruhu",
+             "dust": 150, "cards": 2, "gate": [0, 1, 2, 3]},
+            {"type": "duel",  "bot": "KaibaBC",    "bot_name": "Seto Kaiba",
+             "subtitle": "Yarı Final — KaibaCorp hava gemisinde",
+             "dust": 200, "cards": 3, "gate": [4]},
+            {"type": "boss",  "bot": "YamiMarik",  "bot_name": "Yami Marik",
+             "subtitle": "Final — İşigitsuzlu Kral",
+             "dust": 500, "cards": 5, "gate": [5]},
+        ],
+    },
 }
 
 # Global yöneticiler
@@ -136,12 +175,27 @@ def _adv_node(adv_id: str, node_idx: int):
 
 
 def _check_node_available(user_id: int, adv_id: str, node_idx: int) -> str | None:
-    """Node oynanabilir mi? Hata varsa mesaj, yoksa None dondurur."""
+    """Node oynanabilir mi? Hata varsa mesaj, yoksa None dondurur.
+
+    `gate` field'i varsa: belirtilen tum node index'leri tamamlanmis olmali.
+    Yoksa fallback: klasik linear (onceki node tamamlanmis).
+    """
     progress = user_db.get_adventure_progress(user_id, adv_id)
     if node_idx in progress:
         return "Bu asama zaten tamamlandi"
-    if node_idx > 0 and (node_idx - 1) not in progress:
-        return "Onceki asamayi tamamla"
+    adv, node, err = _adv_node(adv_id, node_idx)
+    if err:
+        return err
+    gate = node.get("gate")
+    if gate is not None:
+        # Serbest sira — gate icindeki tum node'lar tamamlanmis olmali
+        missing = [g for g in gate if g not in progress]
+        if missing:
+            return "Bu asama henuz kilitli (gerekli rakipler yenilmedi)"
+    else:
+        # Default linear
+        if node_idx > 0 and (node_idx - 1) not in progress:
+            return "Onceki asamayi tamamla"
     return None
 
 

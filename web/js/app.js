@@ -145,12 +145,19 @@
         UI.showScreen("duel-island-screen");
         try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
     };
+    document.getElementById("banner-battle-city")?.addEventListener("click", async () => {
+        UI.showScreen("battle-city-screen");
+        try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
+    });
     document.getElementById("btn-back-training").onclick = () => {
         UI.showScreen("adventures-screen");
     };
     document.getElementById("btn-back-island").onclick = () => {
         UI.showScreen("adventures-screen");
     };
+    document.getElementById("btn-back-battle-city")?.addEventListener("click", () => {
+        UI.showScreen("adventures-screen");
+    });
 
     document.getElementById("btn-back-collection").onclick = () => {
         UI.showScreen("home-screen");
@@ -274,19 +281,30 @@
 
     // Macera yolu renderer — 9 dugumlu roguelike patika
     WS.on("adventures",(d)=>{
-        const adv=d.adventures?.duel_island;
-        if(!adv) return;
-        const nodes=adv.nodes||[];
-        const completed=adv.completed||[];
-        renderIslandPath(nodes, completed);
-        // Hub tile ilerleme cubugu
-        const hubLbl=document.getElementById("island-progress-label");
-        const hubFill=document.getElementById("island-progress-fill");
-        const total=nodes.length||9;
-        const doneCount=completed.length;
-        const pct=Math.round((doneCount/total)*100);
-        if(hubLbl) hubLbl.textContent = doneCount>=total?"Tamamlandı":`Aşama ${doneCount}/${total}`;
-        if(hubFill) hubFill.style.width = pct+"%";
+        const dAdv=d.adventures?.duel_island;
+        if(dAdv){
+            const nodes=dAdv.nodes||[];
+            const completed=dAdv.completed||[];
+            renderIslandPath(nodes, completed);
+            const hubLbl=document.getElementById("island-progress-label");
+            const hubFill=document.getElementById("island-progress-fill");
+            const total=nodes.length||9;
+            const doneCount=completed.length;
+            const pct=Math.round((doneCount/total)*100);
+            if(hubLbl) hubLbl.textContent = doneCount>=total?"Tamamlandı":`Aşama ${doneCount}/${total}`;
+            if(hubFill) hubFill.style.width = pct+"%";
+        }
+        const bcAdv=d.adventures?.battle_city;
+        if(bcAdv){
+            renderBattleCity(bcAdv.nodes||[], bcAdv.completed||[]);
+            // Hub tile locator ilerleme cubugu (4 locator toplama)
+            const bcLbl=document.getElementById("bc-progress-label");
+            const bcFill=document.getElementById("bc-progress-fill");
+            const locDone=(bcAdv.completed||[]).filter(i=>i<4).length;
+            const bcPct=Math.round((locDone/4)*100);
+            if(bcLbl) bcLbl.textContent = locDone>=4?"Final açık":`Locator ${locDone}/4`;
+            if(bcFill) bcFill.style.width = bcPct+"%";
+        }
     });
 
     // Gizem teklifi geldi — modal'i doldur
@@ -557,6 +575,100 @@
         const pct=Math.round((completed.length/nodes.length)*100);
         if (fill) fill.style.width = pct+"%";
         if (cnt) cnt.textContent = `${completed.length} / ${nodes.length}`;
+    }
+
+    // ===== BATTLE CITY RENDERER =====
+    // 4 serbest tile (street) + 3 linear node (blimp). Locator = tamamlanan street sayisi.
+    const BC_ICONS = {
+        "Seeker": "⚔",
+        "Strings": "🧩",
+        "Arkana": "🎴",
+        "UmbraLumis": "🎭",
+        "YamiBakura": "👻",
+        "KaibaBC": "🐉",
+        "YamiMarik": "👁",
+    };
+    function renderBattleCity(nodes, completed){
+        const doneSet = new Set(completed);
+        // Ön eleme: index 0-3
+        const streetHost = document.getElementById("bc-street-grid");
+        if (streetHost) {
+            streetHost.innerHTML = "";
+            for (let i = 0; i < 4 && i < nodes.length; i++) {
+                const n = nodes[i];
+                const done = doneSet.has(i);
+                const icon = BC_ICONS[n.bot] || "⚔";
+                const cls = "bc-street-tile" + (done ? " done" : "");
+                const html =
+                    `<button class="${cls}" data-node="${i}" type="button">`+
+                        `<div class="bc-street-tile-art"></div>`+
+                        `<div class="bc-street-tile-content">`+
+                            `<div class="bc-street-tile-tag">${icon} Nadir Avcı</div>`+
+                            `<div class="bc-street-tile-name">${n.bot_name || n.bot}</div>`+
+                            `<div class="bc-street-tile-sub">${n.subtitle || ""}</div>`+
+                            `<div class="bc-street-tile-reward">${n.dust || 0} toz · 1 locator</div>`+
+                        `</div>`+
+                        (done ? `<div class="bc-street-tile-badge">✓</div>` : ``)+
+                    `</button>`;
+                streetHost.insertAdjacentHTML("beforeend", html);
+            }
+            streetHost.querySelectorAll(".bc-street-tile:not(.done)").forEach(tile => {
+                const idx = parseInt(tile.dataset.node, 10);
+                tile.addEventListener("click", async () => {
+                    try { await ensureConnected(); } catch(e) { return; }
+                    WS.playAdventure("battle_city", idx);
+                });
+            });
+        }
+
+        // Gate
+        const locDone = completed.filter(i => i < 4).length;
+        const badge = document.getElementById("bc-locator-count");
+        if (badge) badge.textContent = locDone;
+        const gate = document.getElementById("bc-gate");
+        const gateLbl = document.getElementById("bc-gate-label");
+        const blimpPhase = document.getElementById("bc-phase-blimp");
+        const gateOpen = locDone >= 4;
+        if (gate) gate.classList.toggle("open", gateOpen);
+        if (gateLbl) gateLbl.textContent = gateOpen
+            ? "🗝  Battle Ship açıldı — son üç düello"
+            : `🔒 Battle Ship — ${locDone}/4 Locator gerekli`;
+        if (blimpPhase) blimpPhase.classList.toggle("locked", !gateOpen);
+
+        // Battle Ship: 3 linear node (index 4,5,6)
+        const blimpHost = document.getElementById("bc-blimp-path");
+        if (blimpHost) {
+            blimpHost.innerHTML = "";
+            for (let i = 4; i < 7 && i < nodes.length; i++) {
+                const n = nodes[i];
+                const done = doneSet.has(i);
+                const prevDone = i === 4 ? gateOpen : doneSet.has(i - 1);
+                const locked = !prevDone && !done;
+                const isCurrent = !done && !locked;
+                const isBoss = n.type === "boss";
+                const icon = BC_ICONS[n.bot] || (isBoss ? "♛" : "⚔");
+                let cls = "bc-blimp-node";
+                if (isBoss) cls += " boss";
+                if (done) cls += " done";
+                else if (locked) cls += " locked";
+                if (isCurrent) cls += " current";
+                const html =
+                    `<button class="${cls}" data-node="${i}" data-type="${n.type}" type="button" ${locked || done ? "disabled" : ""}>`+
+                        `<span class="bc-blimp-node-icon" aria-hidden="true">${icon}</span>`+
+                        `<span class="bc-blimp-node-label">${n.bot_name || n.bot}</span>`+
+                        (n.subtitle ? `<span class="bc-blimp-node-sub">${n.subtitle}</span>` : ``)+
+                        (done ? `<span class="bc-blimp-node-badge">✓</span>` : ``)+
+                    `</button>`;
+                blimpHost.insertAdjacentHTML("beforeend", html);
+            }
+            blimpHost.querySelectorAll(".bc-blimp-node:not(.locked):not(.done)").forEach(node => {
+                const idx = parseInt(node.dataset.node, 10);
+                node.addEventListener("click", async () => {
+                    try { await ensureConnected(); } catch(e) { return; }
+                    WS.playAdventure("battle_city", idx);
+                });
+            });
+        }
     }
 
     // ===== GİZEM MODAL =====
