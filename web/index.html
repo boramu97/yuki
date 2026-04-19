@@ -6,19 +6,19 @@
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#0a0810">
     <title>Yuki — Duel</title>
-    <link rel="stylesheet" href="css/base.css?v=15">
-    <link rel="stylesheet" href="css/auth.css?v=15">
-    <link rel="stylesheet" href="css/home.css?v=15">
-    <link rel="stylesheet" href="css/lobby.css?v=15">
-    <link rel="stylesheet" href="css/duel.css?v=15">
-    <link rel="stylesheet" href="css/motor-panel.css?v=15">
-    <link rel="stylesheet" href="css/float-panels.css?v=15">
-    <link rel="stylesheet" href="css/card-popup.css?v=15">
-    <link rel="stylesheet" href="css/collection.css?v=15">
-    <link rel="stylesheet" href="css/adventures.css?v=15">
-    <link rel="stylesheet" href="css/battle-city.css?v=15">
-    <link rel="stylesheet" href="css/result.css?v=15">
-    <link rel="stylesheet" href="css/responsive.css?v=15">
+    <link rel="stylesheet" href="css/base.css?v=16">
+    <link rel="stylesheet" href="css/auth.css?v=16">
+    <link rel="stylesheet" href="css/home.css?v=16">
+    <link rel="stylesheet" href="css/lobby.css?v=16">
+    <link rel="stylesheet" href="css/duel.css?v=16">
+    <link rel="stylesheet" href="css/motor-panel.css?v=16">
+    <link rel="stylesheet" href="css/float-panels.css?v=16">
+    <link rel="stylesheet" href="css/card-popup.css?v=16">
+    <link rel="stylesheet" href="css/collection.css?v=16">
+    <link rel="stylesheet" href="css/adventures.css?v=16">
+    <link rel="stylesheet" href="css/battle-city.css?v=16">
+    <link rel="stylesheet" href="css/result.css?v=16">
+    <link rel="stylesheet" href="css/responsive.css?v=16">
 </head>
 <body>
     <!-- GİRİŞ / KAYIT -->
@@ -170,6 +170,10 @@
                         <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
                         <span class="grave-count" id="opp-grave-count">0</span>
                     </button>
+                    <div class="deck-zone" id="opp-deck" aria-label="Rakip destesi" title="Rakip Destesi">
+                        <div class="deck-stack" aria-hidden="true"></div>
+                        <span class="deck-count" id="opp-deck-count">40</span>
+                    </div>
                 </div>
                 <div class="field-row" id="opp-mzone">
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
@@ -191,6 +195,10 @@
                         <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
                         <span class="grave-count" id="self-grave-count">0</span>
                     </button>
+                    <div class="deck-zone" id="self-deck" aria-label="Senin desten" title="Deste">
+                        <div class="deck-stack" aria-hidden="true"></div>
+                        <span class="deck-count" id="self-deck-count">40</span>
+                    </div>
                 </div>
             </div>
 
@@ -578,11 +586,11 @@
         <button id="btn-back-home-result" class="btn primary" style="font-size:1.1rem;padding:12px 32px">Ana Sayfaya Don</button>
     </div>
 
-    <script src="js/websocket.js?v=15"></script>
-    <script src="js/field.js?v=15"></script>
-    <script src="js/ui.js?v=15"></script>
-    <script src="js/collection.js?v=15"></script>
-    <script src="js/touch.js?v=15"></script>
-    <script src="js/app.js?v=15"></script>
+    <script src="js/websocket.js?v=16"></script>
+    <script src="js/field.js?v=16"></script>
+    <script src="js/ui.js?v=16"></script>
+    <script src="js/collection.js?v=16"></script>
+    <script src="js/touch.js?v=16"></script>
+    <script src="js/app.js?v=16"></script>
 </body>
 </html>

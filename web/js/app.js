@@ -239,24 +239,34 @@
     WS.on("hand_sync",(d)=>{
         // Motor otoriteli el snapshot'i — event-driven takipten bagimsiz olarak
         // el state'ini tamamen yeniler. Desync imkansiz hale gelir.
-        if (!d.hands) return;
-        for (const t of ["0","1"]) {
-            const team = +t;
-            const cards = d.hands[t] || [];
-            const h = Field.cards[team].hand;
-            h.length = 0;
-            for (const c of cards) {
-                h.push({
-                    code: c.code || 0,
-                    position: 0,
-                    card_name: c.card_name || "",
-                    card_atk: c.card_atk,
-                    card_def: c.card_def,
-                    card_type: c.card_type || 0,
-                });
+        if (d.hands) {
+            for (const t of ["0","1"]) {
+                const team = +t;
+                const cards = d.hands[t] || [];
+                const h = Field.cards[team].hand;
+                h.length = 0;
+                for (const c of cards) {
+                    h.push({
+                        code: c.code || 0,
+                        position: 0,
+                        card_name: c.card_name || "",
+                        card_atk: c.card_atk,
+                        card_def: c.card_def,
+                        card_type: c.card_type || 0,
+                    });
+                }
             }
+            Field.render();
         }
-        Field.render();
+        // Deste kart sayilari (motor otoriter)
+        if (d.deck_counts) {
+            const selfT = String(Field.myTeam);
+            const oppT = String(1 - Field.myTeam);
+            const sEl = document.getElementById("self-deck-count");
+            const oEl = document.getElementById("opp-deck-count");
+            if (sEl && d.deck_counts[selfT] !== undefined) sEl.textContent = d.deck_counts[selfT];
+            if (oEl && d.deck_counts[oppT] !== undefined) oEl.textContent = d.deck_counts[oppT];
+        }
     });
     WS.on("select",(d)=>{if(d.msg){console.log("[SELECT]",d.msg.name,"type="+d.msg.type,"player="+d.msg.player);UI.handleSelect(d.msg);}});
     WS.on("retry",()=>{UI.log("Gecersiz, tekrar sec!","damage");if(UI.currentSelect)UI.handleSelect(UI.currentSelect)});

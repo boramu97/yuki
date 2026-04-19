@@ -576,6 +576,15 @@ class DuelManager:
             return
         hands = {0: self._query_hand(0), 1: self._query_hand(1)}
 
+        # Deste kart sayilari (motor otoritesi) — UI deck-count badge icin
+        try:
+            deck_counts = {
+                0: int(self._core.query_count(self._duel, 0, LOCATION_DECK)),
+                1: int(self._core.query_count(self._duel, 1, LOCATION_DECK)),
+            }
+        except Exception:
+            deck_counts = {0: 0, 1: 0}
+
         my_info = {
             0: [self._hand_card_info(c) for c in hands[0]],
             1: [self._hand_card_info(c) for c in hands[1]],
@@ -590,7 +599,14 @@ class DuelManager:
                 str(1 - p.team): opp_masked,
             }
             try:
-                await p.send({"action": "hand_sync", "hands": payload})
+                await p.send({
+                    "action": "hand_sync",
+                    "hands": payload,
+                    "deck_counts": {
+                        "0": deck_counts[0],
+                        "1": deck_counts[1],
+                    },
+                })
             except Exception as e:
                 print(f"[HAND_SYNC SEND ERROR] {e}")
 
