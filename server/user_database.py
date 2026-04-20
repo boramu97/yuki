@@ -24,6 +24,9 @@ class User:
 class UserDatabase:
     """SQLite tabanlı kullanıcı veritabanı."""
 
+    # Yeni kullanici basina baslangic toz miktari
+    STARTING_DUST = 1500
+
     def __init__(self, db_path=None):
         self._path = str(db_path or USER_DB_PATH)
         self._conn = sqlite3.connect(self._path)
@@ -39,7 +42,7 @@ class UserDatabase:
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 salt TEXT NOT NULL,
-                dust INTEGER NOT NULL DEFAULT 100,
+                dust INTEGER NOT NULL DEFAULT 1500,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -91,21 +94,50 @@ class UserDatabase:
             pass  # Kolon zaten var
         self._conn.commit()
 
+    @staticmethod
+    def _excluded_card_codes() -> set[int]:
+        """Koleksyona acilmayacak kartlar — sadece bot'un kullandigi unique desteler.
+
+        PEGASUS_DECK'teki Toon/pegasus-ozel kartlar (diger destelerde kullanilmayanlar).
+        Bu kartlar: (1) starter collection'a eklenmez, (2) mystery/shop pool'unda
+        gorunmez, (3) craft edilemez.
+        """
+        from server.decks import (
+            PEGASUS_DECK, YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
+            JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, JADEN_DECK,
+            SEEKER_DECK, STRINGS_DECK, ARKANA_DECK, UMBRA_LUMIS_DECK,
+            YAMI_BAKURA_DECK, KAIBA_BATTLECITY_DECK, YAMI_MARIK_DECK,
+        )
+        others = set()
+        for d in [YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
+                  JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
+                  INSECT_DECK, REX_RAPTOR_DECK, JADEN_DECK,
+                  SEEKER_DECK, STRINGS_DECK, ARKANA_DECK, UMBRA_LUMIS_DECK,
+                  YAMI_BAKURA_DECK, KAIBA_BATTLECITY_DECK, YAMI_MARIK_DECK]:
+            others.update(d)
+        return set(PEGASUS_DECK) - others
+
     def _load_card_pool(self):
-        """Tüm destelerdeki kartları tipine göre gruplar (başlangıç koleksiyonu için)."""
+        """Tüm destelerdeki kartları tipine göre gruplar (başlangıç koleksiyonu için).
+
+        Pegasus destesindeki kartlar haric (bkz. _excluded_card_codes).
+        """
         from server.decks import (
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, JADEN_DECK,
         )
         all_decks = [
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
-            INSECT_DECK, REX_RAPTOR_DECK, PEGASUS_DECK, JADEN_DECK,
+            INSECT_DECK, REX_RAPTOR_DECK, JADEN_DECK,
         ]
         all_codes = set()
         for d in all_decks:
             all_codes.update(d)
+        # Pegasus destesinin benzersiz kartlarini havuzdan cikar
+        all_codes -= self._excluded_card_codes()
 
         card_db = sqlite3.connect(str(CARD_DB_PATH))
         TYPE_SPELL = 0x2
@@ -173,8 +205,8 @@ class UserDatabase:
 
         try:
             cursor = self._conn.execute(
-                "INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)",
-                (username, pw_hash, salt),
+                "INSERT INTO users (username, password_hash, salt, dust) VALUES (?, ?, ?, ?)",
+                (username, pw_hash, salt, self.STARTING_DUST),
             )
             self._conn.commit()
             self._generate_starter_collection(cursor.lastrowid)
@@ -252,6 +284,9 @@ class UserDatabase:
 
     def craft_card(self, user_id: int, code: int) -> tuple[bool, str, int]:
         """Kartı toz ile açar. (başarılı, mesaj, kalan_toz) döner."""
+        # Pegasus destesinin benzersiz kartlari — koleksyona acik degil
+        if code in self._excluded_card_codes():
+            return False, "Bu kart koleksyona acik degil", self.get_dust(user_id)
         # Zaten koleksiyonda mı?
         exists = self._conn.execute(
             "SELECT 1 FROM collections WHERE user_id=? AND card_code=?",
