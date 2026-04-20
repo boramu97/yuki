@@ -674,7 +674,7 @@ class DuelManager:
     def _filter_message(self, msg: dict, viewer_team: int) -> dict:
         """Mesaji oyuncu perspektifine gore filtrele.
 
-        Rakibin elindeki kartlarin kodlarini gizle (0 yap).
+        Rakibin kapali/gizli kartlarinin kod/isim bilgisini gizle.
         """
         name = msg.get("name", "")
 
@@ -691,6 +691,18 @@ class DuelManager:
         if name == "MSG_SHUFFLE_HAND" and msg.get("player") != viewer_team:
             filtered = dict(msg)
             filtered["cards"] = [{"code": 0} for _ in range(msg.get("count", 0))]
+            return filtered
+
+        # MSG_SET: Rakibin set ettigi kartin kod/isim bilgisini gizle
+        # (face-down kartin icerigi rakibe gorunmesin — hamle gecmisi ve render)
+        if name == "MSG_SET" and msg.get("controller") != viewer_team:
+            filtered = dict(msg)
+            filtered["code"] = 0
+            filtered["card_name"] = ""
+            filtered["card_atk"] = 0
+            filtered["card_def"] = 0
+            filtered["card_type"] = 0
+            filtered["card_desc"] = ""
             return filtered
 
         return msg

@@ -414,7 +414,20 @@
         else if(name==="MSG_POS_CHANGE"){
             const loc=msg.location||0x04;
             const zone=loc===0x04?"mzone":loc===0x08?"szone":null;
-            if(zone){const z=Field.cards[msg.controller]?.[zone];if(z&&z[msg.sequence]){z[msg.sequence].position=msg.position;Field.render();}}
+            if(zone){
+                const z=Field.cards[msg.controller]?.[zone];
+                if(z&&z[msg.sequence]){
+                    z[msg.sequence].position=msg.position;
+                    // Flip face-up — code/name/stats rakibin client'inda hala 0 olabilir (MSG_SET filter),
+                    // flip sirasinda kod acilir
+                    if(msg.code) z[msg.sequence].code=msg.code;
+                    if(cname) z[msg.sequence].card_name=cname;
+                    if(msg.card_atk!==undefined) z[msg.sequence].card_atk=msg.card_atk;
+                    if(msg.card_def!==undefined) z[msg.sequence].card_def=msg.card_def;
+                    if(msg.card_type) z[msg.sequence].card_type=msg.card_type;
+                    Field.render();
+                }
+            }
         }
         else if(name==="MSG_DAMAGE"){Field.damageLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP kaybetti`,cls:"damage"})}
         else if(name==="MSG_RECOVER"){Field.recoverLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP kazandı`,cls:"summon"})}
