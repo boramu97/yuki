@@ -180,10 +180,15 @@
 }
 
 .bc-blimp-path {
-    display: flex; justify-content: center; align-items: center;
+    display: flex; flex-direction: row-reverse; justify-content: center; align-items: center;
     gap: clamp(40px, 8vw, 90px); padding: 30px 20px 50px;
     position: relative;
 }
+/* Arkaplan gorselindeki blimp detayi ile hizalama — 14" ekran referans
+   (1cm ≈ 3.2vw @ 31cm genislik). Bakura sag, Kaiba orta, Marik sol. */
+.bc-blimp-node[data-node="4"] { --bc-offset-x: 13vw; }  /* Bakura: +4cm sag */
+.bc-blimp-node[data-node="5"] { --bc-offset-x: 1.6vw; } /* Kaiba: +0.5cm sag */
+.bc-blimp-node[data-node="6"] { --bc-offset-x: -13vw; } /* Marik: -4cm sol */
 .bc-blimp-path::before {
     content: ''; position: absolute; left: 20%; right: 20%; top: 50%;
     height: 2px;
@@ -200,6 +205,8 @@
     isolation: isolate; touch-action: manipulation;
     --n-rim: rgba(180,140,60,0.55);
     --n-rim-hi: rgba(232,200,64,0.95);
+    --bc-offset-x: 0;
+    transform: translateX(var(--bc-offset-x));
 }
 .bc-blimp-node::before {
     content: ''; position: absolute; inset: 0; border-radius: 50%; padding: 2px;
@@ -216,7 +223,7 @@
     z-index: -1;
 }
 .bc-blimp-node:hover:not(.done):not(.locked) {
-    transform: translateY(-3px) scale(1.04);
+    transform: translateX(var(--bc-offset-x)) translateY(-3px) scale(1.04);
 }
 
 .bc-blimp-node-icon { font-size: 2.1rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); transform: translateY(-3px); }
