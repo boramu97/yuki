@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/auth.css?v=17">
     <link rel="stylesheet" href="css/home.css?v=17">
     <link rel="stylesheet" href="css/lobby.css?v=17">
-    <link rel="stylesheet" href="css/duel.css?v=21">
+    <link rel="stylesheet" href="css/duel.css?v=22">
     <link rel="stylesheet" href="css/motor-panel.css?v=17">
     <link rel="stylesheet" href="css/float-panels.css?v=18">
     <link rel="stylesheet" href="css/card-popup.css?v=17">
@@ -141,9 +141,21 @@
                     <div class="console-lp" id="opp-lp">8000</div>
                     <div class="console-lp-bar"><div class="console-lp-fill" id="opp-lp-bar"></div></div>
                 </div>
-                <div class="console-info console-info-right opp" aria-label="Tur durumu">
+                <div class="console-info console-info-right opp" aria-label="Tur">
                     <div class="console-turn">TUR <span id="turn-counter">I</span></div>
-                    <div class="console-phase" id="phase-name" aria-live="polite">-</div>
+                </div>
+            </div>
+
+            <!-- Faz/durum dijital konsol (saha ustu) -->
+            <div class="phase-hud" aria-label="Faz ve durum">
+                <div class="phase-hud-block phase-hud-phase-block">
+                    <div class="phase-hud-label">PHASE</div>
+                    <div class="phase-hud-phase" id="phase-name" aria-live="polite">—</div>
+                </div>
+                <div class="phase-hud-sep"></div>
+                <div class="phase-hud-block phase-hud-status-block">
+                    <div class="phase-hud-label">STATUS</div>
+                    <div class="phase-hud-status" id="status-text" aria-live="polite">Duello başlamadı</div>
                 </div>
             </div>
 
@@ -164,10 +176,9 @@
                     <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
                 </div>
 
-                <!-- Durum cubugu -->
+                <!-- Elektrik seam (saf dekoratif) -->
                 <div class="status-strip">
                     <div class="line"></div>
-                    <div id="status-text" aria-live="polite">Duello başlamadı</div>
                     <div class="line"></div>
                 </div>
 
@@ -581,7 +592,7 @@
     </div>
 
     <script src="js/websocket.js?v=17"></script>
-    <script src="js/field.js?v=17"></script>
+    <script src="js/field.js?v=19"></script>
     <script src="js/ui.js?v=17"></script>
     <script src="js/collection.js?v=17"></script>
     <script src="js/touch.js?v=17"></script>

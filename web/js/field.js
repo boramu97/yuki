@@ -41,7 +41,14 @@ const Field = {
     },
     setPhase(code) {
         const n={0x01:"Draw",0x02:"Standby",0x04:"Main Phase",0x08:"Battle",0x10:"Battle Step",0x20:"Damage",0x40:"Damage Cal",0x80:"Battle",0x100:"Main Phase 2",0x200:"End Phase"};
-        document.getElementById("phase-name").textContent = n[code] || "";
+        document.getElementById("phase-name").textContent = n[code] || "—";
+        const hud = document.querySelector(".phase-hud");
+        if (hud) {
+            hud.classList.remove("phase-battle","phase-end","phase-draw");
+            if (code === 0x01) hud.classList.add("phase-draw");
+            else if (code & 0xF8) hud.classList.add("phase-battle");
+            else if (code === 0x200) hud.classList.add("phase-end");
+        }
     },
     setStatus(text) {
         document.getElementById("status-text").textContent = text;
@@ -67,10 +74,22 @@ const Field = {
         this.render();
     },
     _removeFrom(con, loc, seq, code) {
-        if (loc===0x04) delete this.cards[con]?.mzone[seq];
-        else if (loc===0x08) delete this.cards[con]?.szone[seq];
-        else if (loc===0x02) { const h=this.cards[con]?.hand; if(h){const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);} }
-        else if (loc===0x10) { const g=this.cards[con]?.grave; if(g){const i=g.findIndex(c=>c.code===code);if(i>=0)g.splice(i,1);} }
+        const L = loc & 0x7F; // overlay flag (0x80) ve diger yuksek bitleri maskele
+        const self = this.cards[con];
+        if (!self) return;
+        if (L===0x04 && self.mzone?.[seq]) { delete self.mzone[seq]; return; }
+        if (L===0x08 && self.szone?.[seq]) { delete self.szone[seq]; return; }
+        if (L===0x02) { const i=self.hand.findIndex(c=>c.code===code); if(i>=0){self.hand.splice(i,1); return;} }
+        if (L===0x10) { const i=self.grave.findIndex(c=>c.code===code); if(i>=0){self.grave.splice(i,1); return;} }
+        // Fallback: loc/seq eslesmediyse mzone+szone'i kod ile tara (Future Fusion/extra-deck edge case)
+        if (code) {
+            for (const z of ["mzone","szone"]) {
+                const zone = self[z]; if (!zone) continue;
+                for (const k of Object.keys(zone)) {
+                    if (zone[k]?.code === code) { delete zone[k]; console.warn(`[field] fallback remove ${code} from ${z}[${k}] (got loc=0x${loc.toString(16)} seq=${seq})`); return; }
+                }
+            }
+        }
     },
     _addTo(con, loc, seq, data) {
         if (loc===0x04) this.cards[con].mzone[seq]=data;
