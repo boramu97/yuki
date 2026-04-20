@@ -128,6 +128,7 @@ ADVENTURES = {
     },
     "battle_city": {
         "name": "Battle City",
+        "requires": "duel_island",  # Duello Adasi tamamlanmadan kilitli
         "nodes": [
             # 4 ön eleme — serbest sırada oynanır (gate=[])
             {"type": "duel",  "bot": "Seeker",     "bot_name": "Rare Hunter (Seeker)",
@@ -174,12 +175,37 @@ def _adv_node(adv_id: str, node_idx: int):
     return adv, nodes[node_idx], None
 
 
+def _check_adventure_unlocked(user_id: int, adv_id: str) -> str | None:
+    """Macera seviyesinde kilit kontrolu — oncul macera tamamlanmis mi?
+
+    Adventure config'inde `requires` varsa o macerandaki tum node'lar bitmis olmali.
+    """
+    adv = ADVENTURES.get(adv_id)
+    if not adv:
+        return None
+    req_id = adv.get("requires")
+    if not req_id:
+        return None
+    req = ADVENTURES.get(req_id)
+    if not req:
+        return None
+    progress = user_db.get_adventure_progress(user_id, req_id)
+    total = len(req.get("nodes", []))
+    if len(progress) < total:
+        return f"Once '{req['name']}' maceransi tamamla"
+    return None
+
+
 def _check_node_available(user_id: int, adv_id: str, node_idx: int) -> str | None:
     """Node oynanabilir mi? Hata varsa mesaj, yoksa None dondurur.
 
     `gate` field'i varsa: belirtilen tum node index'leri tamamlanmis olmali.
     Yoksa fallback: klasik linear (onceki node tamamlanmis).
+    Ayrica macera seviyesinde `requires` kilidi kontrol edilir.
     """
+    unlock_err = _check_adventure_unlocked(user_id, adv_id)
+    if unlock_err:
+        return unlock_err
     progress = user_db.get_adventure_progress(user_id, adv_id)
     if node_idx in progress:
         return "Bu asama zaten tamamlandi"
@@ -634,6 +660,7 @@ async def handle_connection(ws):
                         "name": adv["name"],
                         "nodes": adv["nodes"],
                         "completed": progress,
+                        "locked": _check_adventure_unlocked(_user.user_id, adv_id),
                     }
                 await ws.send(json.dumps({
                     "action": "adventures",
@@ -657,14 +684,10 @@ async def handle_connection(ws):
                     await _send_error(ws, "Bu node duello degil")
                     continue
 
-                progress = user_db.get_adventure_progress(_user.user_id, adv_id)
-                # Bu node zaten tamamlanmış mı?
-                if node_idx in progress:
-                    await _send_error(ws, "Bu asama zaten tamamlandi")
-                    continue
-                # Önceki node tamamlandı mı? (0. node her zaman açık)
-                if node_idx > 0 and (node_idx - 1) not in progress:
-                    await _send_error(ws, "Onceki asamayi tamamla")
+                # Kilit + gate + tamamlanmis mi kontrolleri
+                err = _check_node_available(_user.user_id, adv_id, node_idx)
+                if err:
+                    await _send_error(ws, err)
                     continue
 
                 bot_key = node["bot"]

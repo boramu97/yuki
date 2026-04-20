@@ -96,6 +96,9 @@
 .mode-tile.locked::after{content:'🔒 YAKINDA';position:absolute;top:14px;right:14px;
     font-size:0.7rem;letter-spacing:0.3em;color:var(--text-muted);
     background:rgba(10,8,11,0.8);padding:6px 12px;border:1px solid var(--gold-border);z-index:3}
+/* Battle City ozel kilit — Duello Adasi tamamlanmadiysa */
+#banner-battle-city.locked{height:auto}
+#banner-battle-city.locked::after{content:'🔒 DUELLO ADASI GEREKLI'}
 .tile-shadow .tile-art{background:radial-gradient(ellipse at center, #2a1838 0%, #0a0612 80%)}
 .tile-tourn .tile-art{background:radial-gradient(ellipse at center, #1a2838 0%, #08101a 80%)}
 

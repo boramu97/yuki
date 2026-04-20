@@ -145,7 +145,12 @@
         UI.showScreen("duel-island-screen");
         try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
     };
-    document.getElementById("banner-battle-city")?.addEventListener("click", async () => {
+    document.getElementById("banner-battle-city")?.addEventListener("click", async (e) => {
+        const tile = e.currentTarget;
+        if (tile.classList.contains("locked")) {
+            UI.setStatus(tile.dataset.lockReason || "Bu macera henuz kilitli");
+            return;
+        }
         UI.showScreen("battle-city-screen");
         try { await ensureConnected(); WS.getAdventures(); } catch(e) {}
     });
@@ -314,6 +319,18 @@
             const bcPct=Math.round((locDone/4)*100);
             if(bcLbl) bcLbl.textContent = locDone>=4?"Final açık":`Locator ${locDone}/4`;
             if(bcFill) bcFill.style.width = bcPct+"%";
+            // Kilit durumu — Duello Adasi tamamlanmadiysa tile grayscale
+            const bcTile=document.getElementById("banner-battle-city");
+            if(bcTile){
+                if(bcAdv.locked){
+                    bcTile.classList.add("locked");
+                    bcTile.dataset.lockReason = bcAdv.locked;
+                    if(bcLbl) bcLbl.textContent = "🔒 Duello Adasi'ni tamamla";
+                } else {
+                    bcTile.classList.remove("locked");
+                    delete bcTile.dataset.lockReason;
+                }
+            }
         }
     });
 

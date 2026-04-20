@@ -254,6 +254,24 @@
 }
 .field-row{display:flex;gap:0.8vw;justify-content:center;position:relative;z-index:2}
 
+/* Oyuncu zone grupu — simetrik 3 kolonlu layout
+   [side-col: field-slot + spacer] [zones-grid: szone/mzone] [side-col: grave + deck] */
+.player-zones{
+    display:flex;justify-content:center;align-items:center;gap:1vw;
+    position:relative;z-index:2;
+}
+.player-zones .side-col{
+    display:flex;flex-direction:column;gap:3px;justify-content:center;align-items:center;
+    min-width:7.5vw;flex-shrink:0;
+}
+.player-zones .zones-grid{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+/* Side-col icindeki grave/deck — eski horizontal margin'i sifirla */
+.side-col .grave-zone,.side-col .deck-zone{margin-left:0}
+/* Alan karti slotu — card-slot'u inherit eder, hafif daha dim rune circles */
+.field-slot{opacity:0.82}
+/* Hizalama icin gorunmez spacer */
+.side-slot-spacer{width:7.5vw;height:10.2vw;visibility:hidden;flex-shrink:0}
+
 /* Durum cubugu — anime electric seam (cyan lightning divider) */
 .status-strip{display:flex;align-items:center;justify-content:center;padding:8px 6vw;gap:16px;position:relative;z-index:3}
 .status-strip::before{
@@ -290,13 +308,82 @@
     filter:blur(6px);animation:energy-pulse 3s ease-in-out infinite;
 }
 @keyframes energy-pulse{0%,100%{opacity:0.4}50%{opacity:1}}
-#status-text{
-    font-size:1rem;color:var(--gold);font-style:italic;padding:4px 20px;
-    background:rgba(13,11,14,0.85);
-    border:1px solid rgba(88,196,240,0.1);border-radius:20px;white-space:nowrap;
-    box-shadow:0 0 12px rgba(88,196,240,0.05);
-    text-shadow:0 0 8px rgba(232,200,64,0.15);
+/* PHASE/STATUS HUD — dijital konsol gosterge (saha ustu) */
+.phase-hud{
+    position:relative;z-index:8;margin:6px auto 4px;
+    display:inline-flex;align-items:stretch;gap:0;
+    padding:0;min-width:360px;max-width:70vw;
+    align-self:center;width:fit-content;
+    background:linear-gradient(180deg, rgba(3,2,6,0.95) 0%, rgba(10,8,16,0.97) 100%);
+    border:1px solid rgba(88,196,240,0.45);
+    border-radius:3px;
+    box-shadow:
+        inset 0 0 16px rgba(88,196,240,0.12),
+        inset 0 1px 0 rgba(200,220,255,0.1),
+        0 4px 16px rgba(0,0,0,0.7),
+        0 0 22px rgba(88,196,240,0.22);
+    color:rgba(88,196,240,0.95);
+    /* center via parent flex (field-wrap is column) */
 }
+/* Wrapper: field-wrap'e align-self icin */
+.phase-hud{align-self:center}
+/* L-bracket koseler + drop shadow glow */
+.phase-hud::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:
+        linear-gradient(90deg, currentColor 0 14px, transparent 14px) 3px 3px/14px 1.5px no-repeat,
+        linear-gradient(0deg, currentColor 0 14px, transparent 14px) 3px 3px/1.5px 14px no-repeat,
+        linear-gradient(270deg, currentColor 0 14px, transparent 14px) calc(100% - 3px) 3px/14px 1.5px no-repeat,
+        linear-gradient(0deg, currentColor 0 14px, transparent 14px) calc(100% - 3px) 3px/1.5px 14px no-repeat,
+        linear-gradient(90deg, currentColor 0 14px, transparent 14px) 3px calc(100% - 3px)/14px 1.5px no-repeat,
+        linear-gradient(180deg, currentColor 0 14px, transparent 14px) 3px calc(100% - 3px)/1.5px 14px no-repeat,
+        linear-gradient(270deg, currentColor 0 14px, transparent 14px) calc(100% - 3px) calc(100% - 3px)/14px 1.5px no-repeat,
+        linear-gradient(180deg, currentColor 0 14px, transparent 14px) calc(100% - 3px) calc(100% - 3px)/1.5px 14px no-repeat;
+    filter:drop-shadow(0 0 4px currentColor);
+    opacity:0.95;
+}
+/* Scanline ekran dokusu */
+.phase-hud::after{
+    content:'';position:absolute;inset:4px;pointer-events:none;z-index:1;border-radius:1px;
+    background:repeating-linear-gradient(180deg,
+        transparent 0 2px,
+        rgba(255,255,255,0.025) 2px, rgba(255,255,255,0.025) 3px);
+}
+.phase-hud-block{
+    position:relative;z-index:3;padding:6px 22px 8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-width:0;
+}
+.phase-hud-phase-block{min-width:160px}
+.phase-hud-status-block{flex:1;min-width:180px}
+.phase-hud-label{
+    font-size:0.55rem;letter-spacing:4px;text-transform:uppercase;
+    color:rgba(140,220,255,0.65);margin-bottom:3px;
+    font-family:'Segoe UI',sans-serif;
+}
+.phase-hud-phase{
+    font-size:1.3rem;font-weight:700;line-height:1;letter-spacing:3px;
+    font-family:'Courier New','Consolas','Menlo',monospace;
+    color:#ffdc60;text-transform:uppercase;
+    text-shadow:0 0 6px rgba(232,200,64,0.8), 0 0 14px rgba(232,200,64,0.45);
+}
+.phase-hud-status{
+    font-size:0.95rem;line-height:1.15;letter-spacing:1px;
+    font-family:'Courier New','Consolas','Menlo',monospace;
+    color:#e8f4ff;
+    text-shadow:0 0 6px rgba(140,220,255,0.55);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw;
+}
+/* Ayirici dikey bar */
+.phase-hud-sep{
+    position:relative;z-index:3;width:1px;align-self:stretch;margin:8px 0;
+    background:linear-gradient(180deg, transparent, rgba(88,196,240,0.5), transparent);
+    box-shadow:0 0 6px rgba(88,196,240,0.55);
+}
+/* Phase rengi — aktif phase'e gore farklilik icin class'lar */
+.phase-hud.phase-battle .phase-hud-phase{color:#ff9a6a;text-shadow:0 0 6px rgba(255,120,80,0.8), 0 0 14px rgba(255,120,80,0.4)}
+.phase-hud.phase-end .phase-hud-phase{color:#c8a0ec;text-shadow:0 0 6px rgba(154,106,186,0.8), 0 0 14px rgba(154,106,186,0.4)}
+.phase-hud.phase-draw .phase-hud-phase{color:#8bc34a;text-shadow:0 0 6px rgba(139,195,74,0.8), 0 0 14px rgba(139,195,74,0.4)}
 
 /* KART SLOTU — Kaiba-tech cyan frame + 4 kose "L" bracket */
 .card-slot{

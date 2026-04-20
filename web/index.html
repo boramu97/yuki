@@ -10,12 +10,12 @@
     <link rel="stylesheet" href="css/auth.css?v=17">
     <link rel="stylesheet" href="css/home.css?v=17">
     <link rel="stylesheet" href="css/lobby.css?v=17">
-    <link rel="stylesheet" href="css/duel.css?v=22">
+    <link rel="stylesheet" href="css/duel.css?v=23">
     <link rel="stylesheet" href="css/motor-panel.css?v=17">
     <link rel="stylesheet" href="css/float-panels.css?v=18">
     <link rel="stylesheet" href="css/card-popup.css?v=17">
     <link rel="stylesheet" href="css/collection.css?v=17">
-    <link rel="stylesheet" href="css/adventures.css?v=17">
+    <link rel="stylesheet" href="css/adventures.css?v=18">
     <link rel="stylesheet" href="css/battle-city.css?v=17">
     <link rel="stylesheet" href="css/result.css?v=17">
     <link rel="stylesheet" href="css/responsive.css?v=17">
@@ -159,21 +159,32 @@
                 </div>
             </div>
 
-            <!-- SAHA -->
+            <!-- SAHA — simetrik 3-kolonlu layout: [side-col] [zones-grid] [side-col] -->
             <div class="field">
-                <div class="field-row" id="opp-szone">
-                    <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
-                    <button type="button" class="grave-zone" id="opp-grave" aria-label="Rakip mezarlığı" title="Rakip Mezarlık">
-                        <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
-                        <span class="grave-count" id="opp-grave-count">0</span>
-                    </button>
-                    <div class="deck-zone" id="opp-deck" aria-label="Rakip destesi" title="Rakip Destesi">
-                        <div class="deck-stack" aria-hidden="true"></div>
-                        <span class="deck-count" id="opp-deck-count">40</span>
+                <!-- Rakip tarafi: szone (ust, dis) / mzone (seam'e yakin) -->
+                <div class="player-zones opp">
+                    <div class="side-col side-left">
+                        <div class="card-slot field-slot" id="opp-field" aria-label="Rakip Alan Karti" title="Rakip Alan Karti"></div>
+                        <div class="side-slot-spacer" aria-hidden="true"></div>
                     </div>
-                </div>
-                <div class="field-row" id="opp-mzone">
-                    <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                    <div class="zones-grid">
+                        <div class="field-row" id="opp-szone">
+                            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        </div>
+                        <div class="field-row" id="opp-mzone">
+                            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        </div>
+                    </div>
+                    <div class="side-col side-right">
+                        <button type="button" class="grave-zone" id="opp-grave" aria-label="Rakip mezarlığı" title="Rakip Mezarlık">
+                            <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
+                            <span class="grave-count" id="opp-grave-count">0</span>
+                        </button>
+                        <div class="deck-zone" id="opp-deck" aria-label="Rakip destesi" title="Rakip Destesi">
+                            <div class="deck-stack" aria-hidden="true"></div>
+                            <span class="deck-count" id="opp-deck-count">40</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Elektrik seam (saf dekoratif) -->
@@ -182,18 +193,29 @@
                     <div class="line"></div>
                 </div>
 
-                <div class="field-row" id="self-mzone">
-                    <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
-                </div>
-                <div class="field-row" id="self-szone">
-                    <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
-                    <button type="button" class="grave-zone" id="self-grave" aria-label="Senin mezarlığın" title="Mezarlığın">
-                        <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
-                        <span class="grave-count" id="self-grave-count">0</span>
-                    </button>
-                    <div class="deck-zone" id="self-deck" aria-label="Senin desten" title="Deste">
-                        <div class="deck-stack" aria-hidden="true"></div>
-                        <span class="deck-count" id="self-deck-count">40</span>
+                <!-- Oyuncu tarafi: mzone (seam'e yakin) / szone (alt, dis) -->
+                <div class="player-zones self">
+                    <div class="side-col side-left">
+                        <div class="side-slot-spacer" aria-hidden="true"></div>
+                        <div class="card-slot field-slot" id="self-field" aria-label="Alan Kartin" title="Alan Kartin"></div>
+                    </div>
+                    <div class="zones-grid">
+                        <div class="field-row" id="self-mzone">
+                            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        </div>
+                        <div class="field-row" id="self-szone">
+                            <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        </div>
+                    </div>
+                    <div class="side-col side-right">
+                        <div class="deck-zone" id="self-deck" aria-label="Senin desten" title="Deste">
+                            <div class="deck-stack" aria-hidden="true"></div>
+                            <span class="deck-count" id="self-deck-count">40</span>
+                        </div>
+                        <button type="button" class="grave-zone" id="self-grave" aria-label="Senin mezarlığın" title="Mezarlığın">
+                            <span class="grave-icon" aria-hidden="true">&#x1F480;</span>
+                            <span class="grave-count" id="self-grave-count">0</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -596,6 +618,6 @@
     <script src="js/ui.js?v=17"></script>
     <script src="js/collection.js?v=17"></script>
     <script src="js/touch.js?v=17"></script>
-    <script src="js/app.js?v=17"></script>
+    <script src="js/app.js?v=18"></script>
 </body>
 </html>
