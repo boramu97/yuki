@@ -615,12 +615,15 @@
         "KaibaBC": "🐉",
         "YamiMarik": "👁",
     };
-    // Phase 1 karakter kapak gorselleri (web/img/bc/)
+    // Battle City karakter kapak gorselleri (web/img/bc/)
     const BC_COVERS = {
         "Seeker":     "img/bc/seeker.png",
         "Strings":    "img/bc/strings.png",
         "Arkana":     "img/bc/arkana.png",
         "UmbraLumis": "img/bc/umbra.png",
+        "YamiBakura": "img/bc/bakura.png",
+        "KaibaBC":    "img/bc/kaiba.png",
+        "YamiMarik":  "img/bc/marik.png",
     };
     function renderBattleCity(nodes, completed){
         const doneSet = new Set(completed);
@@ -683,14 +686,19 @@
                 const isCurrent = !done && !locked;
                 const isBoss = n.type === "boss";
                 const icon = BC_ICONS[n.bot] || (isBoss ? "♛" : "⚔");
+                const cover = BC_COVERS[n.bot];
                 let cls = "bc-blimp-node";
                 if (isBoss) cls += " boss";
                 if (done) cls += " done";
                 else if (locked) cls += " locked";
                 if (isCurrent) cls += " current";
+                if (cover) cls += " has-cover";
+                const portrait = cover
+                    ? `<img src="${cover}" alt="" class="bc-blimp-cover-img" loading="lazy">`
+                    : `<span class="bc-blimp-node-icon" aria-hidden="true">${icon}</span>`;
                 const html =
                     `<button class="${cls}" data-node="${i}" data-type="${n.type}" type="button" ${locked || done ? "disabled" : ""}>`+
-                        `<span class="bc-blimp-node-icon" aria-hidden="true">${icon}</span>`+
+                        portrait+
                         `<span class="bc-blimp-node-label">${n.bot_name || n.bot}</span>`+
                         (n.subtitle ? `<span class="bc-blimp-node-sub">${n.subtitle}</span>` : ``)+
                         (done ? `<span class="bc-blimp-node-badge">✓</span>` : ``)+

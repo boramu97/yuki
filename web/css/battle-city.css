@@ -220,6 +220,23 @@
 }
 
 .bc-blimp-node-icon { font-size: 2.1rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); transform: translateY(-3px); }
+/* Karakter portrait — daire icinde foto */
+.bc-blimp-cover-img {
+    position: absolute; inset: 3px;
+    width: calc(100% - 6px); height: calc(100% - 6px);
+    border-radius: 50%;
+    object-fit: cover; object-position: center top;
+    display: block; pointer-events: none; z-index: 0;
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1);
+}
+/* Cover'li node'da dahili radial bg'i gizle */
+.bc-blimp-node.has-cover::after { display: none; }
+/* Hover: portrait hafif zoom */
+.bc-blimp-node:hover:not(.done):not(.locked) .bc-blimp-cover-img { transform: scale(1.05); }
+/* Done state: hafif yesil tint overlay */
+.bc-blimp-node.done .bc-blimp-cover-img { filter: saturate(0.6) brightness(0.75); }
+/* Locked state: grayscale */
+.bc-blimp-node.locked .bc-blimp-cover-img { filter: grayscale(1) brightness(0.5); }
 .bc-blimp-node-label {
     position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%);
     font-size: 0.64rem; letter-spacing: 0.28em; text-indent: 0.28em;
