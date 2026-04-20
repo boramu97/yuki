@@ -615,6 +615,13 @@
         "KaibaBC": "🐉",
         "YamiMarik": "👁",
     };
+    // Phase 1 karakter kapak gorselleri (web/img/bc/)
+    const BC_COVERS = {
+        "Seeker":     "img/bc/seeker.png",
+        "Strings":    "img/bc/strings.png",
+        "Arkana":     "img/bc/arkana.png",
+        "UmbraLumis": "img/bc/umbra.png",
+    };
     function renderBattleCity(nodes, completed){
         const doneSet = new Set(completed);
         // Ön eleme: index 0-3
@@ -625,10 +632,12 @@
                 const n = nodes[i];
                 const done = doneSet.has(i);
                 const icon = BC_ICONS[n.bot] || "⚔";
+                const cover = BC_COVERS[n.bot];
+                const artStyle = cover ? ` style="background-image:url('${cover}')"` : "";
                 const cls = "bc-street-tile" + (done ? " done" : "");
                 const html =
                     `<button class="${cls}" data-node="${i}" type="button">`+
-                        `<div class="bc-street-tile-art"></div>`+
+                        `<div class="bc-street-tile-art"${artStyle}></div>`+
                         `<div class="bc-street-tile-content">`+
                             `<div class="bc-street-tile-tag">${icon} Nadir Avcı</div>`+
                             `<div class="bc-street-tile-name">${n.bot_name || n.bot}</div>`+
