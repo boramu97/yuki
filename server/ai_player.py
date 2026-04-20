@@ -258,14 +258,26 @@ def _idle_cmd(msg: dict, retry_attempt: int = 0, bot_name: str = "") -> bytes:
     if can_battle:
         options["battle"].append(("battle", 0))
 
+    # Zorunlu oyun: oynanabilir kart varsa battle/end atlanir
+    # (en kolay AI iyilestirmesi — bot elindeki tum kartlari tuketene kadar ana fazdan cikmasin)
+    has_play = bool(options["hand_activate"] or options["field_activate"]
+                    or options["summon"] or options["spsummon"]
+                    or options["sset"] or options["mset"])
+
     # Stile gore siralanmis mevcut secenek akisi
     flat: list[tuple[str, int]] = []
     for key in style_order:
+        if has_play and key in ("battle", "end"):
+            continue  # oynanabilir kart varken savas/end seceneklerini atla
         flat.extend(options.get(key, []))
 
     # Retry offset ile rotasyon
     idx = min(retry_attempt, len(flat) - 1)
-    action, arg = flat[idx] if flat else ("end", 0)
+    if flat:
+        action, arg = flat[idx]
+    else:
+        # Hicbir oynanabilir hamle yok — savas mumkunse savas, yoksa end
+        action, arg = ("battle", 0) if can_battle else ("end", 0)
 
     if action in ("battle", "end"):
         return build_idle_cmd_response(action)
