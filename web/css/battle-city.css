@@ -95,29 +95,33 @@
 
 .bc-street-tile-art {
     position: absolute; inset: 0;
-    background-color: #0e0a18;
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    background-image:
+    background:
         radial-gradient(ellipse at 35% 40%, rgba(154,106,186,0.2), transparent 65%),
         linear-gradient(180deg, rgba(26,16,40,0.5) 0%, rgba(10,8,14,0.95) 100%);
+    overflow: hidden;
+}
+/* Karakter kapak fotografi — tile'in tumunu kapsar, ust hizali */
+.bc-cover-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center top;
+    display: block; z-index: 0;
+    transition: transform 0.5s cubic-bezier(.2,.8,.3,1);
+    pointer-events: none;
 }
 /* Karakter foto uzerine vignette — text okunabilirligi + atmosfer */
 .bc-street-tile-art::after {
-    content: ''; position: absolute; inset: 0; pointer-events: none;
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
     background: linear-gradient(180deg,
-        rgba(10,8,14,0.08) 0%,
-        rgba(10,8,14,0.18) 40%,
-        rgba(10,8,14,0.85) 86%,
-        rgba(10,8,14,0.98) 100%);
+        rgba(10,8,14,0.05) 0%,
+        rgba(10,8,14,0.15) 42%,
+        rgba(10,8,14,0.82) 82%,
+        rgba(10,8,14,0.97) 100%);
 }
+/* Text content her zaman ustte */
+.bc-street-tile-content { z-index: 2; }
+.bc-street-tile-tag, .bc-street-tile-name, .bc-street-tile-sub, .bc-street-tile-reward { position: relative; z-index: 2; }
 /* Hover: karakter hafif zoom */
-.bc-street-tile:hover:not(.done):not(.locked) .bc-street-tile-art {
-    transform: scale(1.04);
-    transition: transform 0.5s cubic-bezier(.2,.8,.3,1);
-}
-.bc-street-tile-art { transition: transform 0.4s ease; }
+.bc-street-tile:hover:not(.done):not(.locked) .bc-cover-img { transform: scale(1.06); }
 .bc-street-tile-content {
     position: absolute; left: 16px; right: 16px; bottom: 14px;
     display: flex; flex-direction: column; gap: 4px; text-align: left;
