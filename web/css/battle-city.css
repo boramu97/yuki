@@ -235,8 +235,21 @@
 .bc-blimp-node:hover:not(.done):not(.locked) .bc-blimp-cover-img { transform: scale(1.05); }
 /* Done state: hafif yesil tint overlay */
 .bc-blimp-node.done .bc-blimp-cover-img { filter: saturate(0.6) brightness(0.75); }
-/* Locked state: grayscale */
-.bc-blimp-node.locked .bc-blimp-cover-img { filter: grayscale(1) brightness(0.5); }
+/* Locked state: resim gorunsun, hafif desatüre — kilit ikonu uzerine */
+.bc-blimp-node.locked.has-cover .bc-blimp-cover-img {
+    filter: grayscale(0.7) brightness(0.7);
+}
+.bc-blimp-node.locked.has-cover::after {
+    content: '🔒'; display: flex;
+    position: absolute; inset: 3px; border-radius: 50%;
+    align-items: center; justify-content: center;
+    font-size: 2.2rem; line-height: 1;
+    background: rgba(8,6,12,0.48);
+    color: rgba(232,200,64,0.95);
+    text-shadow: 0 0 8px rgba(0,0,0,0.8), 0 2px 6px rgba(0,0,0,0.9);
+    z-index: 1; pointer-events: none;
+}
+.bc-blimp-node.locked.has-cover.boss::after { font-size: 2.8rem; }
 .bc-blimp-node-label {
     position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%);
     font-size: 0.64rem; letter-spacing: 0.28em; text-indent: 0.28em;
@@ -252,7 +265,9 @@
     white-space: nowrap;
 }
 .bc-blimp-node.done { --n-rim: rgba(92,184,92,0.5); --n-rim-hi: rgba(140,220,140,0.85); opacity: 0.78; cursor: default; }
-.bc-blimp-node.locked { opacity: 0.38; cursor: not-allowed; filter: grayscale(0.7); }
+.bc-blimp-node.locked { cursor: not-allowed; }
+/* Cover'siz (emoji) node: eski opacity davranisi */
+.bc-blimp-node.locked:not(.has-cover) { opacity: 0.38; filter: grayscale(0.7); }
 .bc-blimp-node.current {
     --n-rim: rgba(232,200,64,0.65); --n-rim-hi: rgba(255,230,150,1);
     box-shadow: 0 12px 26px -6px rgba(0,0,0,0.75), 0 0 40px -6px rgba(232,200,64,0.55);
