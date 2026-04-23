@@ -246,6 +246,7 @@ const DragDrop = {
     },
 
     _chooseAction(action, vs) {
+        if (window.YUKI_DEBUG_DRAG) console.log("[dd] chooseAction", action, "slot", vs);
         // Deferred SELECT_PLACE — motor slot sorarsa kullanicinin sectigi slot'u yanitla
         if (typeof UI !== "undefined") {
             UI._deferredPlace = {

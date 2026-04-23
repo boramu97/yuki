@@ -84,6 +84,10 @@ const Field = {
     // tamamen replace edilir — event-driven drift imkansiz.
     applyFieldSnapshot(field) {
         if (!field) return;
+        if (window.YUKI_DEBUG_SYNC) {
+            console.log("[field_sync] mzone self:", field.mzone && field.mzone[String(this.myTeam)]);
+            console.log("[field_sync] szone self:", field.szone && field.szone[String(this.myTeam)]);
+        }
         for (const team of [0, 1]) {
             const key = String(team);
             const bucket = this.cards[team];
