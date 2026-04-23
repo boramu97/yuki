@@ -708,13 +708,18 @@ class DuelManager:
         snapshot = {
             "mzone": {"0": [], "1": []},
             "szone": {"0": [], "1": []},
+            "field_card": {"0": None, "1": None},
             "grave": {"0": [], "1": []},
             "exile": {"0": [], "1": []},
         }
 
         for team in (0, 1):
             snapshot["mzone"][str(team)] = self._query_zone(team, LOCATION_MZONE, field_flags)
-            snapshot["szone"][str(team)] = self._query_zone(team, LOCATION_SZONE, field_flags)
+            szone_all = self._query_zone(team, LOCATION_SZONE, field_flags)
+            # MR2: szone slot 5 = alan karti zone. Diger slot'lar normal buyu/tuzak.
+            snapshot["szone"][str(team)] = szone_all[:5]
+            if len(szone_all) > 5 and szone_all[5]:
+                snapshot["field_card"][str(team)] = szone_all[5]
             # Grave/exile — slot'suz (sirali liste), bos slot olmaz
             grave_cards = self._query_zone(team, LOCATION_GRAVE, grave_flags)
             exile_cards = self._query_zone(team, LOCATION_REMOVED, grave_flags)
@@ -732,6 +737,15 @@ class DuelManager:
                             # type snapshot'ta yoksa ekle (grave/exile light query)
                             if "type" not in c:
                                 c["type"] = db_card.type
+        # Field spell icin de ayni enrichment
+        for team_key in ("0", "1"):
+            fc = snapshot["field_card"][team_key]
+            if fc and fc.get("code"):
+                db_card = self._db.get_card(fc["code"])
+                if db_card:
+                    fc["card_name"] = db_card.name
+                    if "type" not in fc:
+                        fc["type"] = db_card.type
 
         # Diag: kart varsa log bas (sahipsiz mzone/szone skip)
         occ = sum(
@@ -771,6 +785,7 @@ class DuelManager:
         out = {
             "mzone": {"0": [], "1": []},
             "szone": {"0": [], "1": []},
+            "field_card": {"0": None, "1": None},
             "grave": snapshot["grave"],
             "exile": snapshot["exile"],
         }
@@ -786,20 +801,29 @@ class DuelManager:
                     pos = c.get("position", 0)
                     is_facedown = bool(pos & 0x0A)
                     if team != viewer_team and is_facedown:
-                        # Rakibin face-down kartini gizle (position/slot aciksa
-                        # da kod ve istatistik sifir)
                         filtered_list.append({
-                            "code": 0,
-                            "position": pos,
-                            "card_name": "",
-                            "atk": 0,
-                            "def": 0,
-                            "type": 0,
-                            "overlays": [],
+                            "code": 0, "position": pos, "card_name": "",
+                            "atk": 0, "def": 0, "type": 0, "overlays": [],
                         })
                     else:
                         filtered_list.append(c)
                 out[zone][team_key] = filtered_list
+        # Field spell filter
+        for team_key in ("0", "1"):
+            team = int(team_key)
+            fc = snapshot["field_card"][team_key]
+            if fc is None:
+                out["field_card"][team_key] = None
+                continue
+            pos = fc.get("position", 0)
+            is_facedown = bool(pos & 0x0A)
+            if team != viewer_team and is_facedown:
+                out["field_card"][team_key] = {
+                    "code": 0, "position": pos, "card_name": "",
+                    "atk": 0, "def": 0, "type": 0, "overlays": [],
+                }
+            else:
+                out["field_card"][team_key] = fc
         return out
 
     async def _sync_hands(self):

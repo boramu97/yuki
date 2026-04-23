@@ -17,8 +17,8 @@ const Field = {
     init(team) {
         this.myTeam = team; this.lp = [8000,8000]; this.startLp = 8000; this.turn = 0;
         this.cards = {
-            0:{mzone:{},szone:{},hand:[],grave:[],exile:[]},
-            1:{mzone:{},szone:{},hand:[],grave:[],exile:[]},
+            0:{mzone:{},szone:{},hand:[],grave:[],exile:[],field:null},
+            1:{mzone:{},szone:{},hand:[],grave:[],exile:[],field:null},
         };
         this.render();
     },
@@ -87,6 +87,7 @@ const Field = {
         if (window.YUKI_DEBUG_SYNC) {
             console.log("[field_sync] mzone self:", field.mzone && field.mzone[String(this.myTeam)]);
             console.log("[field_sync] szone self:", field.szone && field.szone[String(this.myTeam)]);
+            console.log("[field_sync] field self:", field.field_card && field.field_card[String(this.myTeam)]);
         }
         for (const team of [0, 1]) {
             const key = String(team);
@@ -98,6 +99,8 @@ const Field = {
             bucket.szone = {};
             mz.forEach((c, i) => { const n = this._normalizeSnapshotCard(c); if (n) bucket.mzone[i] = n; });
             sz.forEach((c, i) => { const n = this._normalizeSnapshotCard(c); if (n) bucket.szone[i] = n; });
+            const fc = field.field_card && field.field_card[key];
+            bucket.field = this._normalizeSnapshotCard(fc);
             const gr = (field.grave && field.grave[key]) || [];
             const ex = (field.exile && field.exile[key]) || [];
             bucket.grave = gr.map(c => this._normalizeSnapshotCard(c)).filter(Boolean);
@@ -111,9 +114,55 @@ const Field = {
         this._renderZone("opp-mzone",this.oppTeam(),"mzone");
         this._renderZone("self-szone",this.selfTeam(),"szone");
         this._renderZone("opp-szone",this.oppTeam(),"szone");
+        this._renderField("self-field",this.selfTeam());
+        this._renderField("opp-field",this.oppTeam());
         this._renderHand();
         this._renderOppHand();
         this._renderGraveCount();
+    },
+
+    _renderField(elId, team) {
+        const slot=document.getElementById(elId); if(!slot) return;
+        slot.innerHTML="";
+        const card=this.cards[team]?.field; if(!card) return;
+        const pos=card.position||0;
+        const isFD=(pos&0x0A)!==0;
+        const face=document.createElement("div");
+        face.className="card-face";
+        face.dataset.code=card.code||0;
+        face.dataset.controller=team;
+        face.dataset.location=8;  // LOCATION_SZONE
+        face.dataset.sequence=5;  // field spell slot
+        if(isFD){
+            face.classList.add("facedown");
+            face.innerHTML=cardBackHTML();
+        } else {
+            const img=document.createElement("img");
+            img.src=cardImageUrl(card.code); img.loading="lazy";
+            img.onerror=function(){this.style.display="none";face.style.background="#1c1a10";face.style.display="flex";face.style.alignItems="center";face.style.justifyContent="center";face.style.fontSize="0.55vw";face.style.color="#a09070";face.textContent=card.card_name||"#"+card.code;};
+            face.appendChild(img);
+            if(card.counters){
+                const entries=Object.entries(card.counters).filter(([,v])=>v>0);
+                if(entries.length>0){
+                    const wrap=document.createElement("div");
+                    wrap.className="counter-stack";
+                    entries.forEach(([type,count])=>{
+                        const b=document.createElement("div");
+                        b.className="counter-badge";
+                        b.dataset.counterType=type;
+                        b.textContent=count;
+                        b.title=`Sayaç #${type}`;
+                        wrap.appendChild(b);
+                    });
+                    face.appendChild(wrap);
+                }
+            }
+        }
+        const menu=document.createElement("div");
+        menu.className="card-menu";
+        menu.dataset.slotId=`${team}-field-5`;
+        face.appendChild(menu);
+        slot.appendChild(face);
     },
 
     _renderGraveCount() {

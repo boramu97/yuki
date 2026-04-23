@@ -252,7 +252,7 @@ const DragDrop = {
             UI._deferredPlace = {
                 controller: vs.controller,
                 location: vs.location,
-                sequence: vs.slot,
+                sequence: vs.sequence !== undefined ? vs.sequence : vs.slot,
             };
         }
         // Pending state'i temizle (motor cevabi snapshot ile gelecek)
@@ -340,9 +340,10 @@ const DragDrop = {
                     slots.push({ zoneId: "self-szone", slot: i, controller: selfTeam, location: 0x08 });
                 }
             }
-            // Field spell slot (szone 5) — aktivatable field spell icin
-            if (!Field.cards[selfTeam].szone[FIELD_SPELL_SLOT]) {
-                slots.push({ zoneId: "self-szone", slot: FIELD_SPELL_SLOT, controller: selfTeam, location: 0x08 });
+            // Field spell: #self-field slot'u ayri hedef (motor szone[5]'e koyar,
+            // snapshot'ta field_card'a geri doner). vs.sequence=5 motor icin.
+            if (!Field.cards[selfTeam].field) {
+                slots.push({ zoneId: "self-field", slot: 0, controller: selfTeam, location: 0x08, sequence: 5 });
             }
         }
         return slots;
