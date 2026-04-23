@@ -23,7 +23,12 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;
+body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);
+    /* min-height: viewport-full; height auto. Icerik (duel screen) sigarsa
+       normal; sigmazsa scroll. Overflow sadece #duel taraminda duel screen
+       overflow-y:auto ile kontrol edilir — body scroll olmasin ki sabit
+       arka plan/overlay'lar bozulmasin. */
+    height:100vh;overflow:hidden;
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 input,textarea{-webkit-user-select:text;user-select:text}

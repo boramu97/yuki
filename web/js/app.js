@@ -464,7 +464,59 @@
         }
         else if(name==="MSG_ADD_COUNTER"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} +${msg.count} sayac`,"spell",c?.code)}
         else if(name==="MSG_REMOVE_COUNTER"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} -${msg.count} sayac`,"move",c?.code)}
-        else if(name==="MSG_EQUIP")UI.log("Techizat edildi","spell");
+        else if(name==="MSG_BECOME_TARGET"){
+            // MST vb. one-shot efektte hedef alinan kartlari zincir tepesindeki
+            // kaynak karta bagla: "[MST] → Change of Heart'i hedef aldi".
+            const targets = msg.targets || [];
+            const source = UI.chainContext.length > 0 ? UI.chainContext[UI.chainContext.length-1] : null;
+            targets.forEach(t => {
+                const tc = Field.getCardAt(t.controller, t.location, t.sequence);
+                const targetName = tc?.card_name || "Kapali Kart";
+                const targetCode = tc?.code || 0;
+                UI.logAction({
+                    actor: source ? source.card_name : "Efekt",
+                    verb: "hedef aldi",
+                    card: {name: targetName, code: targetCode},
+                    from: source?.code ? 0x08 : 0,
+                    to: t.location,
+                    cls: "target",
+                });
+            });
+        }
+        else if(name==="MSG_CARD_TARGET"){
+            // Continuous target (Snatch Steal, Skull Lair vs.) — source = equip kart
+            const sc = Field.getCardAt(msg.equip_controller, msg.equip_location, msg.equip_sequence);
+            const tc = Field.getCardAt(msg.target_controller, msg.target_location, msg.target_sequence);
+            if (sc && tc) {
+                UI.logAction({
+                    actor: sc.card_name || "Kart",
+                    verb: "hedef aldi",
+                    card: {name: tc.card_name || "?", code: tc.code || 0},
+                    from: msg.equip_location, to: msg.target_location,
+                    cls: "target",
+                });
+            }
+        }
+        else if(name==="MSG_CANCEL_TARGET"){
+            const sc = Field.getCardAt(msg.equip_controller, msg.equip_location, msg.equip_sequence);
+            const tc = Field.getCardAt(msg.target_controller, msg.target_location, msg.target_sequence);
+            if (sc) UI.logAction({actor: sc.card_name||"Kart", verb:"hedefi birakti", card: tc ? {name: tc.card_name, code: tc.code}: null, cls:"move"});
+        }
+        else if(name==="MSG_EQUIP"){
+            // Equip spell hangi monster'a bagli? — source szone'daki equip kart, target mzone monster
+            const sc = Field.getCardAt(msg.equip_controller, msg.equip_location, msg.equip_sequence);
+            const tc = Field.getCardAt(msg.target_controller, msg.target_location, msg.target_sequence);
+            if (sc && tc) {
+                UI.logAction({
+                    actor: sc.card_name || "Techizat",
+                    verb: "donatildi",
+                    card: {name: tc.card_name || "?", code: tc.code || 0},
+                    from: 0x08, to: 0x04, cls: "spell",
+                });
+            } else {
+                UI.log("Techizat edildi","spell");
+            }
+        }
         else if(name==="MSG_TOSS_COIN"){const r=(msg.results||[]).map(v=>v?"Yazi":"Tura").join(", ");UI.log(`Yazi/Tura: ${r}`)}
         else if(name==="MSG_TOSS_DICE")UI.log(`Zar: ${(msg.results||[]).join(", ")}`);
     }

@@ -7,7 +7,8 @@
     /* Body: mobil 100vh fix (adres cubugu sorunu) */
     body { height: 100dvh; }
     .screen { height: 100dvh; }
-    #duel { height: 100dvh; }
+    /* #duel: dvh uzerinden min-height, icerik tasarsa kendi scroll'u ile gez */
+    #duel { min-height: 100dvh; height: auto; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
 
     /* --- AUTH EKRANI --- */
     #auth-screen { padding: 20px; }

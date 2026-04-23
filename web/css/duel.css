@@ -1,7 +1,12 @@
 /* Yuki — Duel screen: HUD, field, cards, hand */
 
 #duel{
-    height:100vh;
+    /* Viewport hicbir zaman altinda kalmasin diye min-height; icerik tasarsa
+       #duel kendi scroll'u ile asagi yukari gezilebilir. Alt konsol + self LP
+       her zaman erisilebilir. */
+    min-height:100vh;height:auto;
+    overflow-y:auto;overflow-x:hidden;
+    overscroll-behavior:contain;
     position:relative;
     /* Anime duel chamber — koyu orman/gece atmosferi */
     background:
@@ -166,7 +171,7 @@
 /* Rakip konsol — kavisli balkon, 3D derinlik, Kaiba tech paneli */
 .opp-hand-area{
     display:flex;justify-content:center;padding:14px 8vw 4px;
-    height:auto;min-height:4.6vw;overflow:visible;flex-shrink:0;
+    height:auto;min-height:clamp(70px, 6vw, 90px);overflow:visible;flex-shrink:0;
     position:relative;z-index:15;
     /* Yarim daire alt kenar */
     border-radius:0 0 50% 50% / 0 0 100% 100%;
@@ -690,7 +695,10 @@
 .hand-area{
     display:flex;justify-content:center;align-items:flex-end;
     padding:10px 10vw 20px;position:relative;z-index:20;pointer-events:none;
-    min-height:12vw;
+    /* Min-height: vw-tabanli ama cok yuksek ekranda (>1100px) 170px ile kapli.
+       Cok dar (portrait) ekranda 140px alt sinir — LP konsolu + kartlar
+       erisilebilir kalsin. */
+    min-height:clamp(140px, 12vw, 170px);
     /* Yarim daire ust kenar */
     border-radius:50% 50% 0 0 / 22% 22% 0 0;
     /* Derin metalik kirmizi konsol gradient */

@@ -4,7 +4,6 @@
 .float-panel.left{left:8px}
 .float-panel.right{right:8px}
 #log-panel{left:8px;top:50%;transform:translateY(-50%)}
-#effects-panel{left:8px;top:auto;bottom:9vw}
 .float-panel .fp-title{font-size:1.1rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);padding:10px 14px;border-bottom:1px solid rgba(180,140,60,0.08)}
 .float-panel .fp-list{overflow-y:auto;max-height:48vh;padding:4px}
 
