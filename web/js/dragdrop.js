@@ -27,6 +27,14 @@ const DragDrop = {
         document.addEventListener("pointermove", this._onMove.bind(this), true);
         document.addEventListener("pointerup", this._onUp.bind(this), true);
         document.addEventListener("pointercancel", this._cancel.bind(this), true);
+        // Browser native HTML5 drag'i yut — img elementi varsayilan olarak
+        // draggable:true, tutunca "no-drop" cursor gosterir ve pointer event'leri
+        // calismaz. Hand-card ile ilgili herhangi bir native drag'i iptal et.
+        document.addEventListener("dragstart", (e) => {
+            if (e.target && e.target.closest && e.target.closest(".hand-card,.card-face,.drag-ghost")) {
+                e.preventDefault();
+            }
+        }, true);
         // Drag sonrasi patlayan synthetic click'i yut — hand-card preview /
         // highlight menu yanlislikla tetiklenmesin.
         document.addEventListener("click", (e) => {
