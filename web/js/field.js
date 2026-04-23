@@ -16,7 +16,10 @@ const Field = {
 
     init(team) {
         this.myTeam = team; this.lp = [8000,8000]; this.startLp = 8000; this.turn = 0;
-        this.cards = {0:{mzone:{},szone:{},hand:[],grave:[]},1:{mzone:{},szone:{},hand:[],grave:[]}};
+        this.cards = {
+            0:{mzone:{},szone:{},hand:[],grave:[],exile:[]},
+            1:{mzone:{},szone:{},hand:[],grave:[],exile:[]},
+        };
         this.render();
     },
     selfTeam() { return this.myTeam; },
@@ -58,60 +61,43 @@ const Field = {
         const z = loc===0x04?"mzone":loc===0x08?"szone":null;
         return z ? this.cards[con]?.[z]?.[seq] || null : null;
     },
-    addCounter(con, loc, seq, type, count) {
-        const c = this.getCardAt(con, loc, seq); if (!c) return;
-        if (!c.counters) c.counters = {}; c.counters[type] = (c.counters[type]||0) + count; this.render();
-    },
-    removeCounter(con, loc, seq, type, count) {
-        const c = this.getCardAt(con, loc, seq); if (!c) return;
-        if (!c.counters) c.counters = {}; c.counters[type] = Math.max(0,(c.counters[type]||0)-count);
-        if (!c.counters[type]) delete c.counters[type]; this.render();
+
+    // Server snapshot'tan gelen kart kaydini normalize et (render'in bekledigi
+    // alan isimleri: card_atk / card_def / card_type).
+    _normalizeSnapshotCard(c) {
+        if (!c) return null;
+        return {
+            code: c.code || 0,
+            position: c.position || 0,
+            card_name: c.card_name || "",
+            card_atk: c.atk !== undefined ? c.atk : c.card_atk,
+            card_def: c.def !== undefined ? c.def : c.card_def,
+            card_type: c.type !== undefined ? c.type : (c.card_type || 0),
+            card_level: c.level || 0,
+            overlays: c.overlays || [],
+            counters: c.counters || null,
+            equip: c.equip || null,
+        };
     },
 
-    moveCard(code, from, to, info) {
-        this._removeFrom(from.controller, from.location, from.sequence, code);
-        this._addTo(to.controller, to.location, to.sequence, {code, position:to.position||0, ...(info||{})});
-        this.render();
-    },
-    _removeFrom(con, loc, seq, code) {
-        const L = loc & 0x7F; // overlay flag (0x80) ve diger yuksek bitleri maskele
-        const self = this.cards[con];
-        if (!self) return;
-        if (L===0x04 && self.mzone?.[seq]) { delete self.mzone[seq]; return; }
-        if (L===0x08 && self.szone?.[seq]) { delete self.szone[seq]; return; }
-        if (L===0x02) { const i=self.hand.findIndex(c=>c.code===code); if(i>=0){self.hand.splice(i,1); return;} }
-        if (L===0x10) { const i=self.grave.findIndex(c=>c.code===code); if(i>=0){self.grave.splice(i,1); return;} }
-        // Fallback: loc/seq eslesmediyse mzone+szone'i kod ile tara (Future Fusion/extra-deck edge case)
-        if (code) {
-            for (const z of ["mzone","szone"]) {
-                const zone = self[z]; if (!zone) continue;
-                for (const k of Object.keys(zone)) {
-                    if (zone[k]?.code === code) { delete zone[k]; console.warn(`[field] fallback remove ${code} from ${z}[${k}] (got loc=0x${loc.toString(16)} seq=${seq})`); return; }
-                }
-            }
-        }
-    },
-    _addTo(con, loc, seq, data) {
-        if (loc===0x04) this.cards[con].mzone[seq]=data;
-        else if (loc===0x08) this.cards[con].szone[seq]=data;
-        else if (loc===0x02) this.cards[con].hand.push(data);
-        else if (loc===0x10) this.cards[con].grave.push(data);
-    },
-    addToHand(player, cards) {
-        for (const c of cards) this.cards[player].hand.push({code:c.code||0,position:c.position||0,card_name:c.card_name||"",card_atk:c.card_atk,card_def:c.card_def,card_type:c.card_type||0});
-        this.render();
-    },
-    summonCard(msg, fromHand) {
-        const z=(msg.location||0x04)===0x04?"mzone":"szone";
-        this.cards[msg.controller][z][msg.sequence]={code:msg.code,position:msg.position||1,card_name:msg.card_name||"",card_atk:msg.card_atk,card_def:msg.card_def,card_type:msg.card_type||0};
-        // Elden kaldir
-        const h=this.cards[msg.controller].hand;
-        const i=h.findIndex(c=>c.code===msg.code);
-        if(i>=0) h.splice(i,1);
-        else if(fromHand && h.length>0) {
-            // Normal summon kesin elden gelir — gizli kart fallback
-            const j=h.findIndex(c=>!c.code||c.code===0);
-            if(j>=0) h.splice(j,1); else h.pop();
+    // Motor otoriteli saha snapshot'ini uygula. mzone/szone/grave/exile
+    // tamamen replace edilir — event-driven drift imkansiz.
+    applyFieldSnapshot(field) {
+        if (!field) return;
+        for (const team of [0, 1]) {
+            const key = String(team);
+            const bucket = this.cards[team];
+            if (!bucket) continue;
+            const mz = (field.mzone && field.mzone[key]) || [];
+            const sz = (field.szone && field.szone[key]) || [];
+            bucket.mzone = {};
+            bucket.szone = {};
+            mz.forEach((c, i) => { const n = this._normalizeSnapshotCard(c); if (n) bucket.mzone[i] = n; });
+            sz.forEach((c, i) => { const n = this._normalizeSnapshotCard(c); if (n) bucket.szone[i] = n; });
+            const gr = (field.grave && field.grave[key]) || [];
+            const ex = (field.exile && field.exile[key]) || [];
+            bucket.grave = gr.map(c => this._normalizeSnapshotCard(c)).filter(Boolean);
+            bucket.exile = ex.map(c => this._normalizeSnapshotCard(c)).filter(Boolean);
         }
         this.render();
     },
@@ -215,9 +201,22 @@ const Field = {
                     face.appendChild(st);
                 }
                 if(card.counters){
-                    const total=Object.values(card.counters).reduce((a,b)=>a+b,0);
-                    if(total>0){const b=document.createElement("div");b.className="counter-badge";b.textContent=total;face.appendChild(b);}
+                    const entries=Object.entries(card.counters).filter(([,v])=>v>0);
+                    if(entries.length>0){
+                        const wrap=document.createElement("div");
+                        wrap.className="counter-stack";
+                        entries.forEach(([type,count])=>{
+                            const b=document.createElement("div");
+                            b.className="counter-badge";
+                            b.dataset.counterType=type;
+                            b.textContent=count;
+                            b.title=`Sayaç #${type}`;
+                            wrap.appendChild(b);
+                        });
+                        face.appendChild(wrap);
+                    }
                 }
+                if(card.equip){face.classList.add("card-equipped");}
             }
             // Menu container (ui.js dolduracak)
             const menu=document.createElement("div");
@@ -293,6 +292,8 @@ document.addEventListener("contextmenu",(e)=>{
 document.getElementById("card-preview-overlay")?.addEventListener("click",function(){this.classList.remove("active")});
 
 // Kart tikla → highlight varsa popup, yoksa preview
+// NOT: el kartlari icin sol tik preview ACMAZ — o onizleme sag tik /
+// long-press ile acilir. El kartinin sol tiki drag&drop icin reservelidir.
 document.addEventListener("click",(e)=>{
     // Popup butonuna tiklandi
     if(e.target.closest(".popup-btn")) return;
@@ -300,7 +301,10 @@ document.addEventListener("click",(e)=>{
     // Mevcut popup'lari kapat
     document.querySelectorAll(".card-popup.open").forEach(p=>p.remove());
 
-    const card=e.target.closest(".hand-card,.card-face");
+    // El kartlari: sol tik drag icin, preview sag tik/long-press'le acilir
+    if(e.target.closest(".hand-card")) return;
+
+    const card=e.target.closest(".card-face");
     if(!card) return;
 
     // Highlight yoksa → preview ac

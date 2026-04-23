@@ -222,12 +222,13 @@
 
     WS.on("duel_start",(d)=>{
         UI.showScreen("duel"); Field.init(myTeam);
-        document.getElementById("self-name").textContent=myName;
-        document.getElementById("self-initial").textContent=myName.charAt(0).toUpperCase();
-        document.getElementById("opp-name").textContent=oppName;
-        document.getElementById("opp-initial").textContent=oppName.charAt(0).toUpperCase();
-        document.getElementById("self-lp").textContent="8000";
-        document.getElementById("opp-lp").textContent="8000";
+        const setText=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+        setText("self-name",myName);
+        setText("self-initial",myName.charAt(0).toUpperCase());
+        setText("opp-name",oppName);
+        setText("opp-initial",oppName.charAt(0).toUpperCase());
+        setText("self-lp","8000");
+        setText("opp-lp","8000");
         // Tema arkaplan
         const duelEl=document.getElementById("duel");
         duelEl.classList.remove("theme-toon");
@@ -272,6 +273,13 @@
             if (sEl && d.deck_counts[selfT] !== undefined) sEl.textContent = d.deck_counts[selfT];
             if (oEl && d.deck_counts[oppT] !== undefined) oEl.textContent = d.deck_counts[oppT];
         }
+    });
+    WS.on("field_sync",(d)=>{
+        // Motor otoriteli saha snapshot'i — mzone/szone/grave/exile tamamen
+        // motor tarafindan belirlenir. Token, overlay, counter, equip, flip
+        // gibi tum edge case'ler otomatik kapsanir — event-driven drift
+        // fiziksel olarak imkansiz.
+        if (d.field) Field.applyFieldSnapshot(d.field);
     });
     WS.on("select",(d)=>{if(d.msg){console.log("[SELECT]",d.msg.name,"type="+d.msg.type,"player="+d.msg.player);UI.handleSelect(d.msg);}});
     WS.on("retry",()=>{UI.log("Gecersiz, tekrar sec!","damage");if(UI.currentSelect)UI.handleSelect(UI.currentSelect)});
@@ -378,7 +386,7 @@
         }
         else if(name==="MSG_NEW_PHASE") Field.setPhase(msg.phase);
         else if(name==="MSG_DRAW"){
-            Field.addToHand(msg.player,msg.cards||[]);
+            // State: hand_sync halleder. Burada sadece log.
             if(msg.player===myTeam){
                 (msg.cards||[]).forEach(c=>{
                     if(c.card_name)UI.logAction({actor:p(msg.player),verb:"Kart çekti",card:{name:c.card_name,code:c.code},to:0x02,cls:"move"});
@@ -388,7 +396,7 @@
             }
         }
         else if(name==="MSG_MOVE"){
-            Field.moveCard(code,msg.from||{},msg.to||{},{card_name:cname,card_atk:msg.card_atk,card_def:msg.card_def,card_type:msg.card_type});
+            // State: field_sync + hand_sync halleder. Burada sadece mezar/surgun log'u.
             const to=msg.to?.location||0, from=msg.from?.location||0;
             if(cname && (to===0x10 || to===0x20)){
                 const con = msg.to?.controller ?? msg.from?.controller ?? 0;
@@ -396,7 +404,7 @@
             }
         }
         else if(name==="MSG_SUMMONING"||name==="MSG_SPSUMMONING"){
-            Field.summonCard(msg, name==="MSG_SUMMONING");
+            // State: field_sync halleder. Burada sadece log.
             UI.logAction({
                 actor:p(msg.controller),
                 verb:name==="MSG_SUMMONING"?"Çağırdı":"Özel Çağrı yaptı",
@@ -405,29 +413,11 @@
             });
         }
         else if(name==="MSG_SET"){
-            const z=(msg.location||0x04)===0x04?"mzone":"szone";
-            Field.cards[msg.controller][z][msg.sequence]={code,position:msg.position||0x8,card_name:cname,card_type:msg.card_type||0};
-            const h=Field.cards[msg.controller].hand;const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);
-            Field.render();
+            // State: field_sync + hand_sync halleder. Burada sadece log.
             UI.logAction({actor:p(msg.controller),verb:"Set etti",card:cname?{name:cname,code}:null,from:0x02,to:msg.location||0x04,cls:"move"});
         }
         else if(name==="MSG_POS_CHANGE"){
-            const loc=msg.location||0x04;
-            const zone=loc===0x04?"mzone":loc===0x08?"szone":null;
-            if(zone){
-                const z=Field.cards[msg.controller]?.[zone];
-                if(z&&z[msg.sequence]){
-                    z[msg.sequence].position=msg.position;
-                    // Flip face-up — code/name/stats rakibin client'inda hala 0 olabilir (MSG_SET filter),
-                    // flip sirasinda kod acilir
-                    if(msg.code) z[msg.sequence].code=msg.code;
-                    if(cname) z[msg.sequence].card_name=cname;
-                    if(msg.card_atk!==undefined) z[msg.sequence].card_atk=msg.card_atk;
-                    if(msg.card_def!==undefined) z[msg.sequence].card_def=msg.card_def;
-                    if(msg.card_type) z[msg.sequence].card_type=msg.card_type;
-                    Field.render();
-                }
-            }
+            // State: field_sync halleder (position + flip face-up kod acilmasi dahil).
         }
         else if(name==="MSG_DAMAGE"){Field.damageLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP kaybetti`,cls:"damage"})}
         else if(name==="MSG_RECOVER"){Field.recoverLP(msg.player,msg.amount);UI.logAction({actor:p(msg.player),verb:`${msg.amount} LP kazandı`,cls:"summon"})}
@@ -444,19 +434,10 @@
                 from:msg.triggering_location,to:0x08,
                 chainIdx:UI.chainContext.length,cls:"spell"
             });
-            // Kartın su anki konumu (location) szone olabilir — motor dahili olarak tasir
-            if(msg.location===0x08){
-                const ex=Field.cards[con]?.szone[msg.sequence];
-                if(ex){ex.position=0x1;ex.code=code;ex.card_name=cname||ex.card_name;ex.card_type=msg.card_type||ex.card_type;}
-            }
-            // triggering_location = kartın orijinal konumu (chain'e girmeden once)
-            // Elden aktiflestirildi ama motor MSG_MOVE gondermez — elden silmemiz gerekiyor
-            const trigLoc=msg.triggering_location||0;
-            if(trigLoc===0x02){
-                const h=Field.cards[con]?.hand;
-                if(h){const i=h.findIndex(c=>c.code===code);if(i>=0)h.splice(i,1);}
-            }
-            Field.render();
+            // State: field_sync + hand_sync halleder (elden aktivasyonda motor
+            // MOVE gondermez ama query_location HAND bos donecegi icin hand_sync
+            // zaten sifirlar; szone'da aktifleşen kartin flip'i de field_sync'te
+            // gorunur.)
         }
         else if(name==="MSG_CHAIN_SOLVED")UI.popChainContext();
         else if(name==="MSG_CHAIN_END"){
@@ -466,22 +447,16 @@
             UI.clearChainContext();
         }
         else if(name==="MSG_SHUFFLE_HAND"){
-            // Motor eli yeniden gonderdi — el state'ini tamamen yenile
-            // Motor dogruluk kaynagidir, verisine guveniriz
-            const h=Field.cards[msg.player].hand;
-            const cards=msg.cards||[];
-            h.length=0;
-            for(const c of cards){
-                if(typeof c==="object") h.push({code:c.code||0,position:0,card_name:c.card_name||"",card_atk:c.card_atk,card_def:c.card_def,card_type:c.card_type||0});
-                else h.push({code:c||0,position:0,card_name:"",card_type:0});
-            }
-            Field.render();
+            // State: hand_sync halleder. Burada bir sey yok.
         }
-        else if(name==="MSG_FLIPSUMMONING"){Field.summonCard(msg, false);UI.logAction({actor:p(msg.controller),verb:"Flip Summon",card:{name:cname,code},cls:"summon"})}
+        else if(name==="MSG_FLIPSUMMONING"){UI.logAction({actor:p(msg.controller),verb:"Flip Summon",card:{name:cname,code},cls:"summon"})}
         else if(name==="MSG_LPUPDATE")Field.updateLP(msg.player,msg.lp);
-        else if(name==="MSG_STAT_UPDATE"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);if(c){c.card_atk=msg.card_atk;c.card_def=msg.card_def;Field.render();}}
-        else if(name==="MSG_ADD_COUNTER"){Field.addCounter(msg.controller,msg.location,msg.sequence,msg.counter_type,msg.count);const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} +${msg.count} sayac`,"spell",c?.code)}
-        else if(name==="MSG_REMOVE_COUNTER"){Field.removeCounter(msg.controller,msg.location,msg.sequence,msg.counter_type,msg.count);const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} -${msg.count} sayac`,"move",c?.code)}
+        else if(name==="MSG_STAT_UPDATE"){
+            // Artik field_sync tum mzone/szone stat'larini getiriyor; bu mesaja
+            // gerek yok ama server hala gonderiyor olabilir — no-op.
+        }
+        else if(name==="MSG_ADD_COUNTER"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} +${msg.count} sayac`,"spell",c?.code)}
+        else if(name==="MSG_REMOVE_COUNTER"){const c=Field.getCardAt(msg.controller,msg.location,msg.sequence);UI.log(`${c?.card_name||""} -${msg.count} sayac`,"move",c?.code)}
         else if(name==="MSG_EQUIP")UI.log("Techizat edildi","spell");
         else if(name==="MSG_TOSS_COIN"){const r=(msg.results||[]).map(v=>v?"Yazi":"Tura").join(", ");UI.log(`Yazi/Tura: ${r}`)}
         else if(name==="MSG_TOSS_DICE")UI.log(`Zar: ${(msg.results||[]).join(", ")}`);

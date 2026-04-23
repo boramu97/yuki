@@ -12,7 +12,7 @@
 // ile coexistence — 8px hareket once long-press'i iptal eder (kendi 5px
 // threshold'uyla), drag kendi threshold'unda aktif olur.
 
-const DRAG_THRESHOLD = 8;     // px — bu kadar hareket sonrasi drag aktif
+const DRAG_THRESHOLD = 4;     // px — bu kadar hareket sonrasi drag aktif
 const FIELD_SPELL_SLOT = 5;   // szone 5 = field spell zone
 
 const DragDrop = {
@@ -45,24 +45,31 @@ const DragDrop = {
         const card = e.target.closest(".hand-card");
         if (!card) return;
 
+        const dbg = (...a) => { if (window.YUKI_DEBUG_DRAG) console.log("[dd]", ...a); };
+        dbg("pointerdown on hand-card", card);
+
         // Sadece kendi elimizdeki kartlar
         const handEl = document.getElementById("hand");
-        if (!handEl || !handEl.contains(card)) return;
+        if (!handEl || !handEl.contains(card)) { dbg("skip: not in #hand"); return; }
 
-        // SELECT_IDLECMD aktif mi?
+        // Bir SELECT aktif mi? (IDLECMD=11 veya BATTLECMD=10 — her ikisinde de
+        // el aksiyonu olabilir). Aksiyon listesi bos ise zaten return edilir.
         const select = (typeof UI !== "undefined") ? UI.currentSelect : null;
-        if (!select || select.type !== 11) return;
+        if (!select) { dbg("skip: no UI.currentSelect"); return; }
 
         const code = +(card.dataset.code || 0);
         const handIndex = +(card.dataset.index || 0);
-        if (!code) return;
+        if (!code) { dbg("skip: code=0"); return; }
 
         // Bu kart icin aksiyon var mi?
         const actions = this._actionsForHandCard(code, select);
-        if (actions.length === 0) return;
+        dbg("actions for code", code, actions);
+        if (actions.length === 0) { dbg("skip: no actions for this card"); return; }
 
         const validSlots = this._validSlotsForActions(actions);
-        if (validSlots.length === 0) return;
+        dbg("validSlots", validSlots);
+        if (validSlots.length === 0) { dbg("skip: no valid slots"); return; }
+        dbg("ARMED — move >= " + DRAG_THRESHOLD + "px baslat");
 
         // Arm: threshold'a kadar bekle
         this.armed = {
@@ -275,11 +282,12 @@ const DragDrop = {
     //  ACTION DISCOVERY
     // ========================================================================
 
-    // SELECT_IDLECMD listelerinde kod ile eslesen el aksiyonlarini bul.
-    // Sadece location=0x02 (hand) olanlar — sahadaki ayni kodlu kart icin
-    // aksiyon drag kapsaminda degil.
+    // SELECT_IDLECMD / SELECT_BATTLECMD listelerinde kod ile eslesen el
+    // aksiyonlarini bul. Sadece location=0x02 (hand) olanlar — sahadaki ayni
+    // kodlu kart icin aksiyon drag kapsaminda degil.
     _actionsForHandCard(code, select) {
         const actions = [];
+        const respType = select.type;  // 11=IDLECMD, 10=BATTLECMD
         const map = [
             ["summonable",         "Cagir",        "summon",   "gold"],
             ["special_summonable", "Ozel Cagir",   "spsummon", "gold"],
@@ -297,7 +305,7 @@ const DragDrop = {
                     label, cls, actionType, index: i,
                     zoneHint: (actionType === "sset" || actionType === "activate") ? "szone" :
                               "mzone",  // summon / spsummon / mset
-                    callback: () => WS.sendResponse(11, { action: actionType, index: i }),
+                    callback: () => WS.sendResponse(respType, { action: actionType, index: i }),
                 });
             });
         });
