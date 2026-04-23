@@ -57,6 +57,11 @@
 }
 .console-info-left{left:1.5vw}
 .console-info-right{right:1.5vw;text-align:right}
+/* Self balkonunda LP konsolunu alt kenara sabitle — hand-area'nin dikey
+   boyutundan bagimsiz LP'nin kartlarin asagisinda kalmasi garanti. */
+.hand-area .console-info{top:auto;bottom:10px;transform:none}
+/* Opp balkonunda LP konsolunu ust kenara sabitle (simetrik) */
+.opp-hand-area .console-info{top:8px;bottom:auto;transform:none}
 
 /* Oyuncu tarafi altin tema */
 .console-info.self{
@@ -170,8 +175,8 @@
 .field-wrap{flex:1;display:flex;flex-direction:column;position:relative;min-height:0}
 /* Rakip konsol — kavisli balkon, 3D derinlik, Kaiba tech paneli */
 .opp-hand-area{
-    display:flex;justify-content:center;padding:14px 8vw 4px;
-    height:auto;min-height:clamp(70px, 6vw, 90px);overflow:visible;flex-shrink:0;
+    display:flex;justify-content:center;padding:8px 8vw 4px;
+    height:auto;min-height:clamp(56px, calc(4.8vw + 10px), 80px);overflow:visible;flex-shrink:0;
     position:relative;z-index:15;
     /* Yarim daire alt kenar */
     border-radius:0 0 50% 50% / 0 0 100% 100%;
@@ -201,7 +206,7 @@
         rgba(140,220,255,0.85) 80%, transparent);
     box-shadow:0 0 6px rgba(88,196,240,0.9), 0 0 12px rgba(88,196,240,0.4);
 }
-.opp-hand-card{width:4vw;height:5.6vw;border-radius:2px;margin-left:-0.8vw;flex-shrink:0;overflow:hidden;background:#b8860b;border:1px solid #d4a820}
+.opp-hand-card{width:3.4vw;height:4.8vw;border-radius:2px;margin-left:-0.7vw;flex-shrink:0;overflow:hidden;background:#b8860b;border:1px solid #d4a820}
 .opp-hand-card:first-child{margin-left:0}
 .opp-hand-card .card-back-inner{width:100%;height:100%;background:#6b3a1a;border-radius:2px;display:flex;align-items:center;justify-content:center}
 .opp-hand-card .card-back-oval{width:50%;height:55%;background:#2a2a2a;border-radius:50%;border:1px solid #1a1a1a}
@@ -694,11 +699,11 @@
 /* Oyuncu konsolu — kavisli balkon, 3D kirmizi Kaiba-tech paneli */
 .hand-area{
     display:flex;justify-content:center;align-items:flex-end;
-    padding:10px 10vw 20px;position:relative;z-index:20;pointer-events:none;
-    /* Min-height: vw-tabanli ama cok yuksek ekranda (>1100px) 170px ile kapli.
-       Cok dar (portrait) ekranda 140px alt sinir — LP konsolu + kartlar
-       erisilebilir kalsin. */
-    min-height:clamp(140px, 12vw, 170px);
+    padding:6px 10vw 10px;position:relative;z-index:20;pointer-events:none;
+    /* Min-height kucultuldu — opp-hand'dan kurtarilan alanla self taraf
+       yukari kaydirildi. Alt padding azaltilip LP konsolu alt kenara
+       sabitlendi (bkz. .console-info self override). */
+    min-height:clamp(110px, 10vw, 150px);
     /* Yarim daire ust kenar */
     border-radius:50% 50% 0 0 / 22% 22% 0 0;
     /* Derin metalik kirmizi konsol gradient */
