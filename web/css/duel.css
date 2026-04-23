@@ -452,7 +452,99 @@
 }
 .card-stats-bar .atk{color:#ffd740;text-align:left;border-radius:0 3px 0 3px;background:rgba(0,0,0,0.6)}
 .card-stats-bar .def{color:#64b5f6;text-align:right;border-radius:3px 0 3px 0;background:rgba(0,0,0,0.6)}
-.counter-badge{position:absolute;top:3px;right:3px;width:1.5vw;height:1.5vw;min-width:20px;min-height:20px;background:radial-gradient(circle,#4fc3f7,#0288d1);border:2px solid #b3e5fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7vw;font-weight:900;color:#fff;font-family:sans-serif;z-index:5}
+.counter-stack{position:absolute;top:3px;right:3px;display:flex;flex-direction:column;gap:2px;z-index:5;align-items:flex-end}
+.counter-stack .counter-badge{position:static}
+.counter-badge{position:absolute;top:3px;right:3px;width:1.5vw;height:1.5vw;min-width:20px;min-height:20px;background:radial-gradient(circle,#4fc3f7,#0288d1);border:2px solid #b3e5fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7vw;font-weight:900;color:#fff;font-family:sans-serif;z-index:5;box-shadow:0 0 6px rgba(79,195,247,0.6)}
+.counter-badge[data-counter-type="1"]{background:radial-gradient(circle,#ffd740,#c9a227);border-color:#ffe082}
+.counter-badge[data-counter-type="2"]{background:radial-gradient(circle,#b388ff,#6a1b9a);border-color:#d1c4e9}
+.card-equipped{box-shadow:inset 0 0 0 2px rgba(183,106,255,0.75),0 0 10px rgba(183,106,255,0.45)}
+
+/* ==========================================================================
+   DRAG & DROP — el → saha
+   ========================================================================== */
+
+/* Surukleme sirasinda kaynak kart yari seffaf */
+.hand-card.dragging-source{opacity:0.35;filter:grayscale(0.4)}
+
+/* Ghost: cursor'i takip eden kart klonu */
+.drag-ghost{
+    border-radius:3px;
+    transform:scale(1.08) rotate(-1.5deg);
+    opacity:0.92;
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,0.65)) drop-shadow(0 0 12px rgba(79,195,247,0.45));
+    will-change:left,top,transform,opacity;
+}
+.drag-ghost .card-menu,.drag-ghost .card-popup{display:none !important}
+
+/* Valid drop slot: cyan parilti + scan animation */
+.card-slot.valid-drop{
+    background:radial-gradient(circle,rgba(79,195,247,0.22),rgba(79,195,247,0.05) 60%);
+    box-shadow:inset 0 0 0 2px rgba(79,195,247,0.55),0 0 14px rgba(79,195,247,0.35);
+    animation:dd-valid-pulse 1.4s ease-in-out infinite;
+}
+@keyframes dd-valid-pulse{
+    0%,100%{box-shadow:inset 0 0 0 2px rgba(79,195,247,0.4),0 0 10px rgba(79,195,247,0.25)}
+    50%{box-shadow:inset 0 0 0 2px rgba(79,195,247,0.75),0 0 18px rgba(79,195,247,0.55)}
+}
+/* Hover'daki valid slot — daha guclu altin cerceve */
+.card-slot.valid-drop.hover-drop{
+    background:radial-gradient(circle,rgba(255,215,64,0.25),rgba(255,215,64,0.06) 60%);
+    box-shadow:inset 0 0 0 3px rgba(255,215,64,0.85),0 0 22px rgba(255,215,64,0.55);
+    animation:none;
+}
+
+/* Pending: drop sonrasi motor onayi beklenen slot */
+.card-face.pending{
+    outline:2px dashed rgba(79,195,247,0.85);
+    outline-offset:-2px;
+    opacity:0.88;
+    animation:dd-pending-scan 1.8s linear infinite;
+    z-index:150;
+}
+.card-face.pending::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(180deg,transparent 0px,transparent 3px,rgba(79,195,247,0.08) 3px,rgba(79,195,247,0.08) 4px);
+    border-radius:3px;
+}
+@keyframes dd-pending-scan{
+    0%,100%{box-shadow:0 0 0 1px rgba(79,195,247,0.3),0 0 14px rgba(79,195,247,0.35)}
+    50%{box-shadow:0 0 0 1px rgba(79,195,247,0.55),0 0 22px rgba(79,195,247,0.55)}
+}
+
+/* Drop sonrasi aksiyon popup'i: slot uzerine asili menu */
+.drop-popup{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    display:flex;flex-direction:column;gap:4px;
+    background:rgba(5,3,8,0.94);
+    border:1px solid rgba(180,140,60,0.45);
+    border-radius:4px;
+    padding:6px;
+    min-width:6.5vw;
+    z-index:200;
+    box-shadow:0 8px 20px rgba(0,0,0,0.75),0 0 16px rgba(180,140,60,0.25);
+    backdrop-filter:blur(4px);
+}
+.drop-popup .popup-btn{
+    padding:0.55vw 0.7vw;border-radius:3px;font-size:0.75vw;font-family:inherit;
+    border:1px solid rgba(180,140,60,0.35);
+    background:rgba(180,140,60,0.08);color:#d4c8a0;
+    cursor:pointer;white-space:nowrap;transition:all 0.15s;
+    text-align:center;min-height:28px;
+}
+.drop-popup .popup-btn:hover{background:rgba(180,140,60,0.28);color:#ffe082;border-color:var(--gold)}
+.drop-popup .popup-btn.gold{border-color:rgba(232,168,64,0.55);color:#ffe082}
+.drop-popup .popup-btn.gold:hover{background:rgba(232,168,64,0.3);color:#fff}
+.drop-popup .popup-btn.purple{border-color:rgba(183,106,255,0.55);color:#d1b3ff}
+.drop-popup .popup-btn.purple:hover{background:rgba(183,106,255,0.3);color:#fff}
+.drop-popup .popup-btn.dim{color:#a09070}
+.drop-popup .popup-btn.cancel{border-color:rgba(204,80,80,0.55);color:#ff9a8a;margin-top:4px;border-top:1px solid rgba(204,80,80,0.35);padding-top:0.55vw}
+.drop-popup .popup-btn.cancel:hover{background:rgba(204,80,80,0.3);color:#fff}
+
+/* Mobilde popup butonlari daha buyuk (44px tap target) */
+@media (max-width:768px){
+    .drop-popup{min-width:22vw}
+    .drop-popup .popup-btn{font-size:3vw;padding:2.5vw;min-height:44px}
+}
 
 /* KART ICI AKSYON MENUSU */
 .card-menu{position:absolute;inset:0;background:rgba(5,3,8,0.92);border-radius:3px;padding:6px;display:none;flex-direction:column;justify-content:center;gap:4px;z-index:100}
@@ -668,7 +760,8 @@
     mask:linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 12%, transparent 25%, transparent 75%, rgba(0,0,0,0.5) 88%, rgba(0,0,0,0.9) 100%);
     opacity:0.75;z-index:0;
 }
-.hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:pointer;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;top:-5vw;z-index:2;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto;touch-action:manipulation}
+.hand-card{width:6.2vw;height:8.5vw;border-radius:4px;overflow:hidden;cursor:grab;transition:transform 0.3s cubic-bezier(.2,.8,.3,1.2),box-shadow 0.3s,border-color 0.3s;margin-left:-1vw;box-shadow:0 4px 14px rgba(0,0,0,0.7);position:relative;top:-5vw;z-index:2;border:1.5px solid rgba(200,170,60,0.2);pointer-events:auto;touch-action:none;user-select:none;-webkit-user-drag:none}
+.hand-card:active{cursor:grabbing}
 .hand-card:first-child{margin-left:0}
 .hand-card:hover{transform:translateY(-1.8vw) scale(1.18) rotate(0deg)!important;border-color:rgba(154,106,186,0.55);box-shadow:0 0 20px rgba(154,106,186,0.35),0 10px 28px rgba(0,0,0,0.6);z-index:30}
 .hand-card img{width:100%;height:100%;object-fit:cover;display:block;border-radius:3px}

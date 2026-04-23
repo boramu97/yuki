@@ -566,14 +566,39 @@ const UI = {
         this._addButtonRow(btns);
     },
 
-    // --- BOLGE SECIMI (otomatik) ---
+    // --- BOLGE SECIMI ---
+    // Drag-drop'tan gelen `_deferredPlace` varsa kullanicinin sectigi slot'u
+    // yanitla. Yoksa ilk bos slot'u otomatik sec (eski davranis).
     _place(msg) {
         const flag = msg.selectable || 0, player = msg.player;
+
+        // Deferred: drag-drop kullanici slot'u onceden sectiyse
+        if (this._deferredPlace) {
+            const dp = this._deferredPlace;
+            this._deferredPlace = null;
+            const bit = this._placeBitIndex(dp.controller, dp.location, dp.sequence, player);
+            // Motor selectable flag'i TERS semantik kullaniyor: bit 1 = NOT available.
+            // Eski kod `!(flag & bit)` ile uygun slot'u buldugu icin ayni mantik.
+            if (bit >= 0 && !(flag & (1 << bit))) {
+                WS.sendResponse(18, { player: dp.controller, location: dp.location, sequence: dp.sequence });
+                return;
+            }
+            // Motor bu slot'u reddetti — fallback: otomatik ilk bos slot
+        }
+
         for (let s = 0; s < 7; s++) { if (!(flag & (1 << s))) { WS.sendResponse(18, { player, location: 0x04, sequence: s }); return; } }
         for (let s = 0; s < 8; s++) { if (!(flag & (1 << (s + 8)))) { WS.sendResponse(18, { player, location: 0x08, sequence: s }); return; } }
         for (let s = 0; s < 7; s++) { if (!(flag & (1 << (s + 16)))) { WS.sendResponse(18, { player: 1 - player, location: 0x04, sequence: s }); return; } }
         for (let s = 0; s < 8; s++) { if (!(flag & (1 << (s + 24)))) { WS.sendResponse(18, { player: 1 - player, location: 0x08, sequence: s }); return; } }
         WS.sendResponse(18, { player, location: 0x04, sequence: 0 });
+    },
+
+    _placeBitIndex(controller, location, sequence, msgPlayer) {
+        // Bit layout: own mzone=0-6, own szone=8-15, opp mzone=16-22, opp szone=24-31
+        const isOwn = controller === msgPlayer;
+        if (location === 0x04) return isOwn ? sequence : (sequence + 16);
+        if (location === 0x08) return isOwn ? (sequence + 8) : (sequence + 24);
+        return -1;
     },
 
     // --- KURBAN ---
