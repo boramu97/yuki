@@ -57,11 +57,21 @@
 }
 .console-info-left{left:1.5vw}
 .console-info-right{right:1.5vw;text-align:right}
-/* Self balkonunda LP konsolunu alt kenara sabitle — hand-area'nin dikey
-   boyutundan bagimsiz LP'nin kartlarin asagisinda kalmasi garanti. */
+/* Tur counter / Pes Et butonu balkon (hand-area) icinde — alt-ust kenarda sabit */
 .hand-area .console-info{top:auto;bottom:10px;transform:none}
-/* Opp balkonunda LP konsolunu ust kenara sabitle (simetrik) */
 .opp-hand-area .console-info{top:8px;bottom:auto;transform:none}
+
+/* Saha-ici LP panelleri: konsolun bittigi yer = sahanin kenari. Field'in
+   ust ve alt kenarinda, ekranin en solunda (left:1.5vw) sabit.
+   Field-hud hem opp hem self icin simetrik. Z-index 30 — slot'larin
+   uzerinde kalir ama drop-popup (200) altinda. */
+.field .console-info.field-hud{
+    position:absolute;left:1.5vw;z-index:30;
+    top:auto;bottom:auto;transform:none;
+    min-width:150px;
+}
+.field .console-info.field-hud.opp{top:6px}
+.field .console-info.field-hud.self{bottom:6px}
 
 /* Oyuncu tarafi altin tema */
 .console-info.self{

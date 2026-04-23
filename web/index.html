@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/auth.css?v=17">
     <link rel="stylesheet" href="css/home.css?v=17">
     <link rel="stylesheet" href="css/lobby.css?v=17">
-    <link rel="stylesheet" href="css/duel.css?v=28">
+    <link rel="stylesheet" href="css/duel.css?v=29">
     <link rel="stylesheet" href="css/motor-panel.css?v=17">
     <link rel="stylesheet" href="css/float-panels.css?v=19">
     <link rel="stylesheet" href="css/card-popup.css?v=17">
@@ -130,11 +130,6 @@
 
             <!-- Rakip El + konsol bilgi panelleri -->
             <div class="opp-hand-area" id="opp-hand">
-                <div class="console-info console-info-left opp" aria-label="Rakip bilgisi">
-                    <div class="console-name" id="opp-name">Rakip</div>
-                    <div class="console-lp" id="opp-lp">8000</div>
-                    <div class="console-lp-bar"><div class="console-lp-fill" id="opp-lp-bar"></div></div>
-                </div>
                 <div class="console-info console-info-right opp" aria-label="Tur">
                     <div class="console-turn">TUR <span id="turn-counter">I</span></div>
                 </div>
@@ -155,6 +150,18 @@
 
             <!-- SAHA — simetrik 3-kolonlu layout: [side-col] [zones-grid] [side-col] -->
             <div class="field">
+                <!-- Saha-ici LP panelleri — konsollarin bittigi yerde (saha ust/alt kenarinda) -->
+                <div class="console-info console-info-left opp field-hud" aria-label="Rakip bilgisi">
+                    <div class="console-name" id="opp-name">Rakip</div>
+                    <div class="console-lp" id="opp-lp">8000</div>
+                    <div class="console-lp-bar"><div class="console-lp-fill" id="opp-lp-bar"></div></div>
+                </div>
+                <div class="console-info console-info-left self field-hud" aria-label="Oyuncu bilgisi">
+                    <div class="console-name" id="self-name">Sen</div>
+                    <div class="console-lp" id="self-lp">8000</div>
+                    <div class="console-lp-bar"><div class="console-lp-fill" id="self-lp-bar"></div></div>
+                </div>
+
                 <!-- Rakip tarafi: szone (ust, dis) / mzone (seam'e yakin) -->
                 <div class="player-zones opp">
                     <div class="side-col side-left">
@@ -227,11 +234,6 @@
 
             <!-- El + oyuncu konsol bilgi panelleri -->
             <div class="hand-area" id="hand">
-                <div class="console-info console-info-left self" aria-label="Oyuncu bilgisi">
-                    <div class="console-name" id="self-name">Sen</div>
-                    <div class="console-lp" id="self-lp">8000</div>
-                    <div class="console-lp-bar"><div class="console-lp-fill" id="self-lp-bar"></div></div>
-                </div>
                 <div class="console-info console-info-right self" aria-label="Eylem paneli">
                     <button id="btn-surrender" class="btn-surrender" type="button">PES ET</button>
                 </div>
