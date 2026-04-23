@@ -274,12 +274,19 @@
             if (oEl && d.deck_counts[oppT] !== undefined) oEl.textContent = d.deck_counts[oppT];
         }
     });
+    window._fsCount = 0;
     WS.on("field_sync",(d)=>{
-        // Motor otoriteli saha snapshot'i — mzone/szone/grave/exile tamamen
-        // motor tarafindan belirlenir. Token, overlay, counter, equip, flip
-        // gibi tum edge case'ler otomatik kapsanir — event-driven drift
-        // fiziksel olarak imkansiz.
-        if (d.field) Field.applyFieldSnapshot(d.field);
+        window._fsCount++;
+        const f = d.field;
+        if (f && f.mzone && (f.mzone["0"]||f.mzone["1"])) {
+            const mz0 = (f.mzone["0"]||[]).map(c => c ? c.code||0 : null);
+            const mz1 = (f.mzone["1"]||[]).map(c => c ? c.code||0 : null);
+            const sz0 = (f.szone["0"]||[]).map(c => c ? c.code||0 : null);
+            const sz1 = (f.szone["1"]||[]).map(c => c ? c.code||0 : null);
+            const any = [...mz0,...mz1,...sz0,...sz1].some(x=>x);
+            if (any) console.log(`[field_sync #${window._fsCount}] mz0=`,mz0,'mz1=',mz1,'sz0=',sz0,'sz1=',sz1);
+        }
+        if (f) Field.applyFieldSnapshot(f);
     });
     WS.on("select",(d)=>{if(d.msg){console.log("[SELECT]",d.msg.name,"type="+d.msg.type,"player="+d.msg.player);UI.handleSelect(d.msg);}});
     WS.on("retry",()=>{UI.log("Gecersiz, tekrar sec!","damage");if(UI.currentSelect)UI.handleSelect(UI.currentSelect)});

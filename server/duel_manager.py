@@ -19,7 +19,7 @@ import struct as _struct
 from server.ocg_binding import (
     OCGCore,
     LOCATION_DECK, LOCATION_EXTRA, LOCATION_MZONE, LOCATION_SZONE,
-    LOCATION_HAND,
+    LOCATION_HAND, LOCATION_GRAVE, LOCATION_REMOVED,
     POS_FACEDOWN_DEFENSE, POS_FACEDOWN,
     DUEL_MODE_MR2,
     DUEL_STATUS_END, DUEL_STATUS_AWAITING, DUEL_STATUS_CONTINUE,
@@ -28,6 +28,8 @@ from server.ocg_binding import (
     MSG_FLIPSUMMONING, MSG_FLIPSUMMONED, MSG_SELECT_BATTLECMD,
     MSG_CHAIN_END, MSG_EQUIP, MSG_UNEQUIP,
     QUERY_CODE, QUERY_ATTACK, QUERY_DEFENSE, QUERY_POSITION,
+    QUERY_TYPE, QUERY_LEVEL, QUERY_OVERLAY_CARD, QUERY_COUNTERS,
+    QUERY_EQUIP_CARD, QUERY_END,
     TYPE_FUSION, TYPE_SYNCHRO, TYPE_XYZ, TYPE_LINK,
 )
 from server.card_database import CardDatabase
@@ -459,10 +461,11 @@ class DuelManager:
                 if msg_type in (MSG_EQUIP, MSG_UNEQUIP, MSG_CHAIN_END):
                     await self._refresh_all_mzone_stats()
 
-            # Her mesaj sonunda motor otoriteli el snapshot'ini broadcast et.
+            # Her mesaj sonunda motor otoriteli snapshot'lari broadcast et.
             # Unconditional — client event-driven mutasyonlari driftleyebildigi icin
             # degisim kontrolu yapmiyoruz; motor tek dogruluk kaynagi.
             await self._sync_hands()
+            await self._sync_field()
 
     async def _send_card_stat_update(self, controller, location, sequence):
         """Kartin guncel ATK/DEF degerini motordan sorgulayip istemcilere gonderir."""
@@ -561,6 +564,243 @@ class DuelManager:
                 current_code = _struct.unpack_from("<I", raw, off)[0]
             off += data_size
         return codes
+
+    _sync_field_diag = 0
+
+    def _parse_card_record(self, raw: bytes, offset: int) -> tuple[dict | None, int]:
+        """Tek bir kart kaydini parse eder (query_location icindeki tek slot).
+
+        query_location formati:
+          - Bos slot: [int16 0] (2 byte)
+          - Dolu slot: [u16 sz][u32 flag][data]... [u16 4][u32 QUERY_END]
+
+        Returns (card_dict veya None bos slot icin, yeni offset).
+        """
+        if offset + 2 > len(raw):
+            return None, offset
+
+        # Peek: bos slot marker
+        first_sz = _struct.unpack_from("<h", raw, offset)[0]  # signed
+        if first_sz == 0:
+            return None, offset + 2
+
+        card: dict = {}
+        max_iter = 64
+        while offset + 2 <= len(raw) and max_iter > 0:
+            max_iter -= 1
+            sz = _struct.unpack_from("<H", raw, offset)[0]
+            offset += 2
+            if sz < 4 or offset + sz > len(raw):
+                # Bozuk kayit — dur
+                return card, offset
+
+            flag = _struct.unpack_from("<I", raw, offset)[0]
+            offset += 4
+            data_size = sz - 4
+
+            if flag == QUERY_END:
+                return card, offset
+
+            try:
+                if flag == QUERY_CODE and data_size >= 4:
+                    card["code"] = _struct.unpack_from("<I", raw, offset)[0]
+                elif flag == QUERY_POSITION and data_size >= 4:
+                    card["position"] = _struct.unpack_from("<I", raw, offset)[0]
+                elif flag == QUERY_TYPE and data_size >= 4:
+                    card["type"] = _struct.unpack_from("<I", raw, offset)[0]
+                elif flag == QUERY_LEVEL and data_size >= 4:
+                    card["level"] = _struct.unpack_from("<I", raw, offset)[0]
+                elif flag == QUERY_ATTACK and data_size >= 4:
+                    card["atk"] = _struct.unpack_from("<i", raw, offset)[0]
+                elif flag == QUERY_DEFENSE and data_size >= 4:
+                    card["def"] = _struct.unpack_from("<i", raw, offset)[0]
+                elif flag == QUERY_OVERLAY_CARD and data_size >= 4:
+                    count = _struct.unpack_from("<I", raw, offset)[0]
+                    overlays: list[int] = []
+                    for i in range(count):
+                        pos = offset + 4 + i * 4
+                        if pos + 4 > offset + data_size:
+                            break
+                        overlays.append(_struct.unpack_from("<I", raw, pos)[0])
+                    card["overlays"] = overlays
+                elif flag == QUERY_COUNTERS and data_size >= 4:
+                    count = _struct.unpack_from("<I", raw, offset)[0]
+                    counters: dict = {}
+                    for i in range(count):
+                        pos = offset + 4 + i * 4
+                        if pos + 4 > offset + data_size:
+                            break
+                        packed = _struct.unpack_from("<I", raw, pos)[0]
+                        ctype = packed & 0xFFFF
+                        ccount = (packed >> 16) & 0xFFFF
+                        if ccount > 0:
+                            counters[str(ctype)] = ccount
+                    if counters:
+                        card["counters"] = counters
+                elif flag == QUERY_EQUIP_CARD and data_size >= 10:
+                    # Null: [u16 0][u64 0] = 10 byte
+                    # Dolu: [u8 con][u8 loc][u32 seq][u32 pos] = 10 byte
+                    eq_loc = _struct.unpack_from("<B", raw, offset + 1)[0]
+                    if eq_loc != 0:
+                        eq_con = _struct.unpack_from("<B", raw, offset)[0]
+                        eq_seq = _struct.unpack_from("<I", raw, offset + 2)[0]
+                        card["equip"] = {
+                            "controller": eq_con,
+                            "location": eq_loc,
+                            "sequence": eq_seq,
+                        }
+            except Exception:
+                pass
+
+            offset += data_size
+
+        return card, offset
+
+    def _parse_zone_buffer(self, raw: bytes) -> list[dict | None]:
+        """query_location cevabini slot listesine cevirir (None = bos slot)."""
+        if not raw or len(raw) < 4:
+            return []
+        cards: list[dict | None] = []
+        off = 4  # u32 total_size prefix
+        while off < len(raw):
+            card, new_off = self._parse_card_record(raw, off)
+            if new_off <= off:
+                break
+            cards.append(card)
+            off = new_off
+        return cards
+
+    def _query_zone(self, team: int, loc: int, flags: int) -> list[dict | None]:
+        """Belirli bir zone'u motordan sorgula."""
+        if not self._duel:
+            return []
+        try:
+            raw = self._core.query_location(self._duel, team, loc, flags)
+        except Exception as e:
+            print(f"[FIELD_SYNC] query_location ERROR team={team} loc={loc:#x}: {e}")
+            return []
+        try:
+            return self._parse_zone_buffer(raw)
+        except Exception as e:
+            import traceback
+            print(f"[FIELD_SYNC] parse ERROR team={team} loc={loc:#x} raw_len={len(raw)}: {e}")
+            traceback.print_exc()
+            return []
+
+    async def _sync_field(self):
+        """Mzone/szone/grave/exile icin motor otoriteli snapshot broadcast.
+
+        Her mesaj sonrasi kosulsuz. Client event-driven mutasyonu yok artik —
+        saha state'i tamamen motor tarafindan belirleniyor. Token, overlay,
+        counter, equip, face-down flip gibi tum edge case'ler otomatik
+        kapsanir.
+        """
+        if not self._duel:
+            return
+
+        field_flags = (
+            QUERY_CODE | QUERY_POSITION | QUERY_TYPE | QUERY_LEVEL |
+            QUERY_ATTACK | QUERY_DEFENSE | QUERY_OVERLAY_CARD |
+            QUERY_COUNTERS | QUERY_EQUIP_CARD
+        )
+        grave_flags = QUERY_CODE | QUERY_POSITION
+
+        snapshot = {
+            "mzone": {"0": [], "1": []},
+            "szone": {"0": [], "1": []},
+            "grave": {"0": [], "1": []},
+            "exile": {"0": [], "1": []},
+        }
+
+        for team in (0, 1):
+            snapshot["mzone"][str(team)] = self._query_zone(team, LOCATION_MZONE, field_flags)
+            snapshot["szone"][str(team)] = self._query_zone(team, LOCATION_SZONE, field_flags)
+            # Grave/exile — slot'suz (sirali liste), bos slot olmaz
+            grave_cards = self._query_zone(team, LOCATION_GRAVE, grave_flags)
+            exile_cards = self._query_zone(team, LOCATION_REMOVED, grave_flags)
+            snapshot["grave"][str(team)] = [c for c in grave_cards if c]
+            snapshot["exile"][str(team)] = [c for c in exile_cards if c]
+
+        # Kart ismi ekle (UI render + grave viewer icin)
+        for zone in ("mzone", "szone", "grave", "exile"):
+            for team_key in ("0", "1"):
+                for c in snapshot[zone][team_key]:
+                    if c and c.get("code"):
+                        db_card = self._db.get_card(c["code"])
+                        if db_card:
+                            c["card_name"] = db_card.name
+                            # type snapshot'ta yoksa ekle (grave/exile light query)
+                            if "type" not in c:
+                                c["type"] = db_card.type
+
+        # Diag: kart varsa log bas (sahipsiz mzone/szone skip)
+        occ = sum(
+            1 for zone in ("mzone", "szone") for t in ("0", "1")
+            for c in snapshot[zone][t] if c and c.get("code")
+        )
+        grave_occ = sum(len(snapshot["grave"][t]) for t in ("0", "1"))
+        if occ > 0 or grave_occ > 0:
+            self._sync_field_diag += 1
+            if self._sync_field_diag <= 50 or self._sync_field_diag % 25 == 0:
+                mz0 = [c.get("code") if c else None for c in snapshot["mzone"]["0"]]
+                mz1 = [c.get("code") if c else None for c in snapshot["mzone"]["1"]]
+                sz0 = [c.get("code") if c else None for c in snapshot["szone"]["0"]]
+                sz1 = [c.get("code") if c else None for c in snapshot["szone"]["1"]]
+                print(f"[FIELD_SYNC #{self._sync_field_diag}] mz0={mz0} mz1={mz1} sz0={sz0} sz1={sz1} grave_tot={grave_occ}")
+
+        # Her oyuncuya perspektife gore filtre uygula ve broadcast
+        for p in self.room.players:
+            if p.team == self.bot_team:
+                continue
+            filtered = self._filter_field_snapshot(snapshot, p.team)
+            try:
+                await p.send({
+                    "action": "field_sync",
+                    "field": filtered,
+                })
+            except Exception as e:
+                print(f"[FIELD_SYNC SEND ERROR] {e}")
+
+    def _filter_field_snapshot(self, snapshot: dict, viewer_team: int) -> dict:
+        """Rakibin face-down mzone/szone kartlarinin kod/stat bilgisini gizler.
+
+        MSG_SET filter pattern'i ile ayni mantik: position bit 0x0A (facedown)
+        ise code=0 / atk=0 / def=0 / name="" / type=0 — slot/position yine
+        gorunur (face-down render icin).
+        """
+        out = {
+            "mzone": {"0": [], "1": []},
+            "szone": {"0": [], "1": []},
+            "grave": snapshot["grave"],
+            "exile": snapshot["exile"],
+        }
+        for zone in ("mzone", "szone"):
+            for team_key in ("0", "1"):
+                team = int(team_key)
+                cards = snapshot[zone][team_key]
+                filtered_list: list = []
+                for c in cards:
+                    if c is None:
+                        filtered_list.append(None)
+                        continue
+                    pos = c.get("position", 0)
+                    is_facedown = bool(pos & 0x0A)
+                    if team != viewer_team and is_facedown:
+                        # Rakibin face-down kartini gizle (position/slot aciksa
+                        # da kod ve istatistik sifir)
+                        filtered_list.append({
+                            "code": 0,
+                            "position": pos,
+                            "card_name": "",
+                            "atk": 0,
+                            "def": 0,
+                            "type": 0,
+                            "overlays": [],
+                        })
+                    else:
+                        filtered_list.append(c)
+                out[zone][team_key] = filtered_list
+        return out
 
     async def _sync_hands(self):
         """Her iki oyuncunun elini motordan sorgulayip client'lara broadcast eder.
