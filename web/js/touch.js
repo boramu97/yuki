@@ -49,8 +49,7 @@
                 longPressTriggered = true;
                 const code = duelCard.dataset?.code || duelCard.querySelector("img")?.src?.match(/\/(\d+)\.jpg/)?.[1];
                 if (code && code !== "0") {
-                    document.getElementById("preview-img").src =
-                        `https://images.ygoprodeck.com/images/cards/${code}.jpg`;
+                    document.getElementById("preview-img").src = WS.imgBig(parseInt(code, 10));
                     document.getElementById("card-preview-overlay").classList.add("active");
                 }
                 pressTarget = null;

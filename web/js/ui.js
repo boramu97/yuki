@@ -29,7 +29,7 @@ const UI = {
         entry.className = "log-banner" + (cls ? ` ${cls}` : "");
         if (cardCode) {
             const img = document.createElement("img");
-            img.src = `https://images.ygoprodeck.com/images/cards_small/${cardCode}.jpg`;
+            img.src = WS.imgSmall(cardCode);
             img.onerror = function () { this.style.display = "none"; };
             entry.appendChild(img);
         }
@@ -62,7 +62,7 @@ const UI = {
         const cardCode = opts.card && opts.card.code;
         if (cardCode) {
             const img = document.createElement("img");
-            img.src = `https://images.ygoprodeck.com/images/cards_small/${cardCode}.jpg`;
+            img.src = WS.imgSmall(cardCode);
             img.onerror = function () { this.style.display = "none"; };
             entry.appendChild(img);
         }
@@ -163,11 +163,11 @@ const UI = {
         if (card.code) {
             const img = document.createElement("img");
             img.className = "mp-card-img";
-            img.src = `https://images.ygoprodeck.com/images/cards_small/${card.code}.jpg`;
+            img.src = WS.imgSmall(card.code);
             img.onerror = function () { this.style.display = "none"; };
             img.onclick = (e) => {
                 e.stopPropagation();
-                document.getElementById("preview-img").src = `https://images.ygoprodeck.com/images/cards/${card.code}.jpg`;
+                document.getElementById("preview-img").src = WS.imgBig(card.code);
                 document.getElementById("card-preview-overlay").classList.add("active");
             };
             tile.appendChild(img);

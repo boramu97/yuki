@@ -4,6 +4,19 @@ const WS = {
     socket: null,
     connected: false,
     handlers: {},  // action -> callback
+    aliasMap: {},  // varyant_kodu -> ana_kod (login/auth_result'tan dolar). ygoprodeck bazi varyant kodlarini host etmedigi icin (ornek: BEWD 89631133 -> 404) image src'de ana koda resolve edilir.
+
+    // Kart gorseli URL helper'lari — alias-aware, kod=0 ise bos string.
+    imgSmall(code) {
+        if (!code) return "";
+        const main = this.aliasMap[code] || code;
+        return `https://images.ygoprodeck.com/images/cards_small/${main}.jpg`;
+    },
+    imgBig(code) {
+        if (!code) return "";
+        const main = this.aliasMap[code] || code;
+        return `https://images.ygoprodeck.com/images/cards/${main}.jpg`;
+    },
 
     connect(url) {
         return new Promise((resolve, reject) => {

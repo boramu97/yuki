@@ -67,6 +67,30 @@ from server.decks import (
     YAMI_BAKURA_DECK, KAIBA_BATTLECITY_DECK, YAMI_MARIK_DECK,
 )
 import random as _random
+
+
+def _load_card_aliases() -> dict:
+    """cards.cdb'den varyant_kodu -> ana_kod map'i yukler.
+
+    OCGCore'un kart varyantlari (alternatif sanat) ayri kodlarda saklanir
+    ama oyun mantigi icin alias=ana_kod ile ayni karta esitlenir. ygoprodeck
+    CDN tum varyantlari host etmedigi icin (ornek: 89631133 = BEWD varyanti
+    -> 404, 89631139 -> 200) frontend'de varyant kodlari ana koda map edilmeli.
+    """
+    from server.config import CARD_DB_PATH
+    import sqlite3 as _sq
+    try:
+        conn = _sq.connect(str(CARD_DB_PATH))
+        rows = conn.execute("SELECT id, alias FROM datas WHERE alias != 0").fetchall()
+        conn.close()
+        return {row[0]: row[1] for row in rows}
+    except Exception as e:
+        print(f"[ALIAS] yuklenemedi: {e}")
+        return {}
+
+
+_CARD_ALIASES = _load_card_aliases()
+
 from server.ocg_binding import (
     MSG_SELECT_IDLECMD, MSG_SELECT_BATTLECMD, MSG_SELECT_CHAIN,
     MSG_SELECT_EFFECTYN, MSG_SELECT_YESNO, MSG_SELECT_OPTION,
@@ -546,6 +570,7 @@ async def handle_connection(ws):
                         "token": token,
                         "username": user.username,
                         "active_deck_slot": user_db.get_active_deck_slot(user.user_id),
+                        "card_aliases": _CARD_ALIASES,
                     }))
                 else:
                     await ws.send(json.dumps({
@@ -566,6 +591,7 @@ async def handle_connection(ws):
                         "success": True,
                         "username": user.username,
                         "active_deck_slot": user_db.get_active_deck_slot(user.user_id),
+                        "card_aliases": _CARD_ALIASES,
                     }))
                 else:
                     await ws.send(json.dumps({

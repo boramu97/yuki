@@ -42,8 +42,8 @@ const Collection = {
         return this.DUST_TABLE[this.cardTier(card)].dis;
     },
 
-    IMG: (code) => `https://images.ygoprodeck.com/images/cards_small/${code}.jpg`,
-    IMG_BIG: (code) => `https://images.ygoprodeck.com/images/cards/${code}.jpg`,
+    IMG: (code) => WS.imgSmall(code),
+    IMG_BIG: (code) => WS.imgBig(code),
 
     deck() { return this.deckSlots[this.activeSlot].cards; },
     countInDeck(code) { return this.deck().filter(c => c === code).length; },

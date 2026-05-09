@@ -1,10 +1,10 @@
 // Yuki — D3 Field Renderer
 
 function cardImageUrl(code) {
-    return code ? `https://images.ygoprodeck.com/images/cards_small/${code}.jpg` : "";
+    return (typeof WS !== "undefined") ? WS.imgSmall(code) : (code ? `https://images.ygoprodeck.com/images/cards_small/${code}.jpg` : "");
 }
 function cardImageUrlFull(code) {
-    return code ? `https://images.ygoprodeck.com/images/cards/${code}.jpg` : "";
+    return (typeof WS !== "undefined") ? WS.imgBig(code) : (code ? `https://images.ygoprodeck.com/images/cards/${code}.jpg` : "");
 }
 function cardBackHTML() {
     return '<div class="card-back-inner"><div class="card-back-oval"></div></div>';

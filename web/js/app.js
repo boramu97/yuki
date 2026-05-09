@@ -80,6 +80,7 @@
             localStorage.setItem("yuki_token", d.token);
             localStorage.setItem("yuki_username", d.username);
             if (d.active_deck_slot !== undefined) Collection.activeDeckSlot = d.active_deck_slot;
+            if (d.card_aliases) WS.aliasMap = d.card_aliases;
             goHome();
         } else {
             setAuthStatus(d.message, true);
@@ -91,6 +92,7 @@
             const wasLoggedIn = !!myName;
             myName = d.username;
             if (d.active_deck_slot !== undefined) Collection.activeDeckSlot = d.active_deck_slot;
+            if (d.card_aliases) WS.aliasMap = d.card_aliases;
             // Sadece ilk giriste ana sayfaya yonlendir — reconnect sonrasi re-auth'ta ekranda kal
             if (!wasLoggedIn) goHome();
         } else {
@@ -773,7 +775,7 @@
             el.className = "choice-card";
             el.dataset.code = c.code;
             el.innerHTML =
-                `<div class="choice-card-art"><img src="https://images.ygoprodeck.com/images/cards/${c.code}.jpg" alt=""></div>`+
+                `<div class="choice-card-art"><img src="${WS.imgBig(c.code)}" alt=""></div>`+
                 `<div class="choice-card-name">${c.card_name||""}</div>`;
             el.addEventListener("click", () => {
                 host.querySelectorAll(".choice-card").forEach(x=>x.classList.remove("selected"));
@@ -811,7 +813,7 @@
             el.dataset.code = c.code;
             el.dataset.price = c.price;
             el.innerHTML =
-                `<div class="shop-item-art"><img src="https://images.ygoprodeck.com/images/cards/${c.code}.jpg" alt=""></div>`+
+                `<div class="shop-item-art"><img src="${WS.imgBig(c.code)}" alt=""></div>`+
                 `<div class="shop-item-name">${c.card_name||""}</div>`+
                 `<div class="shop-item-price">`+
                     `<span class="price-old">${c.price_original} toz</span>`+
