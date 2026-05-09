@@ -227,7 +227,7 @@ const Collection = {
         document.getElementById("coll-deck-num").textContent = label;
         const mobNum = document.getElementById("coll-mob-deck-num");
         if (mobNum) mobNum.textContent = label;
-        document.getElementById("btn-duel-with-deck").disabled = mainCount !== 40;
+        document.getElementById("btn-duel-with-deck").disabled = mainCount < 40 || mainCount > 50;
         this.renderSlotTabs();
     },
 
@@ -249,10 +249,13 @@ const Collection = {
             const mainCnt = slot.cards.filter(c => !this.isFusion(c)).length;
             const extraCnt = slot.cards.filter(c => this.isFusion(c)).length;
             const active = i === this.activeSlot ? "active" : "";
-            const ready = mainCnt === 40 ? "ready" : "";
+            const inRange = mainCnt >= 40 && mainCnt <= 50;
+            const ready = inRange ? "ready" : "";
             const isActive = i === this.activeDeckSlot;
             const badge = isActive ? '<span class="slot-active-badge">AKTIF</span>' : "";
-            const label = extraCnt > 0 ? `${mainCnt}+${extraCnt}` : `${mainCnt}/40`;
+            const label = inRange
+                ? (extraCnt > 0 ? `${mainCnt}+${extraCnt}` : `${mainCnt}`)
+                : `${mainCnt}/40`;
             return `<button class="coll-slot-tab ${active} ${ready} ${isActive?"is-active":""}" onclick="Collection.switchSlot(${i})">
                 ${slot.name}<span class="slot-cnt">${label}</span>${badge}
             </button>`;
@@ -262,7 +265,7 @@ const Collection = {
     setAsActiveDeck() {
         const slot = this.activeSlot;
         const mainCnt = this.deckSlots[slot].cards.filter(c => !this.isFusion(c)).length;
-        if (mainCnt !== 40) return;
+        if (mainCnt < 40 || mainCnt > 50) return;
         this.activeDeckSlot = slot;
         WS.setActiveDeck(slot);
         this.renderSlotTabs();
@@ -288,7 +291,7 @@ const Collection = {
         const count = this.countInDeck(code);
         const max = this.maxCopies(code);
         const isFus = this.isFusion(code);
-        const limit = isFus ? 15 : 40;
+        const limit = isFus ? 15 : 50;
         const current = isFus ? this.extraDeckCount() : this.mainDeckCount();
         if (count > 0 && count >= max) {
             const idx = this.deck().indexOf(code);
@@ -320,7 +323,7 @@ const Collection = {
         const copies = this.countInDeck(code);
         const max = this.maxCopies(code);
         const isFus = this.isFusion(code);
-        const limit = isFus ? 15 : 40;
+        const limit = isFus ? 15 : 50;
         const current = isFus ? this.extraDeckCount() : this.mainDeckCount();
         if (copies < max && current < limit) {
             this.toggleDeck(code);

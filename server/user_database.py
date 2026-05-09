@@ -511,7 +511,7 @@ class UserDatabase:
         """Bir deste slotunu kaydeder. Kartlar koleksiyonda olmalı."""
         if slot < 0 or slot > 2:
             return False
-        if len(cards) > 55:  # 40 main + 15 extra
+        if len(cards) > 65:  # 50 main + 15 extra
             return False
         self._conn.execute(
             """INSERT INTO user_decks (user_id, slot, name, cards)
