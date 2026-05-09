@@ -952,3 +952,74 @@ YAMI_MARIK_DECK = [
     65830223,
     26905245,
 ]
+
+
+# =============================================================================
+#  Class-2 (Battle City sonrasi) — Cyber Dragon destesi (Zane Truesdale)
+# =============================================================================
+# Bu destedeki kartlar koleksiyonda "Class 2" olarak isaretlenir:
+#   - BC tamamlanmamis kullanici icin koleksiyonda kilitli gorunur
+#   - Dust ile craft edilemez (BC tamamlanmis olmali)
+#   - Mystery/shop havuzunda gorunmez (BC tamamlanmamis user icin)
+# Implementasyon: ADVANCED_CARD_CODES kumesi user_database/websocket_server'da
+# kilit kontrolunde kullanilir.
+
+CYBER_DRAGON_DECK = [
+    # Monster Cards (30)
+    4162088,                                # Cyber Laser Dragon x1
+    68774379,                               # Cyber Barrier Dragon x1
+    35050257, 35050257, 35050257,           # Cyber Larva x3
+    5373478, 5373478, 5373478,              # Cyber Dragon Zwei x3
+    1142880, 1142880, 1142880,              # Cyber Dragon Nachster x3
+    59281922, 59281922, 59281922,           # Cyber Dragon Drei x3
+    23893227, 23893227, 23893227,           # Cyber Dragon Core x3
+    29975188, 29975188, 29975188,           # Cyber Dragon Vier x3
+    70095154, 70095154, 70095154,           # Cyber Dragon x3
+    26439287, 26439287, 26439287,           # Proto-Cyber Dragon x3
+    56364287,                               # Cyber Dragon Herz x1
+    29719112,                               # Cyber Pharos x1
+    33093439,                               # Cyber Eltanin x1
+    15717011,                               # The Light - Hex-Sealed Fusion x1
+
+    # Spell Cards (22)
+    86686671, 86686671,                     # Cyber Repair Plant x2
+    33041277, 33041277, 33041277,           # Cyber Revsystem x3
+    81193865,                               # Super Strident Blaze x1
+    11961740,                               # Different Dimension Capsule x1
+    66607691,                               # Photon Generator Unit x1
+    3659803,                                # Overload Fusion x1
+    38992735,                               # Wave-Motion Cannon x1
+    58199906,                               # Cybernetic Fusion Support x1
+    86198326,                               # 7 Completed x1
+    22046459,                               # Megamorph x1
+    24094653,                               # Polymerization x1
+    5318639, 5318639,                       # Mystical Space Typhoon x2
+    77565204,                               # Future Fusion x1
+    31828916,                               # Machina Armored Unit x1
+    48130397,                               # Super Polymerization x1
+    43898403,                               # Twin Twisters x1
+    52875873, 52875873,                     # Evolution Burst x2
+
+    # Trap Cards (8)
+    63477921,                               # Cyber Summon Blaster x1
+    70342110, 70342110,                     # Dimensional Prison x2
+    18597560,                               # Cybernetic Revolution x1
+    92773018,                               # Cybernetic Hidden Technology x1
+    82428674,                               # Cybernetic Overflow x1
+    12670770,                               # Cyber Network x1
+    91989718,                               # Attack Reflector Unit x1
+
+    # Extra Deck (7) — Cyber Dragon fusion zinciri
+    1546123,                                # Cyber End Dragon
+    74157028,                               # Cyber Twin Dragon
+    82315403,                               # Cyber Eternity Dragon
+    79229522,                               # Chimeratech Fortress Dragon
+    87116928,                               # Chimeratech Megafleet Dragon
+    64599569,                               # Chimeratech Overdragon
+    84058253,                               # Chimeratech Rampage Dragon
+]
+
+
+# Class-2 kart kumesi — koleksiyon sinifi ayrimi icin tek kaynak
+# (yeni Class-2 desteleri eklenince buraya .update() ile genislet)
+ADVANCED_CARD_CODES = set(CYBER_DRAGON_DECK)

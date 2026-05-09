@@ -16,6 +16,7 @@ const Collection = {
     deckFilter: "",
 
     dust: 0,
+    bcCompleted: false,  // Battle City tamamlandi mi? Class-2 erisimi icin (server otoriter)
 
     // Limited kartlar: max 1 kopya
     LIMITED_1: new Set([83764718, 55144522]), // Monster Reborn, Pot of Greed
@@ -49,7 +50,17 @@ const Collection = {
     countInDeck(code) { return this.deck().filter(c => c === code).length; },
     maxCopies(code) { return this.LIMITED_1.has(code) ? 1 : 3; },
     isMonster(t) { return t === "monster" || t === "fusion"; },
-    owns(code) { return this.myCards.has(code) || this.isFusion(code); },
+    // Class-2 kart sahipligi: server otoriter `cls` field'i. Class-2 + BC tamamlanmamis →
+    // fusion bile olsa sahip degil (desteye konulamaz, oynanamaz).
+    isClass2(code) {
+        const card = this.allCards.find(c => c.c === code);
+        return !!(card && card.cls === 2);
+    },
+    isLockedByClass2(code) { return this.isClass2(code) && !this.bcCompleted; },
+    owns(code) {
+        if (this.isLockedByClass2(code)) return false;
+        return this.myCards.has(code) || this.isFusion(code);
+    },
 
     open() {
         UI.showScreen("collection-screen");
@@ -62,6 +73,7 @@ const Collection = {
         this.myCards = new Set(data.cards || []);
         this.presetDecks = data.preset_decks || {};
         this.dust = data.dust || 0;
+        this.bcCompleted = !!data.bc_completed;
 
         // Deste filtresi dropdown doldur
         const sel = document.getElementById("coll-deck-filter");
@@ -152,20 +164,24 @@ const Collection = {
 
         grid.innerHTML = filtered.map(card => {
             const owned = this.owns(card.c);
+            const class2Locked = this.isLockedByClass2(card.c);
             const copies = this.countInDeck(card.c);
             const cls = [
                 "coll-card",
                 owned ? "" : "locked",
+                class2Locked ? "class2-locked" : "",
                 copies > 0 ? "in-deck" : "",
             ].join(" ");
 
             let badge = "";
-            if (dkCodes) {
+            if (class2Locked) {
+                badge = '<span class="coll-class2-badge">&#x1F512; BC</span>';
+            } else if (dkCodes) {
                 badge = owned
                     ? '<span class="coll-deck-badge owned">Var</span>'
                     : '<span class="coll-deck-badge missing">Eksik</span>';
             }
-            if (card.t === "fusion") badge = "";  // Fusion her zaman acik
+            if (card.t === "fusion" && !class2Locked) badge = "";  // Class-1 fusion her zaman acik
             const copyBadge = copies > 0 ? `<span class="coll-copy-badge">x${copies}</span>` : "";
 
             return `<div class="${cls}" onclick="Collection.quickAdd(${card.c})" oncontextmenu="event.preventDefault();Collection.preview(${card.c})">
@@ -347,10 +363,15 @@ const Collection = {
                 }
             }
         } else if (card && !owned) {
-            // Kilitli kart — Aç butonu
-            const cost = this.craftCost(card);
-            const canAfford = this.dust >= cost;
-            html += `<button class="coll-prev-btn craft" ${canAfford ? "" : "disabled"} onclick="Collection.doCraft(${code})">Ac — ${cost} toz</button>`;
+            if (this.isLockedByClass2(code)) {
+                // Class-2 + BC tamamlanmamis — craft engelli, motivasyon mesaji
+                html += `<button class="coll-prev-btn craft" disabled>&#x1F512; Battle City'yi tamamla</button>`;
+            } else {
+                // Kilitli kart — Aç butonu
+                const cost = this.craftCost(card);
+                const canAfford = this.dust >= cost;
+                html += `<button class="coll-prev-btn craft" ${canAfford ? "" : "disabled"} onclick="Collection.doCraft(${code})">Ac — ${cost} toz</button>`;
+            }
         }
 
         actions.innerHTML = html;

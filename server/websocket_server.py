@@ -250,8 +250,12 @@ def _check_node_available(user_id: int, adv_id: str, node_idx: int) -> str | Non
 
 
 def _roll_random_cards(user_id: int, count: int, exclude_owned: bool = True) -> list[int]:
-    """Kart havuzundan rastgele kodlar dondurur (fusion haric — onlar zaten bedava)."""
-    monsters, spells, traps, _fusions = user_db._load_card_pool()
+    """Kart havuzundan rastgele kodlar dondurur (fusion haric — onlar zaten bedava).
+
+    Class-2 (BC-gated) kartlar BC tamamlanmamis user icin havuzdan haric tutulur.
+    """
+    include_advanced = user_db.is_battle_city_completed(user_id)
+    monsters, spells, traps, _fusions = user_db._load_card_pool(include_advanced=include_advanced)
     pool = monsters + spells + traps
     if exclude_owned:
         owned = set(user_db.get_collection(user_id))
@@ -615,12 +619,14 @@ async def handle_connection(ws):
                 card_pool = user_db.get_card_pool()
                 preset_decks = user_db.get_preset_decks()
                 dust = user_db.get_dust(_user.user_id)
+                bc_completed = user_db.is_battle_city_completed(_user.user_id)
                 await ws.send(json.dumps({
                     "action": "collection",
                     "cards": cards,
                     "card_pool": card_pool,
                     "preset_decks": preset_decks,
                     "dust": dust,
+                    "bc_completed": bc_completed,
                 }))
                 continue
 

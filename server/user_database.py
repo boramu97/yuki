@@ -94,6 +94,29 @@ class UserDatabase:
             pass  # Kolon zaten var
         self._conn.commit()
 
+    # =====================================================================
+    #  Koleksiyon Sinif Sistemi (Class 1 = basic, Class 2 = BC-gated)
+    # =====================================================================
+    # Class 2 kartlar:
+    #   - BC tamamlanmamis kullanici koleksiyonda kilitli gorur
+    #   - craft edemez (dust ile acamaz)
+    #   - mystery/shop havuzunda BC oncesi gorunmez
+    #   - sahip degilse desteye konulamaz (owns() false)
+    # Disenchant sahipsa izinli (kilitlenme sadece edinme yolunu kapatir).
+
+    @staticmethod
+    def _advanced_card_codes() -> set[int]:
+        """Class-2 (BC-gated) kart kodu kumesi."""
+        from server.decks import ADVANCED_CARD_CODES
+        return ADVANCED_CARD_CODES
+
+    BATTLE_CITY_NODE_COUNT = 7  # 4 on eleme + Bakura + Kaiba + Marik
+
+    def is_battle_city_completed(self, user_id: int) -> bool:
+        """Kullanici Battle City'nin tum 7 node'unu tamamladi mi?"""
+        progress = self.get_adventure_progress(user_id, "battle_city")
+        return len(progress) >= self.BATTLE_CITY_NODE_COUNT
+
     @staticmethod
     def _excluded_card_codes() -> set[int]:
         """Koleksyona acilmayacak kartlar — sadece bot'un kullandigi unique desteler.
@@ -118,26 +141,32 @@ class UserDatabase:
             others.update(d)
         return set(PEGASUS_DECK) - others
 
-    def _load_card_pool(self):
+    def _load_card_pool(self, include_advanced: bool = True):
         """Tüm destelerdeki kartları tipine göre gruplar (başlangıç koleksiyonu için).
 
         Pegasus destesindeki kartlar haric (bkz. _excluded_card_codes).
+        include_advanced=False ise Class-2 (BC-gated) kartlar da haric tutulur —
+        starter collection ve mystery/shop pool icin BC tamamlanmamis user'a kullanilir.
         """
         from server.decks import (
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
             INSECT_DECK, REX_RAPTOR_DECK, JADEN_DECK,
+            CYBER_DRAGON_DECK,
         )
         all_decks = [
             YUGI_DECK, BASTION_DECK, KAIBA_DECK, ANCIENT_GEAR_DECK,
             JOEY_DECK, MAI_DECK, SYRUS_DECK, DINO_DECK,
             INSECT_DECK, REX_RAPTOR_DECK, JADEN_DECK,
+            CYBER_DRAGON_DECK,
         ]
         all_codes = set()
         for d in all_decks:
             all_codes.update(d)
         # Pegasus destesinin benzersiz kartlarini havuzdan cikar
         all_codes -= self._excluded_card_codes()
+        if not include_advanced:
+            all_codes -= self._advanced_card_codes()
 
         card_db = sqlite3.connect(str(CARD_DB_PATH))
         TYPE_SPELL = 0x2
@@ -164,8 +193,12 @@ class UserDatabase:
         return monsters, spells, traps, fusions
 
     def _generate_starter_collection(self, user_id: int):
-        """Yeni kullanıcıya 65 rastgele kart verir (25 monster, 20 spell, 15 trap, 5 fusion)."""
-        monsters, spells, traps, fusions = self._load_card_pool()
+        """Yeni kullanıcıya 65 rastgele kart verir (25 monster, 20 spell, 15 trap, 5 fusion).
+
+        Class-2 (BC-gated) kartlar starter collection'a girmez — kullanici BC'yi
+        tamamlayinca craft/mystery/shop ile edinir.
+        """
+        monsters, spells, traps, fusions = self._load_card_pool(include_advanced=False)
         selected = (
             random.sample(monsters, min(25, len(monsters)))
             + random.sample(spells, min(20, len(spells)))
@@ -287,6 +320,9 @@ class UserDatabase:
         # Pegasus destesinin benzersiz kartlari — koleksyona acik degil
         if code in self._excluded_card_codes():
             return False, "Bu kart koleksyona acik degil", self.get_dust(user_id)
+        # Class-2 (BC-gated) kart — Battle City tamamlanmadan craft edilemez
+        if code in self._advanced_card_codes() and not self.is_battle_city_completed(user_id):
+            return False, "Once Battle City'yi tamamla", self.get_dust(user_id)
         # Zaten koleksiyonda mı?
         exists = self._conn.execute(
             "SELECT 1 FROM collections WHERE user_id=? AND card_code=?",
@@ -353,6 +389,7 @@ class UserDatabase:
     def get_card_pool(self) -> list[dict]:
         """Tüm destelerdeki benzersiz kartları tip bilgisiyle döndürür."""
         monsters, spells, traps, fusions = self._load_card_pool()
+        advanced = self._advanced_card_codes()
         card_db = sqlite3.connect(str(CARD_DB_PATH))
 
         pool = []
@@ -380,6 +417,7 @@ class UserDatabase:
                 "a": atk, "d": defn, "l": level_raw & 0xFF,
                 "cc": self.DUST_TABLE[tier]["craft"],
                 "dc": self.DUST_TABLE[tier]["disenchant"],
+                "cls": 2 if code in advanced else 1,
             })
         card_db.close()
         return pool
