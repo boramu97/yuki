@@ -130,8 +130,11 @@ const Field = {
         return set;
     },
 
-    // Slot DOM'una "card-spawning" class'i ek + 1sn sonra temizle. Bos slot
-    // dolarsa "kart sahaya kondu" hissi veren halo animasyonu tetiklenir.
+    // Bos slot dolarsa "duello unitesi kartı algiladi" hissi veren teknolojik
+    // efekt tetikle: (1) slot'ta kisa cyan border scan, (2) body'ye SVG
+    // overlay — kartin kosesinden disa dagilan PCB izleri + node parlamalari.
+    // SVG body'ye eklenir cunku slot icine konsa render slot.innerHTML=""
+    // ile animasyonu kesebilir.
     _triggerSpawnGlow(key) {
         const parts = key.split("|");
         const team = parseInt(parts[0], 10);
@@ -146,10 +149,51 @@ const Field = {
             if (grid) slotEl = grid.querySelectorAll(".card-slot")[seq];
         }
         if (!slotEl) return;
+
+        // (1) Slot border scan — kisa cyan tarama, "sensor activate" hissi
         slotEl.classList.remove("card-spawning");
         void slotEl.offsetWidth; // reflow — animation'i bastan baslat
         slotEl.classList.add("card-spawning");
-        setTimeout(() => slotEl.classList.remove("card-spawning"), 1000);
+        setTimeout(() => slotEl.classList.remove("card-spawning"), 420);
+
+        // (2) PCB circuit overlay — body'ye fixed konum
+        const rect = slotEl.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+        const fx = document.createElement("div");
+        fx.className = "spawn-circuit-fx";
+        fx.style.left = rect.left + "px";
+        fx.style.top = rect.top + "px";
+        fx.style.width = rect.width + "px";
+        fx.style.height = rect.height + "px";
+        fx.innerHTML =
+            '<svg viewBox="0 0 100 100" preserveAspectRatio="none" overflow="visible" width="100%" height="100%">'
+            + '<g class="sc-traces">'
+            +   '<path d="M 25,0 L 25,-18 L 8,-18" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 50,0 L 50,-26" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 75,0 L 75,-15 L 95,-15 L 95,-28" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 100,25 L 122,25" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 100,75 L 116,75 L 116,92" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 75,100 L 75,118" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 50,100 L 50,116 L 32,116" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 25,100 L 25,113" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 0,75 L -16,75 L -16,90" vector-effect="non-scaling-stroke"/>'
+            +   '<path d="M 0,25 L -20,25" vector-effect="non-scaling-stroke"/>'
+            + '</g>'
+            + '<g class="sc-nodes">'
+            +   '<circle cx="8" cy="-18" r="2.2"/>'
+            +   '<circle cx="50" cy="-26" r="2.2"/>'
+            +   '<circle cx="95" cy="-28" r="2.2"/>'
+            +   '<circle cx="122" cy="25" r="2.2"/>'
+            +   '<circle cx="116" cy="92" r="2.2"/>'
+            +   '<circle cx="75" cy="118" r="2.2"/>'
+            +   '<circle cx="32" cy="116" r="2.2"/>'
+            +   '<circle cx="25" cy="113" r="2.2"/>'
+            +   '<circle cx="-16" cy="90" r="2.2"/>'
+            +   '<circle cx="-20" cy="25" r="2.2"/>'
+            + '</g>'
+            + '</svg>';
+        document.body.appendChild(fx);
+        setTimeout(() => fx.remove(), 1150);
     },
 
     render() {
