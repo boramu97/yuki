@@ -89,6 +89,7 @@ const Field = {
             console.log("[field_sync] szone self:", field.szone && field.szone[String(this.myTeam)]);
             console.log("[field_sync] field self:", field.field_card && field.field_card[String(this.myTeam)]);
         }
+        const oldKeys = this._slotKeys();
         for (const team of [0, 1]) {
             const key = String(team);
             const bucket = this.cards[team];
@@ -106,7 +107,49 @@ const Field = {
             bucket.grave = gr.map(c => this._normalizeSnapshotCard(c)).filter(Boolean);
             bucket.exile = ex.map(c => this._normalizeSnapshotCard(c)).filter(Boolean);
         }
+        const newKeys = this._slotKeys();
+        const spawned = [];
+        newKeys.forEach(k => { if (!oldKeys.has(k)) spawned.push(k); });
         this.render();
+        if (spawned.length) {
+            // Render bittikten sonra DOM'a glow class'ini ek — bir frame
+            // bekleyip element'in mevcut oldugundan emin oluyoruz.
+            requestAnimationFrame(() => spawned.forEach(k => this._triggerSpawnGlow(k)));
+        }
+    },
+
+    // Su an sahadaki dolu slot'larin id set'i. Diff icin kullanilir.
+    _slotKeys() {
+        const set = new Set();
+        for (const team of [0, 1]) {
+            const b = this.cards[team]; if (!b) continue;
+            Object.keys(b.mzone || {}).forEach(i => { if (b.mzone[i]) set.add(team + "|mzone|" + i); });
+            Object.keys(b.szone || {}).forEach(i => { if (b.szone[i]) set.add(team + "|szone|" + i); });
+            if (b.field) set.add(team + "|field|0");
+        }
+        return set;
+    },
+
+    // Slot DOM'una "card-spawning" class'i ek + 1sn sonra temizle. Bos slot
+    // dolarsa "kart sahaya kondu" hissi veren halo animasyonu tetiklenir.
+    _triggerSpawnGlow(key) {
+        const parts = key.split("|");
+        const team = parseInt(parts[0], 10);
+        const zone = parts[1];
+        const seq = parseInt(parts[2], 10);
+        const isSelf = team === this.myTeam;
+        let slotEl = null;
+        if (zone === "field") {
+            slotEl = document.getElementById(isSelf ? "self-field" : "opp-field");
+        } else {
+            const grid = document.getElementById((isSelf ? "self-" : "opp-") + zone);
+            if (grid) slotEl = grid.querySelectorAll(".card-slot")[seq];
+        }
+        if (!slotEl) return;
+        slotEl.classList.remove("card-spawning");
+        void slotEl.offsetWidth; // reflow — animation'i bastan baslat
+        slotEl.classList.add("card-spawning");
+        setTimeout(() => slotEl.classList.remove("card-spawning"), 1000);
     },
 
     render() {
