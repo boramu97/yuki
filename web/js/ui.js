@@ -442,12 +442,13 @@ const UI = {
     _chain(msg) {
         const chains = msg.chains || [];
         if (chains.length === 0) { WS.sendResponse(16, { index: -1 }); return; }
-        if (!msg.forced && this.autoPassChain) {
-            const hasActivatable = chains.some(ch =>
-                ch.location === 0x02 || ch.location === 0x04 ||
-                ch.location === 0x08 || ch.location === 0x10 || ch.location === 0x20
-            );
-            if (!hasActivatable) { WS.sendResponse(16, { index: -1 }); return; }
+        // AUTO PAS: kullanici acmissa + zincir forced degilse + tum aktivasyon
+        // adaylari sahadaki kapali spell/trap (szone, location 0x08) ise
+        // otomatik pas gec. Hand'deki counter/quick spell'ler veya forced
+        // efektler manuel olarak sorulur — stratejik kararlari etkilemez.
+        if (this.autoPassChain && !msg.forced) {
+            const allFromSet = chains.every(ch => ch.location === 0x08);
+            if (allFromSet) { WS.sendResponse(16, { index: -1 }); return; }
         }
 
         this.showMotorPanel("Zincire efekt eklemek ister misin?", "Zincir");
@@ -463,6 +464,28 @@ const UI = {
                 callback: () => WS.sendResponse(16, { index: -1 })
             }]);
         }
+    },
+
+    // --- AUTO PAS toggle (header butonu) ---
+    initAutoPassButton() {
+        const btn = document.getElementById("mp-auto-pass-btn");
+        if (!btn) return;
+        // localStorage'dan state yukle (yoksa default true)
+        try {
+            const stored = localStorage.getItem("yuki.autoPassChain");
+            if (stored !== null) this.autoPassChain = stored === "1";
+        } catch (e) {}
+        const apply = () => {
+            btn.classList.toggle("active", this.autoPassChain);
+            btn.setAttribute("aria-pressed", this.autoPassChain ? "true" : "false");
+        };
+        apply();
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.autoPassChain = !this.autoPassChain;
+            try { localStorage.setItem("yuki.autoPassChain", this.autoPassChain ? "1" : "0"); } catch (er) {}
+            apply();
+        });
     },
 
     // --- EFEKT EVET/HAYIR ---
@@ -763,3 +786,10 @@ const UI = {
         ]);
     },
 };
+
+// AUTO PAS butonunu DOM hazir oldugunda bind et
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => UI.initAutoPassButton());
+} else {
+    UI.initAutoPassButton();
+}

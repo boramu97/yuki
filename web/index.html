@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/home.css?v=17">
     <link rel="stylesheet" href="css/lobby.css?v=17">
     <link rel="stylesheet" href="css/duel.css?v=31">
-    <link rel="stylesheet" href="css/motor-panel.css?v=17">
+    <link rel="stylesheet" href="css/motor-panel.css?v=18">
     <link rel="stylesheet" href="css/float-panels.css?v=19">
     <link rel="stylesheet" href="css/card-popup.css?v=17">
     <link rel="stylesheet" href="css/collection.css?v=18">
@@ -113,6 +113,7 @@
             <!-- Motor Iletisim Paneli (sol) -->
             <div id="motor-panel" class="motor-panel">
                 <div class="mp-swipe-handle" id="mp-swipe-handle" aria-hidden="true"><div class="mp-handle-bar"></div></div>
+                <button class="mp-auto-pass-btn" id="mp-auto-pass-btn" type="button" aria-pressed="false" title="Acik: kapali spell/trap aktivasyon sorgulari otomatik pas gecilir (forced chain'ler etkilenmez)">AUTO PAS</button>
                 <button class="mp-minimize-btn" id="mp-minimize-btn" aria-label="Motor panelini gizle">&#x25BC;</button>
                 <div class="mp-header">
                     <div class="mp-phase-badge" id="mp-phase"></div>
@@ -121,10 +122,6 @@
                 <div class="mp-actions" id="mp-actions"></div>
                 <div class="mp-footer" id="mp-footer">
                     <div class="mp-footer-actions" id="mp-footer-actions"></div>
-                    <label class="mp-auto-toggle">
-                        <input type="checkbox" id="mp-auto-pass" checked>
-                        <span>Otomatik pas</span>
-                    </label>
                 </div>
             </div>
 
@@ -611,7 +608,7 @@
 
     <script src="js/websocket.js?v=18"></script>
     <script src="js/field.js?v=26"></script>
-    <script src="js/ui.js?v=19"></script>
+    <script src="js/ui.js?v=20"></script>
     <script src="js/collection.js?v=20"></script>
     <script src="js/touch.js?v=18"></script>
     <script src="js/dragdrop.js?v=6"></script>

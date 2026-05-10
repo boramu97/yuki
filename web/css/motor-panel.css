@@ -82,5 +82,45 @@
 .mp-footer-actions .mp-btn-end{background:linear-gradient(180deg,rgba(224,80,64,0.08),rgba(224,80,64,0.02));
     color:rgba(224,80,64,0.8);border:1px solid rgba(224,80,64,0.15)}
 .mp-footer-actions .mp-btn-end:hover{border-color:rgba(224,80,64,0.4);color:#e05040}
-.mp-auto-toggle{font-size:12px;color:rgba(212,200,160,0.35);display:flex;align-items:center;gap:8px}
-.mp-auto-toggle input{accent-color:var(--purple);width:16px;height:16px}
+/* AUTO PAS toggle — panel cercevesinin sag-ust kosesinde,
+   "duello unitesi LED indicator" tarzi. Acikken kapali spell/trap
+   aktivasyon sorgulari otomatik pas gecilir (UI._chain kontrol eder). */
+.mp-auto-pass-btn{
+    position:absolute;top:8px;right:10px;z-index:5;
+    display:inline-flex;align-items:center;gap:6px;
+    padding:3px 9px 3px 8px;
+    font-family:'Courier New',Courier,monospace;
+    font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+    background:rgba(20,28,40,0.7);
+    border:1px solid rgba(120,180,220,0.18);
+    border-radius:2px;
+    color:rgba(180,210,230,0.42);
+    cursor:pointer;
+    transition:color 0.18s,border-color 0.18s,background 0.18s,box-shadow 0.18s,text-shadow 0.18s;
+}
+.mp-auto-pass-btn::before{
+    content:'';width:6px;height:6px;border-radius:50%;
+    background:rgba(120,180,220,0.22);
+    transition:background 0.18s,box-shadow 0.18s;
+}
+.mp-auto-pass-btn:hover{
+    border-color:rgba(120,200,240,0.42);
+    color:rgba(180,220,240,0.72);
+}
+.mp-auto-pass-btn.active{
+    border-color:rgba(80,200,255,0.7);
+    color:#7adef8;
+    background:rgba(20,40,60,0.85);
+    box-shadow:0 0 8px rgba(80,200,255,0.25),inset 0 0 6px rgba(80,200,255,0.12);
+    text-shadow:0 0 6px rgba(80,200,255,0.5);
+}
+.mp-auto-pass-btn.active::before{
+    background:#7adef8;
+    box-shadow:0 0 6px #7adef8,0 0 12px rgba(80,200,255,0.5);
+    animation:mp-auto-pulse 1.4s ease-in-out infinite;
+}
+@keyframes mp-auto-pulse{0%,100%{opacity:1}50%{opacity:0.55}}
+/* mp-minimize-btn ile cakismasin diye kucuk ekranlarda sola kay */
+@media (max-width:768px){
+    .mp-auto-pass-btn{right:48px}
+}
